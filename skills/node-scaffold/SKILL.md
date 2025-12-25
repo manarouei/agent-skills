@@ -1,59 +1,118 @@
 ---
 name: node-scaffold
-description: Generate node implementation scaffold from schema. Creates file structure, base classes, and boilerplate code for the node. Use when schema is complete and you need the basic implementation structure.
+version: "1.0.0"
+description: Generate node implementation scaffold from schema. Creates file structure matching our backend at /home/toni/n8n/back/nodes/.
+
+# Contract
+autonomy_level: IMPLEMENT
+side_effects: [fs]
+timeout_seconds: 60
+retry:
+  policy: none
+  max_retries: 0
+idempotency:
+  required: true
+  key_spec: "correlation_id + node_type"
+max_fix_iterations: 1
+
+input_schema:
+  type: object
+  required: [correlation_id, node_schema, normalized_name]
+  properties:
+    correlation_id:
+      type: string
+    node_schema:
+      type: object
+    normalized_name:
+      type: string
+
+output_schema:
+  type: object
+  required: [files_created, allowlist]
+  properties:
+    files_created:
+      type: array
+      items: { type: string }
+    allowlist:
+      type: object
+      properties:
+        node_name: { type: string }
+        patterns: { type: array }
+
+required_artifacts:
+  - name: scaffold_manifest.json
+    type: json
+    description: List of created files
+  - name: allowlist.json
+    type: json
+    description: Scope allowlist for this node
+
+failure_modes: [validation_error, permission_denied]
+depends_on: [schema-build]
 ---
 
 # Node Scaffold
 
-Generate implementation scaffold from node schema.
+Generate implementation scaffold matching our backend structure.
 
-## When to use this skill
+## Target Structure
 
-Use this skill when:
-- Formal schema is complete and validated
-- Ready to create implementation files
-- Need consistent file structure
-- Preparing for code implementation
-
-## Scaffold structure
-
-Generate the following file structure:
+Files are created in `/home/toni/n8n/back/nodes/`:
 
 ```
-nodes/{NodeName}/
-├── __init__.py
+nodes/
 ├── {node_name}.py          # Main node class
-├── {node_name}_methods.py  # Operation implementations
-├── credentials.py          # Credential type definition
-└── types.py               # Type definitions
+└── (optional subdirs for complex nodes)
 ```
 
-## File templates
+## Scaffold Template
 
-### Main node class
-- Inherits from base node class
-- Defines node properties
-- Routes operations to methods
+```python
+from typing import Dict, List, Any
+from models import NodeExecutionData, Node, WorkflowModel
+from .base import BaseNode, NodeParameterType
 
-### Methods module
-- One function per operation
-- Stub implementations with TODO markers
-- Type hints from schema
+class {ClassName}Node(BaseNode):
+    """
+    {DisplayName} node for {description}
+    """
+    
+    type = "{node_type}"
+    version = {version}
+    
+    description = {
+        "displayName": "{DisplayName}",
+        "name": "{node_type}",
+        "icon": "file:{node_type}.svg",
+        "group": ["input", "output"],
+        "description": "{description}",
+        "inputs": [{"name": "main", "type": "main", "required": True}],
+        "outputs": [{"name": "main", "type": "main", "required": True}],
+    }
+    
+    properties = {
+        "parameters": [
+            # TODO: Generated from schema
+        ],
+        "credentials": [
+            # TODO: Generated from schema
+        ]
+    }
+    
+    def execute(self) -> List[List[NodeExecutionData]]:
+        """Execute node functionality."""
+        # TODO: Implement operations
+        raise NotImplementedError("execute() not implemented")
+```
 
-### Credentials
-- Credential class matching auth type
-- Field definitions
-- Validation methods
+## Scope Allowlist
 
-### Types
-- Pydantic models for parameters
-- Enum definitions for options
-- Response type definitions
+Generates `allowlist.json` with patterns:
+- `nodes/{node_name}*`
+- `tests/*{node_name}*`
+- `credentials/*{node_name}*`
 
-## Scaffold guidelines
+## Artifacts Emitted
 
-- Use schema exactly, don't add fields
-- Include all operations from schema
-- Add docstrings from descriptions
-- Mark all implementation TODOs
-- Follow target framework conventions
+- `artifacts/{correlation_id}/scaffold_manifest.json`
+- `artifacts/{correlation_id}/allowlist.json`

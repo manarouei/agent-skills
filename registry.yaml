@@ -1,0 +1,79 @@
+# Agent Skills Registry
+# Central index of all skills with versions and contract status
+# This file is machine-readable and validated by scripts/validate_skill_contracts.py
+
+version: "1.0.0"
+generated: "2025-12-25"
+
+skills:
+  - name: node-normalize
+    version: "1.0.0"
+    path: skills/node-normalize/SKILL.md
+    autonomy_level: READ
+    description: Normalize node names and generate correlation IDs
+
+  - name: source-classify
+    version: "1.0.0"
+    path: skills/source-classify/SKILL.md
+    autonomy_level: READ
+    description: Classify source as Type1 (TypeScript) or Type2 (documentation)
+
+  - name: source-ingest
+    version: "1.0.0"
+    path: skills/source-ingest/SKILL.md
+    autonomy_level: READ
+    description: Fetch and parse source materials
+
+  - name: schema-infer
+    version: "1.0.0"
+    path: skills/schema-infer/SKILL.md
+    autonomy_level: SUGGEST
+    description: Infer node schema with mandatory trace map
+
+  - name: schema-build
+    version: "1.0.0"
+    path: skills/schema-build/SKILL.md
+    autonomy_level: SUGGEST
+    description: Build formal BaseNode-compliant schema
+
+  - name: node-scaffold
+    version: "1.0.0"
+    path: skills/node-scaffold/SKILL.md
+    autonomy_level: IMPLEMENT
+    description: Generate node implementation scaffold
+
+  - name: code-convert
+    version: "1.0.0"
+    path: skills/code-convert/SKILL.md
+    autonomy_level: IMPLEMENT
+    description: Convert TypeScript to Python (Type1 only)
+
+  - name: code-implement
+    version: "1.0.0"
+    path: skills/code-implement/SKILL.md
+    autonomy_level: IMPLEMENT
+    description: Implement from documentation (Type2 only)
+
+  - name: test-generate
+    version: "1.0.0"
+    path: skills/test-generate/SKILL.md
+    autonomy_level: IMPLEMENT
+    description: Generate pytest test suite
+
+  - name: code-validate
+    version: "1.0.0"
+    path: skills/code-validate/SKILL.md
+    autonomy_level: READ
+    description: Run tests, lint, and type checks
+
+  - name: code-fix
+    version: "1.0.0"
+    path: skills/code-fix/SKILL.md
+    autonomy_level: IMPLEMENT
+    description: Fix validation failures (max 3 iterations)
+
+  - name: pr-prepare
+    version: "1.0.0"
+    path: skills/pr-prepare/SKILL.md
+    autonomy_level: SUGGEST
+    description: Generate PR artifacts for submission

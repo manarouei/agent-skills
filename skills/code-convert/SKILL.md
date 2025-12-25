@@ -1,55 +1,104 @@
 ---
 name: code-convert
-description: Convert TypeScript node code to Python implementation. For Type1 sources with existing n8n TypeScript code, performs language conversion while preserving logic. Use when implementing a node with existing TypeScript source.
+version: "1.0.0"
+description: Convert TypeScript n8n node to Python BaseNode implementation. For TYPE1 sources only. Preserves logic while adapting to our backend patterns.
+
+# Contract
+autonomy_level: IMPLEMENT
+side_effects: [fs]
+timeout_seconds: 300
+retry:
+  policy: none
+  max_retries: 0
+idempotency:
+  required: true
+  key_spec: "correlation_id"
+max_fix_iterations: 3
+
+input_schema:
+  type: object
+  required: [correlation_id, source_type, parsed_sections, node_schema, allowlist]
+  properties:
+    correlation_id:
+      type: string
+    source_type:
+      type: string
+      const: TYPE1
+    parsed_sections:
+      type: object
+    node_schema:
+      type: object
+    allowlist:
+      type: object
+
+output_schema:
+  type: object
+  required: [files_modified, conversion_notes]
+  properties:
+    files_modified:
+      type: array
+      items: { type: string }
+    conversion_notes:
+      type: array
+      items: { type: string }
+
+required_artifacts:
+  - name: conversion_log.json
+    type: json
+    description: Conversion decisions and mappings
+  - name: files.diff
+    type: diff
+    description: Git diff of changes
+
+failure_modes: [parse_error, scope_violation, validation_error]
+depends_on: [node-scaffold]
 ---
 
 # Code Convert
 
-Convert n8n TypeScript node code to Python.
+Convert TypeScript n8n node code to Python BaseNode implementation.
 
-## When to use this skill
+## SCOPE ENFORCEMENT
 
-Use this skill when:
-- Source is Type1 (existing TypeScript node)
-- Scaffold has been generated
-- Need to convert TypeScript logic to Python
-- NOT for Type2 documentation-only sources
+**ALL file modifications MUST be within allowlist patterns.**
+Run `scripts/enforce_scope.py` before committing.
 
-## Conversion process
+## Conversion Mappings
 
-### 1. Parse TypeScript structure
-- Identify execute/trigger methods
-- Map operation routing logic
-- Extract API call patterns
+### Language Constructs
 
-### 2. Convert language constructs
-- TypeScript interfaces → Python dataclasses/Pydantic
-- async/await → Python async
-- Type annotations → Python type hints
-- Arrow functions → Python functions
+| TypeScript | Python |
+|------------|--------|
+| `interface` | `TypedDict` or Pydantic model |
+| `async/await` | `async/await` |
+| `this.helpers.request()` | `requests` / `httpx` |
+| `this.getNodeParameter()` | `self.get_node_parameter()` |
+| `this.getCredentials()` | `self.get_credentials()` |
 
-### 3. Convert n8n patterns
-- `this.helpers.request()` → httpx/requests calls
-- `this.getNodeParameter()` → parameter access
-- `this.getCredentials()` → credential loading
-- Binary data handling → Python equivalent
+### n8n Patterns → BaseNode
 
-### 4. Preserve logic
-- Keep operation routing structure
-- Maintain error handling patterns
-- Preserve pagination logic
-- Keep retry mechanisms
+| n8n TypeScript | Our BaseNode |
+|----------------|--------------|
+| `execute()` returns `INodeExecutionData[][]` | `execute()` returns `List[List[NodeExecutionData]]` |
+| `description.properties` | `properties["parameters"]` |
+| `credentials` array | `properties["credentials"]` |
 
-## Conversion guidelines
+## Conversion Process
 
-- Don't optimize during conversion
-- Preserve original logic exactly
-- Mark unclear patterns with TODO
-- Keep same function names where possible
-- Test conversion incrementally
+1. Parse TypeScript `execute()` method
+2. Map operation routing logic
+3. Convert API call patterns
+4. Preserve error handling
+5. Keep pagination/retry logic
 
-## Output
+## DO NOT
 
-Place converted code in scaffold files:
-- Main logic in `{node_name}_methods.py`
-- Update imports in `{node_name}.py`
+- Optimize during conversion
+- Add parameters not in source
+- Change operation names
+- Skip credential handling
+
+## Artifacts Emitted
+
+- `artifacts/{correlation_id}/conversion_log.json`
+- `artifacts/{correlation_id}/files.diff`

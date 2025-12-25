@@ -1,51 +1,99 @@
 ---
 name: source-classify
-description: Classify the source type for node implementation. Determines if source is Type1 (existing n8n TypeScript node) or Type2 (documentation-only). Returns confidence score and evidence. Use when you need to determine the implementation approach for a workflow node.
+version: "1.0.0"
+description: Classify source type for node implementation. Determines if source is Type1 (existing TypeScript node in n8n repo) or Type2 (documentation-only). Returns confidence score and evidence.
+
+# Contract
+autonomy_level: READ
+side_effects: [net]
+timeout_seconds: 60
+retry:
+  policy: safe
+  max_retries: 2
+  backoff_seconds: 2.0
+idempotency:
+  required: true
+  key_spec: "correlation_id"
+max_fix_iterations: 1
+
+input_schema:
+  type: object
+  required: [correlation_id, normalized_name]
+  properties:
+    correlation_id:
+      type: string
+    normalized_name:
+      type: string
+    source_refs:
+      type: object
+      properties:
+        ts_path: { type: string }
+        docs_url: { type: string }
+
+output_schema:
+  type: object
+  required: [source_type, confidence, evidence]
+  properties:
+    source_type:
+      type: string
+      enum: [TYPE1, TYPE2, UNKNOWN]
+    confidence:
+      type: number
+      minimum: 0
+      maximum: 1
+    evidence:
+      type: array
+      items:
+        type: object
+        properties:
+          type: { type: string }
+          path_or_url: { type: string }
+          verified: { type: boolean }
+
+required_artifacts:
+  - name: classification.json
+    type: json
+    description: Classification result with evidence
+
+failure_modes: [network_error, timeout, validation_error]
+depends_on: [node-normalize]
 ---
 
 # Source Classify
 
-Classify the source type to determine the implementation approach.
+Classify source type to determine implementation approach.
 
-## When to use this skill
+## Source Types
 
-Use this skill when:
-- Starting node implementation and need to determine approach
-- Have a node name and need to find if TypeScript source exists
-- Need to decide between code conversion (Type1) or LLM implementation (Type2)
+| Type | Description | Implementation Approach |
+|------|-------------|------------------------|
+| TYPE1 | Existing n8n TypeScript node | Code conversion |
+| TYPE2 | Documentation only | LLM implementation |
+| UNKNOWN | Cannot determine | Requires human input |
 
-## Source types
+## Classification Logic
 
-### Type1: N8N TypeScript
-- An existing n8n TypeScript node implementation exists
-- Path pattern: packages/nodes-base/nodes/{NodeName}/{NodeName}.node.ts
-- Approach: Convert TypeScript to Python
+1. Check if `source_refs.ts_path` points to valid TypeScript file
+2. Search n8n repository for matching node patterns:
+   - `packages/nodes-base/nodes/{NodeName}/{NodeName}.node.ts`
+3. Check if `source_refs.docs_url` is provided
+4. Calculate confidence based on evidence
 
-### Type2: Documentation Only
-- No existing implementation, only API documentation
-- May have: API docs URL, OpenAPI spec, or manual documentation
-- Approach: LLM-based implementation from documentation
+## Confidence Thresholds
 
-### Unknown
-- Cannot determine source type with confidence
-- Requires human clarification
+| Range | Action |
+|-------|--------|
+| 0.9-1.0 | Proceed automatically |
+| 0.7-0.9 | Flag for verification |
+| <0.7 | Require human input |
 
-## Classification process
+## Evidence Collection
 
-1. Check if source_refs.ts_path points to valid TypeScript file
-2. Search n8n repository for matching node name patterns
-3. Check if source_refs.docs_url is provided
-4. Calculate confidence score based on evidence
+Each evidence entry must include:
+- `type`: "ts_file" | "docs_url" | "api_spec"
+- `path_or_url`: Actual location
+- `verified`: Whether existence was confirmed
 
-## Confidence scoring
+## Artifacts Emitted
 
-- 0.9-1.0: High confidence, proceed automatically
-- 0.7-0.9: Medium confidence, flag for verification
-- Below 0.7: Low confidence, require human input
-
-## Guidelines
-
-- Always return confidence score
-- Collect all available evidence
-- Return UNKNOWN if confidence below 0.5
-- Never guess without evidence
+- `artifacts/{correlation_id}/classification.json`

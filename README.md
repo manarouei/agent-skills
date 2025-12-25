@@ -1,45 +1,82 @@
-# Node Implementation Skills
+# Agent Skills - Contract-First Skill Library
 
-A collection of [Agent Skills](https://agentskills.io/) for autonomous workflow node implementation.
+A **contract-first, enforceable** skill library for agent-driven node development with bounded autonomy.
 
-## Overview
+## Quick Start
 
-These skills enable AI agents to implement workflow nodes from TypeScript source code or API documentation. The skills follow the [Agent Skills specification](https://agentskills.io/specification) and can be used with any compatible agent runtime.
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Validate all skill contracts
+python scripts/validate_skill_contracts.py
+
+# Run tests
+pytest tests/ -v
+```
+
+## Architecture
+
+```
+agent-skills/
+├── skills/           # 12 skill definitions with contracts
+├── contracts/        # Contract definitions & BaseNode interface
+├── runtime/          # Execution engine (SkillExecutor)
+├── scripts/          # Enforcement scripts
+├── tests/            # Integration tests
+└── registry.yaml     # Central skill index
+```
 
 ## Skills
 
-| Skill | Description |
-|-------|-------------|
-| [node-normalize](skills/node-normalize/) | Normalize node names and generate correlation IDs |
-| [source-classify](skills/source-classify/) | Classify source as Type1 (TypeScript) or Type2 (documentation) |
-| [source-ingest](skills/source-ingest/) | Fetch and bundle source materials |
-| [schema-infer](skills/schema-infer/) | Extract operations, parameters, and credentials from source |
-| [schema-build](skills/schema-build/) | Build BaseNode-compliant schema |
-| [node-scaffold](skills/node-scaffold/) | Generate Python class skeleton |
-| [code-convert](skills/code-convert/) | Convert TypeScript to Python (Type1) |
-| [code-implement](skills/code-implement/) | Implement from documentation using LLM (Type2) |
-| [test-generate](skills/test-generate/) | Generate pytest test suite |
-| [code-validate](skills/code-validate/) | Run tests and static analysis |
-| [code-fix](skills/code-fix/) | Attempt automated fixes for failures |
-| [pr-prepare](skills/pr-prepare/) | Package artifacts for PR submission |
+| Skill | Autonomy | Description |
+|-------|----------|-------------|
+| [node-normalize](skills/node-normalize/) | READ | Normalize node names and generate correlation IDs |
+| [source-classify](skills/source-classify/) | READ | Classify source as Type1 (TypeScript) or Type2 (documentation) |
+| [source-ingest](skills/source-ingest/) | READ | Fetch and bundle source materials |
+| [schema-infer](skills/schema-infer/) | SUGGEST | Extract operations, parameters, credentials (**requires trace_map**) |
+| [schema-build](skills/schema-build/) | SUGGEST | Build BaseNode-compliant schema |
+| [node-scaffold](skills/node-scaffold/) | IMPLEMENT | Generate Python class skeleton |
+| [code-convert](skills/code-convert/) | IMPLEMENT | Convert TypeScript to Python (Type1) |
+| [code-implement](skills/code-implement/) | IMPLEMENT | Implement from documentation using LLM (Type2) |
+| [test-generate](skills/test-generate/) | IMPLEMENT | Generate pytest test suite |
+| [code-validate](skills/code-validate/) | SUGGEST | Run tests and static analysis |
+| [code-fix](skills/code-fix/) | IMPLEMENT | Bounded fix loop (max 3 iterations) |
+| [pr-prepare](skills/pr-prepare/) | SUGGEST | Package artifacts for PR submission |
 
-## Usage
+## Contract-First Design
 
-### With Claude Code
+Every skill has enforced contracts in YAML frontmatter:
 
-```bash
-# Add this repository as a skill source
-/skill add /path/to/agent-skills/skills
-
-# Use a skill
-"Use the node-normalize skill to normalize 'Telegram Bot' as a node name"
+```yaml
+---
+name: skill-name
+version: "1.0.0"
+autonomy_level: READ | SUGGEST | IMPLEMENT | COMMIT
+side_effects: [fs, net, git]
+timeout_seconds: 60
+max_fix_iterations: 3
+input_schema: {...}
+output_schema: {...}
+required_artifacts: [...]
+failure_modes: [timeout, parse_error]
+depends_on: [other-skill]
+---
 ```
 
-### With Claude.ai
+## Enforcement Gates
 
-Upload the skill folders to Claude.ai following the [Using skills in Claude](https://support.claude.com/en/articles/12512180-using-skills-in-claude) guide.
+### Trace Map Gate (schema-infer)
+- Every schema field must have documented source
+- Max 30% ASSUMPTION entries allowed
+- Run: `python scripts/validate_trace_map.py trace_map.yaml`
 
-### Pipeline Flow
+### Scope Gate (IMPLEMENT+ skills)
+- File operations limited to allowlist
+- Forbidden: `base.py`, `__init__.py`, `pyproject.toml`
+- Run: `python scripts/enforce_scope.py CORRELATION_ID --check-git`
+
+## Pipeline Flow
 
 ```
 node-normalize → source-classify → source-ingest → schema-infer → schema-build → node-scaffold
@@ -49,42 +86,50 @@ node-normalize → source-classify → source-ingest → schema-infer → schema
                                               test-generate → code-validate ↔ code-fix → pr-prepare
 ```
 
-## Skill Format
+## Runtime
 
-Each skill follows the [Agent Skills specification](https://agentskills.io/specification):
+```python
+from runtime import create_executor, BoundedFixLoop, ExecutionStatus
 
+# Create executor
+executor = create_executor(repo_root)
+
+# Execute a skill
+result = executor.execute(
+    skill_name="schema-infer",
+    inputs={"correlation_id": "ABC123", "source_bundle": {...}},
+    correlation_id="ABC123",
+)
+
+# Bounded fix loop
+fix_loop = BoundedFixLoop(executor, max_iterations=3)
+result = fix_loop.run(correlation_id, initial_errors)
+if result.status == ExecutionStatus.ESCALATED:
+    print("Human review required")
 ```
-skill-name/
-└── SKILL.md    # Required: frontmatter + instructions
-```
 
-### SKILL.md Format
+## BaseNode Contract
 
-```markdown
----
-name: skill-name
-description: What the skill does and when to use it.
----
-
-# Skill Name
-
-Instructions for the agent...
-```
+Generated nodes must implement the BaseNode interface from `/home/toni/n8n/back/nodes/base.py`. See `contracts/BASENODE_CONTRACT.md` for details.
 
 ## Validation
 
-Use the [skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref) library to validate skills:
-
 ```bash
-skills-ref validate ./skills/node-normalize
+# Validate all skill contracts
+python scripts/validate_skill_contracts.py
+
+# Validate a trace map
+python scripts/validate_trace_map.py artifacts/ABC123/trace_map.yaml
+
+# Run tests
+pytest tests/ -v
 ```
 
 ## License
 
-Apache-2.0
+MIT
 
 ## Related
 
-- [Agent Skills Specification](https://agentskills.io/specification)
-- [Example Skills](https://github.com/anthropics/skills)
-- [Agent Skills GitHub](https://github.com/agentskills/agentskills)
+- [BaseNode Contract](contracts/BASENODE_CONTRACT.md)
+- [Skill Contract Schema](contracts/skill_contract.py)

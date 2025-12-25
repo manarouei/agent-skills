@@ -1,78 +1,147 @@
 ---
 name: code-validate
-description: Validate node implementation against schema and quality standards. Runs static analysis, type checking, and test suite. Identifies issues requiring fixes. Use when implementation and tests are complete.
+version: "1.0.0"
+description: Run validation suite - pytest, ruff, mypy. Enforces scope gate. Returns structured validation report.
+
+# Contract
+autonomy_level: READ
+side_effects: []
+timeout_seconds: 300
+retry:
+  policy: none
+  max_retries: 0
+idempotency:
+  required: true
+  key_spec: "correlation_id"
+max_fix_iterations: 1
+
+input_schema:
+  type: object
+  required: [correlation_id, files_modified, test_files, allowlist]
+  properties:
+    correlation_id:
+      type: string
+    files_modified:
+      type: array
+    test_files:
+      type: array
+    allowlist:
+      type: object
+
+output_schema:
+  type: object
+  required: [passed, scope_check, pytest_result, ruff_result, mypy_result]
+  properties:
+    passed:
+      type: boolean
+    scope_check:
+      type: object
+      properties:
+        passed: { type: boolean }
+        violations: { type: array }
+    pytest_result:
+      type: object
+      properties:
+        passed: { type: boolean }
+        tests_run: { type: integer }
+        failures: { type: array }
+    ruff_result:
+      type: object
+      properties:
+        passed: { type: boolean }
+        errors: { type: array }
+    mypy_result:
+      type: object
+      properties:
+        passed: { type: boolean }
+        errors: { type: array }
+
+required_artifacts:
+  - name: validation_report.json
+    type: json
+    description: Complete validation report
+
+failure_modes: [scope_violation, validation_error]
+depends_on: [test-generate]
 ---
 
 # Code Validate
 
-Validate implementation against requirements.
+Run validation suite and enforce scope gate.
 
-## When to use this skill
+## SCOPE GATE (MANDATORY)
 
-Use this skill when:
-- Implementation is complete
-- Tests have been generated
-- Ready to verify quality
-- Before code-fix phase
+**Runs BEFORE any other validation.**
 
-## Validation checks
-
-### Schema compliance
-- All operations from schema implemented
-- All parameters handled
-- Auth type matches schema
-- Types match schema definitions
-
-### Code quality
-- Python syntax valid
-- Type hints present
-- No undefined names
-- Imports resolved
-
-### Static analysis
-- Run pylint/ruff checks
-- No critical issues
-- Complexity within limits
-- Consistent style
-
-### Type checking
-- Run mypy/pyright
-- No type errors
-- Proper generic usage
-- Return types correct
-
-### Test execution
-- All tests pass
-- No skipped required tests
-- Coverage meets threshold
-
-## Validation output
-
-Generate validation report:
-```yaml
-validation_result:
-  passed: boolean
-  checks:
-    schema_compliance:
-      passed: boolean
-      issues: list
-    code_quality:
-      passed: boolean
-      issues: list
-    static_analysis:
-      passed: boolean
-      issues: list
-    type_checking:
-      passed: boolean
-      issues: list
-    tests:
-      passed: boolean
-      failed_tests: list
-      coverage: number
+```bash
+python scripts/enforce_scope.py --allowlist artifacts/{correlation_id}/allowlist.json
 ```
 
-## Issue severity
+If scope gate fails:
+- Validation FAILS immediately
+- No further checks run
+- Generate scope_violation artifact
 
-- CRITICAL: Must fix before proceeding
-- WARNING: Should fix, may proceed
-- INFO: Suggestion only
+## Validation Commands
+
+### 1. Scope Check
+```bash
+scripts/enforce_scope.py --allowlist {allowlist_path}
+```
+
+### 2. Pytest
+```bash
+cd /home/toni/n8n/back
+pytest tests/test_{node_name}.py -v --tb=short
+```
+
+### 3. Ruff
+```bash
+cd /home/toni/n8n/back
+ruff check nodes/{node_name}.py
+```
+
+### 4. Mypy
+```bash
+cd /home/toni/n8n/back
+mypy nodes/{node_name}.py
+```
+
+## Pass Criteria
+
+Validation passes if ALL:
+- Scope check: No violations
+- Pytest: All tests pass
+- Ruff: No errors (warnings OK)
+- Mypy: No errors (notes OK)
+
+## Validation Report Structure
+
+```json
+{
+  "passed": false,
+  "scope_check": {
+    "passed": true,
+    "violations": []
+  },
+  "pytest_result": {
+    "passed": false,
+    "tests_run": 5,
+    "failures": [
+      {"test": "test_execute_create", "error": "AssertionError..."}
+    ]
+  },
+  "ruff_result": {
+    "passed": true,
+    "errors": []
+  },
+  "mypy_result": {
+    "passed": true,
+    "errors": []
+  }
+}
+```
+
+## Artifacts Emitted
+
+- `artifacts/{correlation_id}/validation_report.json`

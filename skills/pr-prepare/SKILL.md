@@ -1,85 +1,129 @@
 ---
 name: pr-prepare
-description: Prepare implementation for pull request submission. Generates PR description, changelog entry, and final documentation. Performs final checks before submission. Use when implementation is validated and ready for review.
+version: "1.0.0"
+description: Prepare PR artifacts for submission. Generates PR description, changelog entry, and node_definitions update.
+
+# Contract
+autonomy_level: SUGGEST
+side_effects: [fs]
+timeout_seconds: 60
+retry:
+  policy: none
+  max_retries: 0
+idempotency:
+  required: true
+  key_spec: "correlation_id"
+max_fix_iterations: 1
+
+input_schema:
+  type: object
+  required: [correlation_id, node_schema, validation_report, files_modified]
+  properties:
+    correlation_id:
+      type: string
+    node_schema:
+      type: object
+    validation_report:
+      type: object
+    files_modified:
+      type: array
+
+output_schema:
+  type: object
+  required: [pr_artifacts, node_definitions_entry]
+  properties:
+    pr_artifacts:
+      type: object
+      properties:
+        description: { type: string }
+        title: { type: string }
+        labels: { type: array }
+    node_definitions_entry:
+      type: string
+      description: Code to add to nodes/__init__.py
+
+required_artifacts:
+  - name: pr_description.md
+    type: md
+    description: PR description template
+  - name: node_definitions_update.py
+    type: py
+    description: Code snippet for nodes/__init__.py
+
+failure_modes: [validation_error]
+depends_on: [code-validate]
 ---
 
 # PR Prepare
 
-Prepare implementation for submission.
+Generate PR artifacts for human review and submission.
 
-## When to use this skill
+## Preconditions
 
-Use this skill when:
-- All validation passes
-- Implementation is complete
-- Ready to submit for review
-- Need PR artifacts
+PR preparation requires:
+- `validation_report.passed == true`
+- No escalation reports
+- All scope checks passed
 
-## Preparation steps
-
-### 1. Final validation
-- Run full validation suite
-- Confirm all checks pass
-- No outstanding issues
-
-### 2. Generate PR description
-Create PR template with:
-- Summary of changes
-- Implementation approach
-- Breaking changes (if any)
-- Testing performed
-- Related issues/tickets
-
-### 3. Update changelog
-Add entry with:
-- Node name and version
-- New operations added
-- Dependencies added
-- Breaking changes
-
-### 4. Generate documentation
-- Update node documentation
-- Add usage examples
-- Document configuration options
-
-### 5. Pre-submission checklist
-- [ ] All tests pass
-- [ ] No linting errors
-- [ ] Types checked
-- [ ] Documentation updated
-- [ ] Changelog updated
-- [ ] PR description complete
-
-## Output artifacts
-
-Generate in artifacts directory:
-```
-artifacts/
-├── pr_description.md
-├── changelog_entry.md
-└── submission_checklist.md
-```
-
-## PR description template
+## PR Description Template
 
 ```markdown
 ## Summary
-Brief description of the node implementation.
+
+Adds `{node_type}` node implementation.
+
+**Source type:** TYPE1 (converted) / TYPE2 (implemented from docs)
 
 ## Changes
-- Added {NodeName} node with operations: ...
-- Added credential type: ...
 
-## Implementation Notes
-- Source type: Type1/Type2
-- Approach: Conversion/LLM implementation
+- `nodes/{node_name}.py` - Node implementation
+- `tests/test_{node_name}.py` - Unit tests
+- `nodes/__init__.py` - Registry update
+
+## Operations Implemented
+
+| Operation | Description |
+|-----------|-------------|
+{operations_table}
+
+## Credentials
+
+- Type: `{credential_type}`
+- Required: Yes/No
 
 ## Testing
-- Unit tests: X passing
-- Coverage: X%
+
+- [ ] Unit tests pass
+- [ ] Ruff check passes  
+- [ ] Mypy check passes
+- [ ] Manual testing with real credentials
+
+## Trace Map Coverage
+
+- Total fields: {total}
+- Traced: {traced}
+- Assumptions: {assumptions}
 
 ## Checklist
-- [ ] Tests pass
+
+- [ ] Code follows BaseNode contract
+- [ ] All parameters have trace_map evidence
+- [ ] Error handling implemented
 - [ ] Documentation updated
-- [ ] Changelog updated
 ```
+
+## node_definitions Update
+
+```python
+# Add to nodes/__init__.py
+
+from .{node_name} import {ClassName}Node
+
+# Add to node_definitions dict:
+'{node_type}': {{'node_class': {ClassName}Node, 'type': 'regular'}},
+```
+
+## Artifacts Emitted
+
+- `artifacts/{correlation_id}/pr_description.md`
+- `artifacts/{correlation_id}/node_definitions_update.py`

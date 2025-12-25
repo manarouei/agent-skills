@@ -1,62 +1,121 @@
 ---
 name: code-implement
-description: Implement node operations from documentation using LLM. For Type2 sources without existing code, generates implementation based on API documentation and schema. Use when implementing a node from documentation only.
+version: "1.0.0"
+description: Implement node from API documentation using LLM. For TYPE2 sources only. Generates implementation based on trace-mapped schema.
+
+# Contract
+autonomy_level: IMPLEMENT
+side_effects: [fs, net]
+timeout_seconds: 600
+retry:
+  policy: none
+  max_retries: 0
+idempotency:
+  required: true
+  key_spec: "correlation_id"
+max_fix_iterations: 3
+
+input_schema:
+  type: object
+  required: [correlation_id, source_type, node_schema, trace_map, allowlist]
+  properties:
+    correlation_id:
+      type: string
+    source_type:
+      type: string
+      const: TYPE2
+    node_schema:
+      type: object
+    trace_map:
+      type: object
+    allowlist:
+      type: object
+
+output_schema:
+  type: object
+  required: [files_modified, implementation_notes, assumptions_used]
+  properties:
+    files_modified:
+      type: array
+      items: { type: string }
+    implementation_notes:
+      type: array
+    assumptions_used:
+      type: array
+      description: List of trace_map ASSUMPTION entries used
+
+required_artifacts:
+  - name: implementation_log.json
+    type: json
+    description: Implementation decisions
+  - name: files.diff
+    type: diff
+    description: Git diff of changes
+
+failure_modes: [parse_error, scope_violation, validation_error, trace_incomplete]
+depends_on: [node-scaffold]
 ---
 
 # Code Implement
 
-Generate node implementation from documentation.
+Generate implementation from API documentation (TYPE2 only).
 
-## When to use this skill
+## SCOPE ENFORCEMENT
 
-Use this skill when:
-- Source is Type2 (documentation only)
-- Scaffold has been generated
-- Schema defines all operations
-- No existing code to convert
+**ALL file modifications MUST be within allowlist patterns.**
 
-## Implementation process
+## TRACE MAP REQUIREMENT
 
-### 1. For each operation
-- Read operation definition from schema
-- Review relevant documentation
-- Identify API endpoint and method
-- Determine request construction
+**Every implemented operation MUST reference trace_map entries.**
 
-### 2. Generate method implementation
-- Build request URL with parameters
-- Construct request body if needed
-- Add authentication headers
-- Handle response parsing
+If an operation requires an ASSUMPTION from trace_map:
+1. Document in `assumptions_used` output
+2. Add TODO comment in code
+3. Flag for human verification
 
-### 3. Add error handling
-- HTTP error responses
-- API-specific error formats
-- Validation errors
-- Timeout handling
+## Implementation Process
 
-### 4. Support features
-- Pagination where documented
-- Rate limiting if specified
-- Retry logic for transient errors
+For each operation in schema:
 
-## Implementation guidelines
+1. Read trace_map for operation parameters
+2. Construct API request from documented patterns
+3. Add authentication from credentials
+4. Handle response parsing
+5. Add error handling
 
-- Follow API documentation exactly
-- Use documented error codes
-- Implement all documented parameters
-- Add TODO for undocumented behavior
-- Request clarification for ambiguity
+## BaseNode Method Template
 
-## Code quality
+```python
+def execute(self) -> List[List[NodeExecutionData]]:
+    input_data = self.get_input_data()
+    results = []
+    
+    for item in input_data:
+        operation = self.get_node_parameter("operation", 0)
+        
+        if operation == "create":
+            result = self._execute_create(item)
+        elif operation == "get":
+            result = self._execute_get(item)
+        # ... more operations
+        
+        results.append(result)
+    
+    return [results]
 
-- Type hints for all parameters
-- Docstrings with operation description
-- Inline comments for complex logic
-- Consistent error message format
+def _execute_create(self, item: NodeExecutionData) -> NodeExecutionData:
+    credentials = self.get_credentials("apiCredential")
+    # Implementation based on trace_map evidence
+    ...
+```
 
-## Output
+## DO NOT
 
-Generate implementation in scaffold files:
-- Methods in `{node_name}_methods.py`
-- Types in `types.py` if needed
+- Invent parameters without trace_map evidence
+- Skip ASSUMPTION verification
+- Implement undocumented endpoints
+
+## Artifacts Emitted
+
+- `artifacts/{correlation_id}/implementation_log.json`
+- `artifacts/{correlation_id}/files.diff`

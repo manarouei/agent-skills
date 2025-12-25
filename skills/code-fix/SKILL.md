@@ -1,68 +1,131 @@
 ---
 name: code-fix
-description: Fix issues identified during validation. Addresses code quality, type errors, and test failures. Iterates until validation passes. Use when validation has identified issues to fix.
+version: "1.0.0"
+description: Fix validation failures with bounded iteration. Max 3 attempts then escalate with artifacts.
+
+# Contract
+autonomy_level: IMPLEMENT
+side_effects: [fs]
+timeout_seconds: 300
+retry:
+  policy: none
+  max_retries: 0
+idempotency:
+  required: false
+  key_spec: null
+max_fix_iterations: 3
+
+input_schema:
+  type: object
+  required: [correlation_id, validation_report, files_modified, allowlist, iteration]
+  properties:
+    correlation_id:
+      type: string
+    validation_report:
+      type: object
+    files_modified:
+      type: array
+    allowlist:
+      type: object
+    iteration:
+      type: integer
+      minimum: 1
+      maximum: 3
+
+output_schema:
+  type: object
+  required: [fixed, iteration, changes_made]
+  properties:
+    fixed:
+      type: boolean
+    iteration:
+      type: integer
+    changes_made:
+      type: array
+      items: { type: string }
+    escalation:
+      type: object
+      description: Present only if max iterations reached
+      properties:
+        reason: { type: string }
+        remaining_errors: { type: array }
+
+required_artifacts:
+  - name: fix_log_{iteration}.json
+    type: json
+    description: Fix attempt log
+  - name: escalation_report.json
+    type: json
+    description: Only if escalating after max iterations
+
+failure_modes: [max_iterations, scope_violation, validation_error]
+depends_on: [code-validate]
 ---
 
 # Code Fix
 
-Fix issues from validation.
+Fix validation failures with bounded iteration loop.
 
-## When to use this skill
+## BOUNDED FIX LOOP
 
-Use this skill when:
-- Validation has completed
-- Issues were identified
-- Need to iterate on fixes
-- Preparing for final validation
+```
+iteration 1 → validate → if pass: done
+                      → if fail: fix → iteration 2
+iteration 2 → validate → if pass: done
+                      → if fail: fix → iteration 3
+iteration 3 → validate → if pass: done
+                      → if fail: ESCALATE (do NOT continue)
+```
 
-## Fix process
+## SCOPE ENFORCEMENT
 
-### 1. Prioritize issues
-- CRITICAL issues first
-- Then WARNING issues
-- INFO issues if time permits
+**ALL fixes MUST be within allowlist patterns.**
+Scope violations are NOT fixable - escalate immediately.
 
-### 2. For each issue
+## Fix Priority
 
-#### Code quality issues
-- Fix syntax errors
-- Add missing imports
-- Resolve undefined names
-- Add type hints
+1. **Scope violations** → Cannot fix, escalate
+2. **Pytest failures** → Fix implementation bugs
+3. **Ruff errors** → Auto-fixable with `ruff check --fix`
+4. **Mypy errors** → Add type hints
 
-#### Static analysis issues
-- Reduce complexity
-- Fix style violations
-- Address security warnings
-- Remove unused code
+## Fix Strategies
 
-#### Type errors
+### Pytest Failures
+- Read error message
+- Identify failing assertion
+- Fix implementation logic
+- DO NOT change test to pass
+
+### Ruff Errors
+```bash
+ruff check nodes/{node_name}.py --fix
+```
+
+### Mypy Errors
+- Add missing type hints
 - Fix type mismatches
-- Add proper type hints
-- Use correct generics
-- Handle Optional types
+- Use `Optional[]` for nullable
 
-#### Test failures
-- Debug failing tests
-- Fix implementation bugs
-- Update test expectations if wrong
-- Add missing test cases
+## Escalation Report
 
-### 3. Re-validate
-- Run validation after each fix
-- Confirm issue resolved
-- Check for new issues introduced
+If iteration 3 fails, generate:
 
-## Fix guidelines
+```json
+{
+  "correlation_id": "...",
+  "total_iterations": 3,
+  "reason": "max_iterations_exceeded",
+  "remaining_errors": [
+    {"type": "pytest", "error": "..."},
+    {"type": "mypy", "error": "..."}
+  ],
+  "files_modified": ["..."],
+  "recommendation": "Human review required"
+}
+```
 
-- One issue at a time
-- Minimal changes per fix
-- Document non-obvious fixes
-- Don't introduce new issues
-- Preserve existing behavior
+## Artifacts Emitted
 
-## Iteration limits
-
-- Maximum 3 fix iterations per issue
-- Escalate if still failing
-- Flag issues needing human review
+- `artifacts/{correlation_id}/fix_log_{iteration}.json`
+- `artifacts/{correlation_id}/escalation_report.json` (if escalating)

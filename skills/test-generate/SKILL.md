@@ -1,69 +1,113 @@
 ---
 name: test-generate
-description: Generate unit and integration tests for node implementation. Creates test cases covering operations, error handling, and edge cases. Use when implementation is complete and you need test coverage.
+version: "1.0.0"
+description: Generate pytest test suite for node implementation. Tests are placed in /home/toni/n8n/back/tests/ following existing patterns.
+
+# Contract
+autonomy_level: IMPLEMENT
+side_effects: [fs]
+timeout_seconds: 180
+retry:
+  policy: none
+  max_retries: 0
+idempotency:
+  required: true
+  key_spec: "correlation_id"
+max_fix_iterations: 2
+
+input_schema:
+  type: object
+  required: [correlation_id, node_schema, files_modified, allowlist]
+  properties:
+    correlation_id:
+      type: string
+    node_schema:
+      type: object
+    files_modified:
+      type: array
+    allowlist:
+      type: object
+
+output_schema:
+  type: object
+  required: [test_files_created, test_count]
+  properties:
+    test_files_created:
+      type: array
+      items: { type: string }
+    test_count:
+      type: integer
+
+required_artifacts:
+  - name: test_manifest.json
+    type: json
+    description: List of generated tests
+
+failure_modes: [validation_error, scope_violation]
+depends_on: [code-convert, code-implement]
 ---
 
 # Test Generate
 
-Create tests for node implementation.
+Generate pytest test suite for node implementation.
 
-## When to use this skill
+## SCOPE ENFORCEMENT
 
-Use this skill when:
-- Node implementation is complete
-- Need unit tests for operations
-- Need integration test patterns
-- Preparing for validation phase
+Test files MUST be in allowlist patterns:
+- `tests/test_{node_name}.py`
+- `tests/integration/test_{node_name}_*.py`
 
-## Test structure
+## Test Structure
 
-Generate test files:
+```python
+# tests/test_{node_name}.py
+import pytest
+from unittest.mock import Mock, patch
+from nodes.{node_name} import {ClassName}Node
+from models import Node, WorkflowModel, NodeExecutionData
+
+@pytest.fixture
+def mock_workflow():
+    return Mock(spec=WorkflowModel)
+
+@pytest.fixture  
+def mock_node_data():
+    return Mock(spec=Node)
+
+class Test{ClassName}Node:
+    """Unit tests for {ClassName}Node"""
+    
+    def test_execute_operation_success(self, mock_workflow, mock_node_data):
+        """Test successful operation execution"""
+        ...
+    
+    def test_execute_invalid_params(self, mock_workflow, mock_node_data):
+        """Test error handling for invalid parameters"""
+        ...
+    
+    def test_credentials_required(self, mock_workflow, mock_node_data):
+        """Test that missing credentials raises error"""
+        ...
 ```
-tests/
-├── test_{node_name}.py       # Unit tests
-├── test_{node_name}_integration.py  # Integration tests
-└── conftest.py              # Fixtures
-```
 
-## Unit tests
+## Test Categories
 
-For each operation, generate:
+### Unit Tests (Required)
+- Happy path for each operation
+- Invalid input handling
+- Missing credentials
+- Response parsing
 
-### Happy path tests
-- Valid input produces expected output
-- All parameters handled correctly
-- Response properly parsed
+### Integration Tests (Optional)
+- Live API tests (skipped by default)
+- Mock server tests
 
-### Error handling tests
-- Invalid input raises appropriate error
-- API errors handled correctly
-- Missing required fields detected
+## Pytest Configuration
 
-### Edge cases
-- Empty responses
-- Large data sets
-- Special characters in input
-- Boundary values
+Tests use config from `/home/toni/n8n/back/pyproject.toml`:
+- `asyncio_mode = "auto"`
+- Markers: `slow`, `integration`, `unit`
 
-## Integration tests
+## Artifacts Emitted
 
-Generate patterns for:
-- Live API testing (skipped by default)
-- Mock server testing
-- Credential handling
-
-## Test guidelines
-
-- Use pytest framework
-- Mock external API calls in unit tests
-- Use fixtures for common setup
-- Parametrize similar tests
-- Clear test names describing scenario
-
-## Fixtures
-
-Generate fixtures for:
-- Mock credentials
-- Sample input data
-- Expected responses
-- Error responses
+- `artifacts/{correlation_id}/test_manifest.json`

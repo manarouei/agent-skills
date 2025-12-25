@@ -1,23 +1,73 @@
 ---
 name: node-normalize
-description: Normalize incoming node implementation requests. Generates a correlation ID, converts node names to lowercase with hyphens, and creates an immutable request snapshot. Use when starting a new node implementation pipeline or when receiving a raw node name that needs standardization.
+version: "1.0.0"
+description: Normalize incoming node implementation requests. Generates a correlation ID, converts node names to kebab-case, and creates an immutable request snapshot. Use when starting a new node implementation pipeline.
+
+# Contract
+autonomy_level: READ
+side_effects: []
+timeout_seconds: 30
+retry:
+  policy: none
+  max_retries: 0
+idempotency:
+  required: true
+  key_spec: "raw_node_name"
+max_fix_iterations: 1
+
+input_schema:
+  type: object
+  required: [raw_node_name]
+  properties:
+    raw_node_name:
+      type: string
+      description: Raw node name from user input
+    source_refs:
+      type: object
+      properties:
+        ts_path: { type: string }
+        docs_url: { type: string }
+
+output_schema:
+  type: object
+  required: [correlation_id, normalized_name, snapshot]
+  properties:
+    correlation_id:
+      type: string
+      pattern: "^node-[a-f0-9-]{36}$"
+    normalized_name:
+      type: string
+      pattern: "^[a-z][a-z0-9-]*[a-z0-9]$"
+    snapshot:
+      type: object
+
+required_artifacts:
+  - name: request_snapshot.json
+    type: json
+    description: Immutable snapshot of the normalization request
+
+failure_modes: [validation_error]
+depends_on: []
 ---
 
 # Node Normalize
 
 Normalize incoming node implementation requests before processing.
 
-## When to use this skill
+## Input
 
-Use this skill when:
-- Starting a new node implementation pipeline
-- Receiving a raw node name from user input
-- Need to generate a unique correlation ID for tracking
-- Need to standardize node naming for filesystem compatibility
+- `raw_node_name`: The raw node name from user input (e.g., "Telegram Bot", "shopify_api")
+- `source_refs` (optional): Object with `ts_path` and/or `docs_url`
 
-## How to normalize a node name
+## Output
 
-1. Convert the input name to lowercase
+- `correlation_id`: UUID v4 prefixed with "node-" for pipeline tracking
+- `normalized_name`: Kebab-case name for filesystem compatibility
+- `snapshot`: Immutable request snapshot with timestamp
+
+## Normalization Rules
+
+1. Convert to lowercase
 2. Replace spaces and underscores with hyphens
 3. Remove special characters (keep only alphanumeric and hyphens)
 4. Remove consecutive hyphens
@@ -25,30 +75,16 @@ Use this skill when:
 
 ## Examples
 
-Input to Output:
-- "Telegram Bot" becomes telegram-bot
-- "shopify_api" becomes shopify-api
-- "AWS S3" becomes aws-s3
-- "  My--Custom_Node  " becomes my-custom-node
+| Input | Output |
+|-------|--------|
+| "Telegram Bot" | telegram-bot |
+| "shopify_api" | shopify-api |
+| "AWS S3" | aws-s3 |
 
-## Correlation ID format
+## Artifacts Emitted
 
-Generate a UUID v4 correlation ID for pipeline tracking in the format node-{uuid4}.
+- `artifacts/{correlation_id}/request_snapshot.json`
 
-Example: node-a1b2c3d4-e5f6-7890-abcd-ef1234567890
+## Failure Modes
 
-## Request snapshot
-
-Create an immutable snapshot containing:
-- Original node name (before normalization)
-- Normalized node name
-- Timestamp (ISO 8601)
-- Source references (if provided)
-- Correlation ID
-
-## Guidelines
-
-- Never modify the original input in place
-- Always log the correlation ID at creation
-- Snapshot must be immutable after creation
-- Empty or whitespace-only names should fail with clear error
+- `validation_error`: Empty or whitespace-only input
