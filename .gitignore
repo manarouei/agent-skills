@@ -1,39 +1,28 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
 *.egg
+*.egg-info/
+.eggs/
+.installed.cfg
 MANIFEST
-
-# Virtual environments
 venv/
-ENV/
+.venv/
 env/
-.venv
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
+ENV/
 
 # Testing
 .pytest_cache/
@@ -41,8 +30,6 @@ env/
 htmlcov/
 .tox/
 .mypy_cache/
-.dmypy.json
-dmypy.json
 
 # Environment
 .env
@@ -50,30 +37,3 @@ dmypy.json
 
 # Logs
 *.log
-
-# Redis dumps
-dump.rdb
-
-# Celery
-celerybeat-schedule
-celerybeat.pid
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
