@@ -1,0 +1,300 @@
+# agent-skills-bounded-autonomy-spec.yaml
+# Version: 1.0.0
+# Purpose: Planner/registry-ready specification for bounded LLM assistance
+
+metadata:
+  schema_version: "1.0"
+  project: "agent-skills"
+  updated: "2025-12-20"
+  enforcement: "repo-native-llm-os"
+
+policies:
+  - id: P0-RULE-HIERARCHY
+    priority: P0
+    statement: "P0 rules MUST be obeyed. P1 rules SHOULD be followed. P2 rules are optional. P0 overrides all."
+    enforcement_mechanism: "PR template checklist item; LLM_RULES.md header"
+    detection_signal: "PR merged without P0 compliance"
+
+  - id: P0-CONTEXT-GATING
+    priority: P0
+    statement: "Before proposing code changes, verify required context. Ask up to 5 clarifying questions. If context still missing after 5 questions, STOP—do not guess."
+    enforcement_mechanism: "Gold prompts enforce question count; LLM_RULES.md documents process"
+    detection_signal: "Code proposed without asking about missing files/APIs"
+
+  - id: P0-SCOPE-CONTROL
+    priority: P0
+    statement: "Touch ONLY explicitly allowed files. Do not rename exported symbols, endpoints, schemas, or data formats without authorization."
+    enforcement_mechanism: "Gold prompts require file allowlist; PR checklist verifies scope"
+    detection_signal: "Unplanned files modified; breaking changes to public APIs"
+
+  - id: P0-NO-HALLUCINATION
+    priority: P0
+    statement: "Never claim a file, function, or API exists unless explicitly stated in context. Cite exact names and paths."
+    enforcement_mechanism: "Gold prompts require symbol citations; code review catches hallucinations"
+    detection_signal: "Undefined name errors; import errors; 'ModuleNotFoundError'"
+
+  - id: P0-OUTPUT-DISCIPLINE
+    priority: P0
+    statement: "Output format: Plan → Patch (file-by-file) → Tests → Risks/Rollback. Include symbol citations."
+    enforcement_mechanism: "Gold prompts specify format; reviewers check structure"
+    detection_signal: "PRs without test updates; missing rollback plan"
+
+  - id: P1-PRESERVE-CONTRACTS
+    priority: P1
+    statement: "Public APIs, Pydantic models, Celery task signatures, HTTP endpoints are contracts. Breaking changes require migration plan."
+    enforcement_mechanism: "PR checklist item; architectural review for API changes"
+    detection_signal: "Breaking changes detected by integration tests"
+
+  - id: P1-STRATEGIC-DOCSTRINGS
+    priority: P1
+    statement: "Add/update docstrings at architectural choke points: Skill.execute(), Agent.run(), registry methods, queue operations."
+    enforcement_mechanism: "PR checklist encourages docstring updates"
+    detection_signal: "New abstractions without docstrings"
+
+  - id: P2-INCREMENTAL-CHANGES
+    priority: P2
+    statement: "Prefer small, reviewable PRs. Large refactors should be staged across multiple PRs."
+    enforcement_mechanism: "PR template suggests incremental approach"
+    detection_signal: "PRs with 1000+ line changes"
+
+skills:
+  - id: SKILL-CONTEXT-GATE
+    name: "context_gate"
+    version: "1.0.0"
+    trigger: "User requests code change without providing full context"
+    inputs:
+      - user_request
+      - visible_files
+      - current_codebase_state
+    steps:
+      - "Parse request to identify required files/symbols"
+      - "Check if required context is available"
+      - "Generate up to 5 clarifying questions if context missing"
+      - "Output plan with explicit assumptions and blockers"
+      - "STOP if user cannot/will not provide blocking context"
+    outputs:
+      - plan_document
+      - questions_list
+      - assumptions_list
+      - blocked_items
+    guardrails:
+      - "Max 5 questions per pass"
+      - "No code generation in this phase"
+      - "Explicit 'BLOCKED' status if context unavailable"
+    stop_conditions:
+      - "All required context obtained"
+      - "5 questions asked without resolution"
+      - "User explicitly says 'proceed without X'"
+
+  - id: SKILL-CODE-REVIEW
+    name: "code_review"
+    version: "1.0.0"
+    trigger: "Code changes submitted for review"
+    inputs:
+      - modified_files
+      - file_diffs
+      - pr_description
+    steps:
+      - "Check P0 compliance: scope control, no hallucinations, tests present"
+      - "Check P1 compliance: contracts preserved, docstrings updated"
+      - "Verify symbols modified are cited exactly"
+      - "Check for breaking changes"
+      - "Generate compliance report"
+    outputs:
+      - compliance_status
+      - p0_violations
+      - p1_violations
+      - recommendations
+    guardrails:
+      - "ALL P0 violations are blocking"
+      - "P1 violations are warnings"
+      - "Must verify imports resolve"
+    stop_conditions:
+      - "All checks completed"
+      - "Critical P0 violation detected (escalate immediately)"
+
+  - id: SKILL-LLM-GATEWAY
+    name: "llm.anthropic_gateway"
+    version: "1.0.0"
+    trigger: "Any LLM API call needed"
+    inputs:
+      - model
+      - system
+      - messages
+      - max_tokens
+      - temperature
+      - budget
+    steps:
+      - "Check budget constraints pre-call"
+      - "Call Anthropic API with retry logic"
+      - "Parse response and calculate cost"
+      - "Check budget constraints post-call"
+      - "Log with trace context"
+    outputs:
+      - text
+      - usage
+      - cost_usd_estimate
+    guardrails:
+      - "Budget checked before and after call"
+      - "Max token cap enforced"
+      - "Retries only with idempotency key"
+    stop_conditions:
+      - "Budget exceeded"
+      - "Max retries exhausted"
+      - "API error non-retryable"
+
+  - id: SKILL-FILE-VALIDATOR
+    name: "file_validator"
+    version: "1.0.0"
+    trigger: "Need to validate file allowlist compliance"
+    inputs:
+      - planned_files
+      - actual_files
+    steps:
+      - "Compare planned vs actual file modifications"
+      - "Flag unplanned file changes"
+      - "Check for forbidden operations (renames, schema changes)"
+    outputs:
+      - compliance_status
+      - unplanned_files
+      - forbidden_operations
+    guardrails:
+      - "Unplanned files are P0 violations"
+      - "Schema changes require explicit approval"
+    stop_conditions:
+      - "Validation complete"
+
+agents:
+  - id: AGENT-BOUNDED-AUTONOMY
+    name: "bounded_autonomy_agent"
+    version: "1.0.0"
+    purpose: "Enforce bounded autonomy rules on code changes"
+    workflow_steps:
+      - "Call context_gate skill to validate requirements"
+      - "If blocked, return questions to user"
+      - "Once context obtained, validate file allowlist"
+      - "Generate plan with explicit assumptions"
+      - "Call code_review skill on proposed changes"
+      - "Return compliance report with blocking issues"
+    inputs:
+      - task_description
+      - visible_context
+      - file_allowlist
+    outputs:
+      - plan_or_questions
+      - compliance_report
+      - blockers
+    step_limit: 10
+
+  - id: AGENT-CODE-REVIEWER
+    name: "code_reviewer_agent"
+    version: "1.0.0"
+    purpose: "Automated PR review against bounded autonomy rules"
+    workflow_steps:
+      - "Read PR files and diffs"
+      - "Call code_review skill for P0/P1/P2 checks"
+      - "Call file_validator skill for scope control"
+      - "Check LLM gateway usage with llm_gateway skill"
+      - "Generate detailed compliance report"
+      - "Approve or block based on P0 violations"
+    inputs:
+      - pr_files
+      - pr_diffs
+      - pr_description
+    outputs:
+      - approval_status
+      - violations
+      - recommendations
+    step_limit: 15
+
+prompt_templates:
+  - id: TEMPLATE-A0-PLAN
+    use_case: "Pass 1: Planning and questions only"
+    required_context:
+      - user_request
+      - visible_files
+    allowed_files_rule: "Read-only access; no modifications in A0 pass"
+
+  - id: TEMPLATE-A1-PATCH
+    use_case: "Pass 2: Implementation with tests"
+    required_context:
+      - approved_plan
+      - file_allowlist
+    allowed_files_rule: "Explicit allowlist required; no additions without asking"
+
+  - id: TEMPLATE-A1-RELIABILITY
+    use_case: "Reliability/security/database changes"
+    required_context:
+      - user_request
+      - file_allowlist
+      - schema_context
+      - error_context
+      - security_context
+    allowed_files_rule: "Explicit allowlist + migrations/ directory if schema changes"
+
+  - id: TEMPLATE-BUGFIX
+    use_case: "Bug fix with minimal scope"
+    required_context:
+      - bug_description
+      - error_trace
+    allowed_files_rule: "Single file unless bug spans multiple modules (require approval)"
+
+  - id: TEMPLATE-NEW-SKILL
+    use_case: "Adding a new skill to the system"
+    required_context:
+      - skill_description
+      - side_effect_type
+      - timeout_s
+      - dependencies
+    allowed_files_rule: "Create src/agentic_system/skills/{skill_name}.py + tests/unit/test_{skill_name}.py"
+
+review_checklists:
+  - id: PR-CHECKLIST-BOUNDED-AUTONOMY
+    items:
+      - label: "P0: Only allowed files modified (no scope creep)"
+        severity: "blocking"
+      - label: "P0: No hallucinated APIs (all imports resolve)"
+        severity: "blocking"
+      - label: "P0: Public contracts preserved (or migration plan provided)"
+        severity: "blocking"
+      - label: "P0: Tests added/updated for all changes"
+        severity: "blocking"
+      - label: "P0: Exact symbols cited in PR description"
+        severity: "blocking"
+      - label: "P1: Docstrings updated at architectural choke points"
+        severity: "recommended"
+      - label: "P1: Rollback procedure documented"
+        severity: "recommended"
+      - label: "P1: LLM calls go through LLMGatewaySkill"
+        severity: "recommended"
+      - label: "P2: Incremental change (<500 lines)"
+        severity: "optional"
+
+metrics:
+  - name: "context_gate_trigger_rate"
+    definition: "Percentage of tasks where LLM asked questions before coding"
+    how_to_measure: "Count PRs with 'Questions:' section in description / total PRs"
+
+  - name: "hallucination_rate"
+    definition: "Percentage of PRs with undefined name/import errors caught in review"
+    how_to_measure: "Count PRs with lint/test failures due to missing symbols / total PRs"
+
+  - name: "contract_breakage_rate"
+    definition: "Percentage of PRs requiring post-merge hotfix due to API changes"
+    how_to_measure: "Count hotfix PRs referencing previous PR / total PRs"
+
+  - name: "scope_creep_rate"
+    definition: "Percentage of PRs touching more files than planned"
+    how_to_measure: "Compare file allowlist in plan vs. actual files changed"
+
+  - name: "llm_gateway_compliance"
+    definition: "Percentage of new LLM calls going through LLMGatewaySkill"
+    how_to_measure: "Grep for 'anthropic.*api' in diffs; verify all use skill_registry"
+
+  - name: "p0_violation_rate"
+    definition: "Percentage of PRs with P0 violations caught before merge"
+    how_to_measure: "Count PRs with P0 violations / total PRs"
+
+  - name: "automated_review_accuracy"
+    definition: "Percentage of automated reviews agreeing with human reviewers"
+    how_to_measure: "Compare code_reviewer_agent output vs. human review decisions"
