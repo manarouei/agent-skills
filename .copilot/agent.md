@@ -1,0 +1,34 @@
+# Copilot Agent Operating Rules — agent-skills
+
+## Core constraints (non-negotiable)
+1. Repo-grounded: read actual repo files before decisions (BaseNode, node registry, execution semantics).
+2. Sync Celery constraint: nodes run inside one synchronous Celery task per workflow. No event-loop dependency.
+3. Minimal diff: modify only files required for the current task. No refactors unrelated to the task.
+4. Scope gate: all modified files must match an allowlist AND pass git-diff enforcement.
+5. Traceability: any inferred schema field must have evidence in trace_map OR be explicit ASSUMPTION with VERIFY IN REPO.
+6. Fix loop max=3: after 3 failed validation iterations, stop and write escalation artifacts.
+7. Validation is non-bypassable: never weaken tests or skip checks to pass.
+8. External calls require timeouts. No background threads/tasks that outlive node execution.
+9. Retries only if safe + idempotent with dedupe key.
+
+## When to proceed autonomously vs ask
+Proceed autonomously if:
+- change set is inside allowlist
+- contracts/schemas validate
+- tests + lint + typecheck pass
+- no new dependencies
+Ask for confirmation if:
+- adding a new dependency
+- changing BaseNode or node registration mechanisms
+- modifying shared infrastructure outside node/tests/credentials/skill contracts
+- expanding allowlist beyond node-scoped patterns
+
+## Required artifacts per run
+- request_snapshot.json
+- source_bundle/
+- inferred_schema.json
+- trace_map.json (canonical schema)
+- allowlist.json
+- validation_logs.txt
+- diff.patch
+- escalation_report.md (only if escalation)

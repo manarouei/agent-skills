@@ -258,6 +258,80 @@ class TestScopeGate:
         assert not result.passed, "Should fail without allowlist.json"
         assert "allowlist.json" in result.message
 
+    def test_untracked_out_of_scope_fails(self, scripts_dir, temp_artifacts):
+        """Untracked files out of scope should fail the scope gate."""
+        gate = ScopeGate(scripts_dir, temp_artifacts)
+        
+        correlation_id = "UNTRACKED_TEST"
+        manifest_dir = temp_artifacts / correlation_id
+        manifest_dir.mkdir(parents=True)
+        
+        # Allowlist only allows nodes/**/*.py
+        allowlist = {
+            "allowed_paths": ["nodes/**/*.py"],
+            "forbidden_paths": [],
+        }
+        with open(manifest_dir / "allowlist.json", "w") as f:
+            json.dump(allowlist, f)
+        
+        # Mock git commands: staged/unstaged return nothing, but untracked has out-of-scope file
+        def mock_run(cmd, **kwargs):
+            result = Mock()
+            result.returncode = 0
+            
+            if "diff" in cmd:
+                result.stdout = ""  # No tracked changes
+            elif "ls-files" in cmd and "--others" in cmd:
+                # Untracked file that's OUT of scope
+                result.stdout = "src/bad_file.py\n"
+            else:
+                result.stdout = ""
+            return result
+        
+        with patch("subprocess.run", mock_run):
+            result = gate.check(correlation_id, check_git=True)
+        
+        assert not result.passed, "Should fail when untracked file is out of scope"
+        assert "violations" in result.message.lower() or "blocked" in result.message.lower()
+        assert result.details.get("violations")
+        assert any("src/bad_file.py" in v["file"] for v in result.details["violations"])
+
+    def test_untracked_in_scope_passes(self, scripts_dir, temp_artifacts):
+        """Untracked files that are in scope should pass the scope gate."""
+        gate = ScopeGate(scripts_dir, temp_artifacts)
+        
+        correlation_id = "UNTRACKED_PASS"
+        manifest_dir = temp_artifacts / correlation_id
+        manifest_dir.mkdir(parents=True)
+        
+        # Allowlist allows nodes/**/*.py
+        allowlist = {
+            "allowed_paths": ["nodes/**/*.py"],
+            "forbidden_paths": [],
+        }
+        with open(manifest_dir / "allowlist.json", "w") as f:
+            json.dump(allowlist, f)
+        
+        # Mock git commands: untracked file IS in scope
+        def mock_run(cmd, **kwargs):
+            result = Mock()
+            result.returncode = 0
+            
+            if "diff" in cmd:
+                result.stdout = ""
+            elif "ls-files" in cmd and "--others" in cmd:
+                # Untracked file that IS in scope
+                result.stdout = "nodes/my_new_node.py\n"
+            else:
+                result.stdout = ""
+            return result
+        
+        with patch("subprocess.run", mock_run):
+            result = gate.check(correlation_id, check_git=True)
+        
+        assert result.passed, f"Should pass when untracked file is in scope: {result.message}"
+        assert result.details.get("files_checked") == 1
+
 
 class TestSkillExecutor:
     """Tests for skill execution."""
@@ -361,71 +435,84 @@ class TestBoundedFixLoop:
         session_dir.mkdir(parents=True)
         
         allowlist = {
-            "allowed_paths": ["**/*.py"],
+            "allowed_paths": ["**/*.py", "**/*.md", "**/*.json"],
             "forbidden_paths": [],
         }
         with open(session_dir / "allowlist.json", "w") as f:
             json.dump(allowlist, f)
         
-        # Test that registered implementations work and return expected values
-        call_count = [0]
+        # Create repo_facts.json required by RepoGroundingGate for IMPLEMENT skills
+        repo_facts = {
+            "basenode_contract_path": "contracts/BASENODE_CONTRACT.md",
+            "node_loader_paths": ["contracts/basenode_contract.py"],
+            "golden_node_paths": ["/home/toni/n8n/back/nodes/telegram.py"],
+            "test_command": "python3 -m pytest -q",
+        }
+        with open(session_dir / "repo_facts.json", "w") as f:
+            json.dump(repo_facts, f)
         
-        def mock_fix(ctx):
-            return {"fixed": True, "iteration": 1, "changes_made": ["fixed.py"]}
-        
-        def mock_validate(ctx):
-            call_count[0] += 1
-            if call_count[0] >= 2:
-                return {"passed": True, "errors": []}  # Fixed on second try
-            return {"passed": False, "errors": [{"type": "lint", "message": "error"}]}
-        
-        executor.register_implementation("code-fix", mock_fix)
-        executor.register_implementation("code-validate", mock_validate)
-        
-        # Test code-fix with all required inputs
-        fix_result = executor.execute(
-            skill_name="code-fix",
-            inputs={
-                "correlation_id": correlation_id,
-                "validation_report": {"passed": False},
-                "files_modified": ["test.py"],
-                "allowlist": {"paths": ["*.py"]},
-                "iteration": 1,
-            },
-            correlation_id=correlation_id,
-        )
-        assert fix_result.status == ExecutionStatus.SUCCESS
-        assert fix_result.outputs.get("fixed") is True
-        
-        # Test code-validate with all required inputs
-        val_result = executor.execute(
-            skill_name="code-validate",
-            inputs={
-                "correlation_id": correlation_id,
-                "files_modified": ["test.py"],
-                "test_files": ["test_test.py"],
-                "allowlist": {"paths": ["*.py"]},
-            },
-            correlation_id=correlation_id,
-        )
-        assert val_result.status == ExecutionStatus.SUCCESS
-        assert val_result.outputs.get("passed") is False  # First call returns False
-        
-        # Second validate call with SAME correlation_id should be skipped (idempotency)
-        # This demonstrates the idempotency enforcement working correctly
-        val_result2 = executor.execute(
-            skill_name="code-validate",
-            inputs={
-                "correlation_id": correlation_id,
-                "files_modified": ["test.py"],
-                "test_files": ["test_test.py"],
-                "allowlist": {"paths": ["*.py"]},
-            },
-            correlation_id=correlation_id,
-        )
-        # Idempotency should skip the call and return previous state
-        assert val_result2.outputs.get("skipped") is True
-        assert val_result2.outputs.get("reason") == "idempotency"
+        # Mock git diff to return empty list (no changes to check)
+        # This avoids checking real git state in unit tests
+        with patch.object(executor.scope_gate, '_get_git_changed_files', return_value=[]):
+            # Test that registered implementations work and return expected values
+            call_count = [0]
+            
+            def mock_fix(ctx):
+                return {"fixed": True, "iteration": 1, "changes_made": ["fixed.py"]}
+            
+            def mock_validate(ctx):
+                call_count[0] += 1
+                if call_count[0] >= 2:
+                    return {"passed": True, "errors": []}  # Fixed on second try
+                return {"passed": False, "errors": [{"type": "lint", "message": "error"}]}
+            
+            executor.register_implementation("code-fix", mock_fix)
+            executor.register_implementation("code-validate", mock_validate)
+            
+            # Test code-fix with all required inputs
+            fix_result = executor.execute(
+                skill_name="code-fix",
+                inputs={
+                    "correlation_id": correlation_id,
+                    "validation_report": {"passed": False},
+                    "files_modified": ["test.py"],
+                    "allowlist": {"paths": ["*.py"]},
+                    "iteration": 1,
+                },
+                correlation_id=correlation_id,
+            )
+            assert fix_result.status == ExecutionStatus.SUCCESS
+            assert fix_result.outputs.get("fixed") is True
+            
+            # Test code-validate with all required inputs
+            val_result = executor.execute(
+                skill_name="code-validate",
+                inputs={
+                    "correlation_id": correlation_id,
+                    "files_modified": ["test.py"],
+                    "test_files": ["test_test.py"],
+                    "allowlist": {"paths": ["*.py"]},
+                },
+                correlation_id=correlation_id,
+            )
+            assert val_result.status == ExecutionStatus.SUCCESS
+            assert val_result.outputs.get("passed") is False  # First call returns False
+            
+            # Second validate call with SAME correlation_id should be skipped (idempotency)
+            # This demonstrates the idempotency enforcement working correctly
+            val_result2 = executor.execute(
+                skill_name="code-validate",
+                inputs={
+                    "correlation_id": correlation_id,
+                    "files_modified": ["test.py"],
+                    "test_files": ["test_test.py"],
+                    "allowlist": {"paths": ["*.py"]},
+                },
+                correlation_id=correlation_id,
+            )
+            # Idempotency should skip the call and return previous state
+            assert val_result2.outputs.get("skipped") is True
+            assert val_result2.outputs.get("reason") == "idempotency"
 
 
 class TestSkillChaining:
@@ -581,6 +668,67 @@ class TestBaseNodeContract:
         assert schema.type == "my-node"
         assert schema.version == 1
         assert len(schema.properties.parameters) == 1
+
+
+class TestTraceMapFixture:
+    """Tests for trace map fixture validation."""
+
+    def test_fixture_validates_with_script(self, scripts_dir):
+        """The canonical trace_map.json fixture should pass validator script."""
+        import subprocess
+        
+        fixture_path = Path(__file__).parent / "fixtures" / "trace_map.json"
+        validator_script = scripts_dir / "validate_trace_map.py"
+        
+        assert fixture_path.exists(), f"Fixture not found: {fixture_path}"
+        assert validator_script.exists(), f"Validator not found: {validator_script}"
+        
+        result = subprocess.run(
+            ["python3", str(validator_script), str(fixture_path)],
+            capture_output=True,
+            text=True,
+        )
+        
+        assert result.returncode == 0, f"Validator failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
+
+    def test_fixture_validates_with_pydantic(self):
+        """The canonical trace_map.json fixture should validate with Pydantic models."""
+        import json
+        from contracts import TraceMap, TraceEntry, TraceSource, ConfidenceLevel
+        
+        fixture_path = Path(__file__).parent / "fixtures" / "trace_map.json"
+        
+        with open(fixture_path) as f:
+            data = json.load(f)
+        
+        # Convert entries
+        entries = []
+        for entry_data in data["trace_entries"]:
+            entry = TraceEntry(
+                field_path=entry_data["field_path"],
+                source=TraceSource(entry_data["source"]),
+                evidence=entry_data["evidence"],
+                confidence=ConfidenceLevel(entry_data["confidence"]),
+                source_file=entry_data.get("source_file"),
+                line_range=entry_data.get("line_range"),
+                excerpt_hash=entry_data.get("excerpt_hash"),
+            )
+            entries.append(entry)
+        
+        trace_map = TraceMap(
+            correlation_id=data["correlation_id"],
+            node_type=data["node_type"],
+            trace_entries=entries,
+            generated_at=data.get("generated_at"),
+            skill_version=data.get("skill_version"),
+        )
+        
+        # Validate
+        assert trace_map.correlation_id == "test-fixture-001"
+        assert trace_map.node_type == "telegram"
+        assert len(trace_map.trace_entries) == 4
+        assert trace_map.assumption_ratio() == 0.0  # No assumptions in fixture
+        assert trace_map.is_valid_for_implement()  # Should be valid
 
 
 if __name__ == "__main__":

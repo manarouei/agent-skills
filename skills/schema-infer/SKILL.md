@@ -15,6 +15,13 @@ idempotency:
   key_spec: "correlation_id"
 max_fix_iterations: 1
 
+# Sync Celery Constraints (MANDATORY)
+sync_celery:
+  requires_sync_execution: true
+  forbids_async_dependencies: true
+  requires_timeouts_on_external_calls: true
+  forbids_background_tasks: true
+
 input_schema:
   type: object
   required: [correlation_id, parsed_sections, source_type]
@@ -42,15 +49,26 @@ output_schema:
         parameters: { type: array }
     trace_map:
       type: object
-      description: "MANDATORY: Every field must map to source evidence"
-      additionalProperties:
-        type: object
-        required: [source_type, source_ref, locator, excerpt_hash]
-        properties:
-          source_type: { type: string, enum: [TS, DOC, ASSUMPTION] }
-          source_ref: { type: string }
-          locator: { type: string }
-          excerpt_hash: { type: string }
+      description: "MANDATORY: Every field must map to source evidence. See .copilot/schemas/trace_map.schema.json"
+      required: [correlation_id, node_type, trace_entries]
+      properties:
+        correlation_id: { type: string }
+        node_type: { type: string }
+        trace_entries:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [field_path, source, evidence, confidence]
+            properties:
+              field_path: { type: string }
+              source: { type: string, enum: [SOURCE_CODE, API_DOCS, ASSUMPTION] }
+              evidence: { type: string, minLength: 10 }
+              confidence: { type: string, enum: [high, medium, low] }
+              assumption_rationale: { type: string }
+              source_file: { type: string }
+              line_range: { type: string }
+              excerpt_hash: { type: string }
     assumptions:
       type: array
       items:
@@ -82,22 +100,32 @@ If evidence cannot be found:
 2. Add to `assumptions` list with verification instructions
 3. DO NOT invent parameters without evidence
 
-## Trace Map Format
+## Trace Map Format (Canonical)
+
+Matches `.copilot/schemas/trace_map.schema.json` and `contracts/skill_contract.py`:
 
 ```json
 {
-  "operations.0.name": {
-    "source_type": "TS",
-    "source_ref": "packages/nodes-base/nodes/Telegram/Telegram.node.ts",
-    "locator": "L45-L52",
-    "excerpt_hash": "a1b2c3d4e5f6"
-  },
-  "credentials.0.type": {
-    "source_type": "ASSUMPTION",
-    "source_ref": "inferred from operation pattern",
-    "locator": "N/A",
-    "excerpt_hash": "N/A"
-  }
+  "correlation_id": "abc-123",
+  "node_type": "telegram",
+  "trace_entries": [
+    {
+      "field_path": "operations[0].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'sendMessage' found in Telegram.node.ts",
+      "confidence": "high",
+      "source_file": "packages/nodes-base/nodes/Telegram/Telegram.node.ts",
+      "line_range": "L45-L52",
+      "excerpt_hash": "a1b2c3d4e5f6"
+    },
+    {
+      "field_path": "credentials[0].type",
+      "source": "ASSUMPTION",
+      "evidence": "Inferred from operation pattern requiring API key",
+      "confidence": "medium",
+      "assumption_rationale": "Standard Telegram Bot API requires token auth"
+    }
+  ]
 }
 ```
 

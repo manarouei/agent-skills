@@ -15,6 +15,13 @@ idempotency:
   key_spec: "raw_node_name"
 max_fix_iterations: 1
 
+# Sync Celery Constraints (MANDATORY)
+sync_celery:
+  requires_sync_execution: true
+  forbids_async_dependencies: true
+  requires_timeouts_on_external_calls: true
+  forbids_background_tasks: true
+
 input_schema:
   type: object
   required: [raw_node_name]

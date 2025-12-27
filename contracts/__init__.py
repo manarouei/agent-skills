@@ -27,6 +27,9 @@ from .skill_contract import (
     ScopeAllowlist,
     # Validation
     ValidationResult,
+    # Sync Celery constraints
+    BoundedAutonomyConstraints,
+    SyncCeleryConstraints,
 )
 
 from .basenode_contract import (
@@ -63,6 +66,9 @@ __all__ = [
     "ScopeAllowlist",
     # Validation
     "ValidationResult",
+    # Sync Celery constraints
+    "BoundedAutonomyConstraints",
+    "SyncCeleryConstraints",
     # BaseNode contract
     "BaseNodeSchema",
     "NodeDescription",

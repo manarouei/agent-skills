@@ -4,12 +4,72 @@ Skill Contract Schemas - Pydantic models for enforceable skill contracts.
 These models define the contract structure that every skill MUST declare in its
 YAML frontmatter. The contracts enable machine-checkable validation and bounded
 autonomy enforcement.
+
+BOUNDED AUTONOMY CONSTRAINT: SYNC_CELERY_CONTEXT
+All nodes execute inside a single synchronous Celery task per workflow.
+Node implementations MUST be compatible with synchronous execution.
 """
 
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+# =============================================================================
+# PROJECT-WIDE BOUNDED AUTONOMY CONSTRAINTS
+# =============================================================================
+
+class BoundedAutonomyConstraints:
+    """
+    Project-wide bounded autonomy constraints.
+    
+    These are NON-NEGOTIABLE rules that apply across the entire project.
+    """
+    
+    # All nodes execute in a single synchronous Celery task per workflow
+    SYNC_CELERY_CONTEXT: bool = True
+    
+    # Constraint implications (enforced by validators and runtime gates)
+    NO_ASYNC_NODE_EXECUTION: bool = True      # Node execution must be sync-safe
+    NO_ASYNC_ONLY_DEPENDENCIES: bool = True   # No aiohttp, asyncio.run in nodes
+    REQUIRE_EXTERNAL_CALL_TIMEOUTS: bool = True  # All HTTP calls need timeouts
+    NO_BACKGROUND_TASKS: bool = True          # No threads/tasks outliving execution
+    RESOURCE_CLEANUP_REQUIRED: bool = True    # Close sessions, avoid state leaks
+
+
+class SyncCeleryConstraints(BaseModel):
+    """
+    Per-skill sync Celery execution constraints.
+    
+    These flags indicate what the skill's outputs must comply with.
+    For node-generation skills, generated code must pass static analysis.
+    """
+    model_config = ConfigDict(extra="forbid")
+    
+    # Generated node code must be synchronous-safe (no required event loop)
+    requires_sync_execution: bool = Field(
+        default=True,
+        description="Generated code must work in sync Celery context"
+    )
+    
+    # No async-only libraries (aiohttp, asyncio patterns in node execution)
+    forbids_async_dependencies: bool = Field(
+        default=True,
+        description="Generated code must not use async-only libraries"
+    )
+    
+    # All external calls must have explicit timeouts
+    requires_timeouts_on_external_calls: bool = Field(
+        default=True,
+        description="HTTP/external calls must specify timeouts"
+    )
+    
+    # No background threads/tasks that outlive node execution
+    forbids_background_tasks: bool = Field(
+        default=True,
+        description="No threads/tasks that outlive execution"
+    )
 
 
 class AutonomyLevel(str, Enum):
@@ -62,6 +122,7 @@ class FailureMode(str, Enum):
 
 class RetryConfig(BaseModel):
     """Retry configuration for skill execution."""
+    model_config = ConfigDict(extra="forbid")
 
     policy: RetryPolicy = RetryPolicy.NONE
     max_retries: int = Field(default=0, ge=0, le=5)
@@ -70,6 +131,7 @@ class RetryConfig(BaseModel):
 
 class IdempotencyConfig(BaseModel):
     """Idempotency configuration."""
+    model_config = ConfigDict(extra="forbid")
 
     required: bool = False
     key_spec: Optional[str] = None  # e.g., "correlation_id + operation"
@@ -77,6 +139,7 @@ class IdempotencyConfig(BaseModel):
 
 class ArtifactSpec(BaseModel):
     """Specification for artifacts emitted by a skill."""
+    model_config = ConfigDict(extra="forbid")
 
     name: str
     type: Literal["json", "yaml", "md", "py", "txt", "diff"]
@@ -90,6 +153,7 @@ class SkillContract(BaseModel):
     This is the enforceable contract that every skill MUST declare.
     It enables bounded autonomy, scope enforcement, and machine validation.
     """
+    model_config = ConfigDict(extra="forbid")
 
     # Identity
     name: str = Field(..., pattern=r"^[a-z][a-z0-9-]*[a-z0-9]$", max_length=64)
@@ -118,6 +182,13 @@ class SkillContract(BaseModel):
 
     # Dependencies
     depends_on: List[str] = Field(default_factory=list)  # skill names
+    
+    # Sync Celery Constraints (for node-generation skills)
+    # When set, runtime gates enforce these on generated code
+    sync_celery_constraints: Optional[SyncCeleryConstraints] = Field(
+        default=None,
+        description="Sync Celery execution constraints for node-generation skills"
+    )
     
     @field_validator("name")
     @classmethod
@@ -148,6 +219,7 @@ class TraceEntry(BaseModel):
     This documents WHERE a piece of schema inference came from.
     ASSUMPTION entries MUST include assumption_rationale for human review.
     """
+    model_config = ConfigDict(extra="forbid")
 
     field_path: str = Field(..., pattern=r"^[\w\.\[\]\*]+$")
     source: TraceSource
@@ -179,6 +251,7 @@ class TraceMap(BaseModel):
     
     File format: JSON only (canonical format, no YAML)
     """
+    model_config = ConfigDict(extra="forbid")
 
     correlation_id: str
     node_type: str
@@ -202,6 +275,7 @@ class TraceMap(BaseModel):
 
 class ScopeAllowlist(BaseModel):
     """File scope allowlist for a node implementation."""
+    model_config = ConfigDict(extra="forbid")
 
     node_name: str
     allowed_patterns: List[str] = Field(default_factory=list)
@@ -221,6 +295,7 @@ class ScopeAllowlist(BaseModel):
 
 class ValidationResult(BaseModel):
     """Result of skill contract validation."""
+    model_config = ConfigDict(extra="forbid")
 
     valid: bool
     errors: List[str] = Field(default_factory=list)

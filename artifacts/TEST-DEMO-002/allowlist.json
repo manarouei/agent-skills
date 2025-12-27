@@ -1,0 +1,8 @@
+{
+  "allowed_paths": [
+    "artifacts/**/*",
+    "nodes/weather*",
+    "tests/*weather*"
+  ],
+  "forbidden_paths": []
+}

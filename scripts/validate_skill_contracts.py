@@ -140,7 +140,6 @@ def validate_with_pydantic(skill_name: str, data: dict[str, Any]) -> list[str]:
             autonomy_level=autonomy,
             side_effects=side_effects,
             timeout_seconds=data.get("timeout_seconds", 60),
-            max_steps=data.get("max_steps", 50),
             retry=retry,
             idempotency=idempotency,
             input_schema=data.get("input_schema", {}),

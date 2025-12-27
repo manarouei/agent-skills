@@ -15,6 +15,13 @@ idempotency:
   key_spec: "correlation_id"
 max_fix_iterations: 3
 
+# Sync Celery Constraints (MANDATORY)
+sync_celery:
+  requires_sync_execution: true
+  forbids_async_dependencies: true
+  requires_timeouts_on_external_calls: true
+  forbids_background_tasks: true
+
 input_schema:
   type: object
   required: [correlation_id, source_type, parsed_sections, node_schema, allowlist]

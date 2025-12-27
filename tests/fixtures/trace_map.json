@@ -1,0 +1,42 @@
+{
+  "correlation_id": "test-fixture-001",
+  "node_type": "telegram",
+  "trace_entries": [
+    {
+      "field_path": "operations[0].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'sendMessage' found in Telegram.node.ts at method definition",
+      "confidence": "high",
+      "source_file": "packages/nodes-base/nodes/Telegram/Telegram.node.ts",
+      "line_range": "L45-L52",
+      "excerpt_hash": "sha256:a1b2c3d4"
+    },
+    {
+      "field_path": "operations[0].parameters[0].name",
+      "source": "API_DOCS",
+      "evidence": "Telegram Bot API documentation specifies chat_id as required parameter",
+      "confidence": "high",
+      "source_file": "https://core.telegram.org/bots/api#sendmessage",
+      "line_range": "N/A"
+    },
+    {
+      "field_path": "credentials[0].type",
+      "source": "SOURCE_CODE",
+      "evidence": "TelegramApi credential type defined in credentials array in node file",
+      "confidence": "high",
+      "source_file": "packages/nodes-base/nodes/Telegram/Telegram.node.ts",
+      "line_range": "L12-L15",
+      "excerpt_hash": "sha256:e5f6g7h8"
+    },
+    {
+      "field_path": "description.displayName",
+      "source": "SOURCE_CODE",
+      "evidence": "displayName property set to 'Telegram' in node description object",
+      "confidence": "high",
+      "source_file": "packages/nodes-base/nodes/Telegram/Telegram.node.ts",
+      "line_range": "L8-L10"
+    }
+  ],
+  "generated_at": "2025-12-27T00:00:00Z",
+  "skill_version": "1.0.0"
+}

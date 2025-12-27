@@ -1,0 +1,17 @@
+{
+  "allowed_patterns": [
+    "agent-skills/skills/**",
+    "agent-skills/contracts/**",
+    "agent-skills/runtime/**",
+    "agent-skills/scripts/**",
+    "agent-skills/tests/**",
+    "agent-skills/registry.yaml",
+    "agent-skills/requirements.txt",
+    "agent-skills/README.md",
+    ".copilot/**"
+  ],
+  "forbidden_patterns": [
+    "**/.venv/**",
+    "**/.git/**"
+  ]
+}

@@ -121,8 +121,66 @@ python scripts/validate_skill_contracts.py
 # Validate a trace map
 python scripts/validate_trace_map.py artifacts/ABC123/trace_map.yaml
 
+# Validate sync-Celery compatibility
+python scripts/validate_sync_celery_compat.py src/
+
 # Run tests
 pytest tests/ -v
+```
+
+## Runtime Reality: Sync Celery Execution Constraint
+
+**CRITICAL**: All skills execute within a single synchronous Celery task. This has binding implications for code generation:
+
+### Constraints Enforced
+
+| Constraint | Reason |
+|------------|--------|
+| No `async def` | Blocks Celery worker |
+| No `await` | Requires async context unavailable |
+| No `asyncio`/`aiohttp` | Async-only libraries |
+| No `threading.Thread` without `.join()` | Orphan threads |
+| HTTP calls must have `timeout=` | Prevents indefinite blocking |
+
+### Contract Field
+
+All SKILL.md files include:
+
+```yaml
+sync_celery:
+  requires_sync_execution: true
+  forbids_async_dependencies: true
+  requires_timeouts_on_external_calls: true
+  forbids_background_tasks: true
+```
+
+### Runtime Gate
+
+The `SyncCeleryGate` in `runtime/executor.py` validates generated code for code-implement, code-convert, and node-scaffold skills. Violations emit a structured artifact:
+
+```json
+{
+  "gate": "sync_celery_compatibility",
+  "passed": false,
+  "violations": [{"line": 5, "pattern": "async_def", ...}],
+  "remediation": ["Replace async def with def", ...]
+}
+```
+
+### CLI Validation
+
+```bash
+# Check file
+python scripts/validate_sync_celery_compat.py path/to/file.py
+
+# Check directory (recursive)
+python scripts/validate_sync_celery_compat.py src/
+
+# Strict mode (warnings as errors)
+python scripts/validate_sync_celery_compat.py --strict src/
+
+# JSON output
+python scripts/validate_sync_celery_compat.py --json report.json src/
 ```
 
 ## License

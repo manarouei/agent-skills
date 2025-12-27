@@ -1,0 +1,32 @@
+version: 1
+execution_context:
+  workflow_execution: "single_sync_celery_task"
+
+limits:
+  max_steps: 50
+  fix_loop_max: 3
+  max_changed_files: 20
+
+gates:
+  require_trace_map_for:
+    - schema-infer
+    - schema-build
+  require_allowlist_for_write: true
+  require_git_diff_scope_check: true
+  require_validation_pass: true
+
+timeouts:
+  default_external_call_seconds: 30
+  require_explicit_timeouts: true
+
+prohibited:
+  async_node_execution: true
+  background_tasks: true
+  bypass_validation: true
+  unrelated_refactors: true
+
+confirmation_required_if:
+  - adds_dependency: true
+  - modifies_basenode: true
+  - modifies_node_loader_or_registry: true
+  - changes_outside_allowlist: true

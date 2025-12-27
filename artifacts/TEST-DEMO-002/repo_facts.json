@@ -1,0 +1,10 @@
+{
+  "basenode_contract_path": "contracts/BASENODE_CONTRACT.md",
+  "node_loader_paths": [
+    "nodes/__init__.py"
+  ],
+  "golden_node_paths": [
+    "nodes/telegram.py"
+  ],
+  "test_command": "pytest tests/"
+}
