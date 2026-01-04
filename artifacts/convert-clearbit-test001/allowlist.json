@@ -1,0 +1,18 @@
+{
+  "node_name": "clearbit",
+  "allowed_paths": [
+    "nodes/clearbit*",
+    "nodes/clearbit*",
+    "tests/*clearbit*",
+    "tests/*clearbit*",
+    "credentials/*clearbit*",
+    "credentials/*clearbit*"
+  ],
+  "forbidden_paths": [
+    "**/base.py",
+    "**/Base*.py",
+    "**/__init__.py"
+  ],
+  "generated_at": "2025-12-31T13:01:55.860610",
+  "correlation_id": "convert-clearbit-test001"
+}

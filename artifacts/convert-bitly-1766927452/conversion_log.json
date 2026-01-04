@@ -1,0 +1,19 @@
+{
+  "correlation_id": "convert-bitly-1766927452",
+  "node_name": "Bitly",
+  "source_type": "TYPE1",
+  "operations_converted": 3,
+  "files_generated": [
+    "/home/toni/agent-skills/artifacts/convert-bitly-1766927452/converted_node/bitly.py",
+    "/home/toni/agent-skills/artifacts/convert-bitly-1766927452/converted_node/__init__.py"
+  ],
+  "notes": [
+    "Found main node class for Bitly",
+    "Found 3 operation handlers",
+    "Converted link/create",
+    "Converted link/update",
+    "Converted link/get",
+    "Converted GenericFunctions.ts to Python helpers"
+  ],
+  "generated_at": "2025-12-29T05:23:17.530817"
+}

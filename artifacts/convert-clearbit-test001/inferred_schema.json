@@ -1,0 +1,48 @@
+{
+  "type": "Clearbit",
+  "version": 1,
+  "description": {
+    "displayName": "Clearbit",
+    "name": "clearbit",
+    "inputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ]
+  },
+  "properties": {
+    "parameters": [
+      {
+        "name": "operation",
+        "type": "OPTIONS",
+        "display_name": "Operation",
+        "options": [
+          {
+            "name": "Enrich",
+            "value": "enrich",
+            "description": "Look up a person and company data based on an email or domain"
+          }
+        ],
+        "default": "enrich",
+        "description": "Operation to perform"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "name": "enrich",
+      "display_name": "Enrich",
+      "description": "Look up a person and company data based on an email or domain"
+    }
+  ],
+  "credentials": [
+    "apiKey"
+  ]
+}

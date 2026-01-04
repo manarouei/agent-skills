@@ -3,6 +3,12 @@
 # Core runtime
 pyyaml>=6.0
 pydantic>=2.0
+jsonschema>=4.0  # For interaction_outcomes input validation
+
+# Database backends
+# SQLite: included in Python stdlib
+# PostgreSQL: optional, install psycopg2-binary for production
+# psycopg2-binary>=2.9  # Uncomment for PostgreSQL StateStore support
 
 # Testing
 pytest>=8.0

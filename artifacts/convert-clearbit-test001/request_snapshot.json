@@ -1,0 +1,13 @@
+{
+  "correlation_id": "convert-clearbit-test001",
+  "timestamp": "2025-12-31T13:01:55.508028",
+  "source_type": "TYPE1",
+  "source_files": [
+    "Clearbit.node.ts",
+    "CompanyDescription.ts",
+    "GenericFunctions.ts",
+    "PersonDescription.ts"
+  ],
+  "node_name": "Clearbit",
+  "target_language": "python"
+}

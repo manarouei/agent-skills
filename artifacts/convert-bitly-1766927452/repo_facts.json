@@ -1,0 +1,11 @@
+{
+  "basenode_contract_path": "contracts/BASENODE_CONTRACT.md",
+  "node_loader_paths": [
+    "nodes/__init__.py"
+  ],
+  "golden_node_paths": [
+    "nodes/gmail.py",
+    "nodes/slack.py"
+  ],
+  "test_command": "python3 -m pytest"
+}

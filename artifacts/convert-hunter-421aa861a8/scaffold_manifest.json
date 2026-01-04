@@ -1,0 +1,18 @@
+{
+  "correlation_id": "convert-hunter-421aa861a8",
+  "node_name": "hunter",
+  "class_name": "Hunter",
+  "module_name": "hunter",
+  "files_created": [
+    "/home/toni/agent-skills/artifacts/convert-hunter-421aa861a8/generated_node/hunter.py",
+    "/home/toni/agent-skills/artifacts/convert-hunter-421aa861a8/generated_node/__init__.py"
+  ],
+  "generated_at": "2025-12-31T12:59:09.218394",
+  "schema_summary": {
+    "type": "Hunter",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 13,
+    "credential_count": 0
+  }
+}

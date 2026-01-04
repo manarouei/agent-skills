@@ -1,0 +1,106 @@
+[
+  {
+    "id": "page-001",
+    "version": "1.0.0",
+    "name": "Cursor-Based Pagination",
+    "category": "pagination",
+    "description": "Cursor-based pagination using next_cursor token from API response",
+    "pattern": {
+      "type": "pagination",
+      "style": "cursor",
+      "max_pages": 100,
+      "rate_limit_header": "X-RateLimit-Remaining",
+      "implementation_notes": "Use cursor token from response to fetch next page. Stop when cursor is null/empty. Always include timeout in requests."
+    },
+    "examples": [
+      {
+        "input": "Slack API list_channels with cursor",
+        "output": "def fetch_all_pages(self, endpoint: str, credentials: dict, params: dict | None = None) -> list:\n    \"\"\"Fetch all pages using cursor-based pagination.\"\"\"\n    results = []\n    params = params or {}\n    cursor = None\n    \n    while True:\n        if cursor:\n            params['cursor'] = cursor\n        \n        response = self._http.get(\n            f'{self.base_url}/{endpoint}',\n            params=params,\n            headers=self._get_auth_headers(credentials),\n            timeout=30,\n        )\n        response.raise_for_status()\n        data = response.json()\n        \n        results.extend(data.get('items', data.get('channels', [])))\n        \n        cursor = data.get('response_metadata', {}).get('next_cursor')\n        if not cursor:\n            break\n    \n    return results",
+        "notes": "Slack uses response_metadata.next_cursor pattern"
+      }
+    ],
+    "applicability": {
+      "services": ["slack", "notion", "stripe", "intercom"],
+      "node_types": ["regular"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "page-002",
+    "version": "1.0.0",
+    "name": "Offset-Limit Pagination",
+    "category": "pagination",
+    "description": "Traditional offset/limit pagination with page size",
+    "pattern": {
+      "type": "pagination",
+      "style": "offset",
+      "max_pages": 100,
+      "rate_limit_header": null,
+      "implementation_notes": "Increment offset by page_size until fewer items returned than requested. Some APIs use 'skip' instead of 'offset'."
+    },
+    "examples": [
+      {
+        "input": "Generic REST API with offset/limit",
+        "output": "def fetch_all_pages(self, endpoint: str, credentials: dict, page_size: int = 100) -> list:\n    \"\"\"Fetch all pages using offset/limit pagination.\"\"\"\n    results = []\n    offset = 0\n    \n    while True:\n        response = self._http.get(\n            f'{self.base_url}/{endpoint}',\n            params={'offset': offset, 'limit': page_size},\n            headers=self._get_auth_headers(credentials),\n            timeout=30,\n        )\n        response.raise_for_status()\n        data = response.json()\n        \n        items = data.get('items', data.get('results', []))\n        results.extend(items)\n        \n        if len(items) < page_size:\n            break\n        \n        offset += page_size\n    \n    return results",
+        "notes": "Stop when items < page_size"
+      }
+    ],
+    "applicability": {
+      "services": ["shopify", "hubspot", "postgres"],
+      "node_types": ["regular"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "page-003",
+    "version": "1.0.0",
+    "name": "Link Header Pagination (RFC 5988)",
+    "category": "pagination",
+    "description": "RFC 5988 Link header pagination following 'next' relation",
+    "pattern": {
+      "type": "pagination",
+      "style": "link",
+      "max_pages": 100,
+      "rate_limit_header": "X-RateLimit-Remaining",
+      "implementation_notes": "Parse Link header for rel=\"next\" URL. Stop when no next link. GitHub uses this pattern."
+    },
+    "examples": [
+      {
+        "input": "GitHub API with Link header",
+        "output": "import re\n\ndef fetch_all_pages(self, url: str, credentials: dict) -> list:\n    \"\"\"Fetch all pages following Link header pagination.\"\"\"\n    results = []\n    \n    while url:\n        response = self._http.get(\n            url,\n            headers=self._get_auth_headers(credentials),\n            timeout=30,\n        )\n        response.raise_for_status()\n        \n        results.extend(response.json())\n        \n        # Parse Link header for next URL\n        link_header = response.headers.get('Link', '')\n        url = None\n        for link in link_header.split(','):\n            if 'rel=\"next\"' in link:\n                match = re.search(r'<([^>]+)>', link)\n                if match:\n                    url = match.group(1)\n                break\n    \n    return results",
+        "notes": "RFC 5988 standard used by GitHub, GitLab"
+      }
+    ],
+    "applicability": {
+      "services": ["github", "gitlab", "bitbucket"],
+      "node_types": ["regular"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "page-004",
+    "version": "1.0.0",
+    "name": "Return All with Limit Parameter",
+    "category": "pagination",
+    "description": "Pattern for nodes with returnAll toggle and limit parameter",
+    "pattern": {
+      "type": "pagination",
+      "style": "cursor",
+      "max_pages": null,
+      "rate_limit_header": null,
+      "implementation_notes": "Nodes typically expose 'returnAll' boolean parameter. If false, use 'limit' parameter to cap results. Implement pagination internally when returnAll=true."
+    },
+    "examples": [
+      {
+        "input": "Node with returnAll parameter",
+        "output": "def execute(self, input_data: list[dict], credentials: dict, parameters: dict) -> list[dict]:\n    return_all = self.get_node_parameter('returnAll', parameters)\n    limit = self.get_node_parameter('limit', parameters) if not return_all else None\n    \n    if return_all:\n        # Fetch all pages\n        results = self._fetch_all_pages(credentials)\n    else:\n        # Fetch single page with limit\n        response = self._http.get(\n            f'{self.base_url}/items',\n            params={'limit': limit},\n            headers=self._get_auth_headers(credentials),\n            timeout=30,\n        )\n        response.raise_for_status()\n        results = response.json().get('items', [])\n    \n    return [{'json': item} for item in results]",
+        "notes": "Common n8n pattern for list operations"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["regular"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  }
+]

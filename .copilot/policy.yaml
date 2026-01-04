@@ -6,6 +6,12 @@ limits:
   max_steps: 50
   fix_loop_max: 3
   max_changed_files: 20
+  # Agent capabilities limits (multi-turn)
+  max_turns_per_context: 8
+  max_turns_hard_cap: 20
+  max_events_per_context: 100
+  max_pocket_facts_per_bucket: 50
+  max_summary_size_chars: 10000
 
 gates:
   require_trace_map_for:
@@ -24,6 +30,17 @@ prohibited:
   background_tasks: true
   bypass_validation: true
   unrelated_refactors: true
+  # Agent capabilities prohibitions
+  daemon_agent_loops: true
+  unbounded_event_logs: true
+
+# Agent capabilities: allowed intermediate states
+agent_capabilities:
+  allowed_intermediate_states:
+    - input_required
+    - delegating
+    - paused
+  require_state_persistence: true
 
 confirmation_required_if:
   - adds_dependency: true

@@ -22,6 +22,53 @@ sync_celery:
   requires_timeouts_on_external_calls: true
   forbids_background_tasks: true
 
+# Interaction Outcomes (Agent Capabilities)
+# This skill supports multi-turn: may request missing inputs
+interaction_outcomes:
+  allowed_intermediate_states: [input_required]
+  max_turns: 4
+  supports_resume: true
+  state_persistence: facts_only  # Lightweight: only store inputs between turns
+  input_request_schema:
+    - name: source_type
+      type: string
+      description: "Source type: TYPE1 (TypeScript) or TYPE2 (docs)"
+      required: true
+    - name: parsed_sections
+      type: object
+      description: "Parsed source sections from source-ingest"
+      required: true
+    - name: source_url
+      type: string
+      description: "Original source URL for evidence linking"
+      required: false
+  # JSON Schema for strict INPUT_REQUIRED payload validation
+  input_request_jsonschema:
+    type: object
+    required: [missing_fields, reason]
+    properties:
+      missing_fields:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          required: [name]
+          properties:
+            name:
+              type: string
+              minLength: 1
+            type:
+              type: string
+            description:
+              type: string
+            required:
+              type: boolean
+      reason:
+        type: string
+        minLength: 10
+      partial_outputs:
+        type: object
+
 input_schema:
   type: object
   required: [correlation_id, parsed_sections, source_type]

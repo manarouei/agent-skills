@@ -1,0 +1,18 @@
+{
+  "node_name": "bitly",
+  "allowed_paths": [
+    "nodes/bitly*",
+    "nodes/bitly*",
+    "tests/*bitly*",
+    "tests/*bitly*",
+    "credentials/*bitly*",
+    "credentials/*bitly*"
+  ],
+  "forbidden_paths": [
+    "**/base.py",
+    "**/Base*.py",
+    "**/__init__.py"
+  ],
+  "generated_at": "2025-12-29T05:23:17.523606",
+  "correlation_id": "convert-bitly-1766927452"
+}

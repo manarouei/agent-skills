@@ -1,0 +1,205 @@
+{
+  "type": "Hunter",
+  "version": 1,
+  "description": {
+    "displayName": "Hunter",
+    "name": "hunter",
+    "inputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ]
+  },
+  "properties": {
+    "parameters": [
+      {
+        "name": "operation",
+        "type": "OPTIONS",
+        "display_name": "Operation",
+        "options": [
+          {
+            "name": "Domain Search",
+            "value": "domainSearch",
+            "description": "Get every email address found on the internet using a given domain name, with sources"
+          },
+          {
+            "name": "Email Finder",
+            "value": "emailFinder",
+            "description": "Generate or retrieve the most likely email address from a domain name, a first name and a last name"
+          },
+          {
+            "name": "Email Verifier",
+            "value": "emailVerifier",
+            "description": "Verify the deliverability of an email address"
+          }
+        ],
+        "default": "domainSearch",
+        "description": "Operation to perform"
+      },
+      {
+        "name": "Email Finder",
+        "display_name": "Domain Search",
+        "type": "STRING",
+        "description": "Get every email address found on the internet using a given domain name, with sources"
+      },
+      {
+        "name": "onlyEmails",
+        "display_name": "Only Emails",
+        "type": "BOOLEAN",
+        "default": true,
+        "description": "Whether to return only the found emails",
+        "display_options": {
+          "show": {
+            "operation": [
+              "domainSearch"
+            ]
+          }
+        }
+      },
+      {
+        "name": "returnAll",
+        "display_name": "Return All",
+        "type": "BOOLEAN",
+        "default": false,
+        "description": "Whether to return all results or only up to a given limit",
+        "display_options": {
+          "show": {
+            "operation": [
+              "domainSearch"
+            ]
+          }
+        }
+      },
+      {
+        "name": "limit",
+        "display_name": "Limit",
+        "type": "NUMBER",
+        "default": 100,
+        "description": "Max number of results to return",
+        "display_options": {
+          "show": {
+            "operation": [
+              "domainSearch"
+            ]
+          }
+        }
+      },
+      {
+        "name": "filters",
+        "display_name": "Filters",
+        "type": "COLLECTION",
+        "default": "{",
+        "display_options": {
+          "show": {
+            "operation": [
+              "domainSearch"
+            ]
+          }
+        }
+      },
+      {
+        "name": "type",
+        "display_name": "Type",
+        "type": "OPTIONS",
+        "default": "",
+        "options": [
+          {
+            "name": "Personal",
+            "value": "personal"
+          },
+          {
+            "name": "Generic",
+            "value": "generic"
+          }
+        ]
+      },
+      {
+        "name": "Generic",
+        "display_name": "Personal",
+        "type": "MULTIOPTIONS"
+      },
+      {
+        "name": "Senior",
+        "display_name": "Junior",
+        "type": "MULTIOPTIONS"
+      },
+      {
+        "name": "Executive",
+        "display_name": "Communication",
+        "type": "STRING"
+      },
+      {
+        "name": "firstname",
+        "display_name": "First Name",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The person",
+        "display_options": {
+          "show": {
+            "operation": [
+              "emailFinder"
+            ]
+          }
+        }
+      },
+      {
+        "name": "lastname",
+        "display_name": "Last Name",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The person",
+        "display_options": {
+          "show": {
+            "operation": [
+              "emailFinder"
+            ]
+          }
+        }
+      },
+      {
+        "name": "email",
+        "display_name": "Email",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The email address you want to verify",
+        "display_options": {
+          "show": {
+            "operation": [
+              "emailVerifier"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "operations": [
+    {
+      "name": "domainSearch",
+      "display_name": "Domain Search",
+      "description": "Get every email address found on the internet using a given domain name, with sources"
+    },
+    {
+      "name": "emailFinder",
+      "display_name": "Email Finder",
+      "description": "Generate or retrieve the most likely email address from a domain name, a first name and a last name"
+    },
+    {
+      "name": "emailVerifier",
+      "display_name": "Email Verifier",
+      "description": "Verify the deliverability of an email address"
+    }
+  ],
+  "credentials": [
+    "apiKey"
+  ]
+}

@@ -1,0 +1,197 @@
+[
+  {
+    "id": "ts-py-001",
+    "version": "1.0.0",
+    "name": "TypeScript Interface to Pydantic Model",
+    "category": "ts_to_python",
+    "description": "Convert TypeScript interface definitions to Pydantic BaseModel",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "interface NodeParameter { name: string; displayName: string; type: NodeParameterType; required?: boolean; default?: any; }",
+      "python_pattern": "class NodeParameter(BaseModel): name: str; display_name: str; type: NodeParameterType; required: bool = False; default: Any = None",
+      "notes": "Pydantic models provide validation, serialization, and IDE support. Use field aliases for camelCase to snake_case conversion."
+    },
+    "examples": [
+      {
+        "input": "interface CredentialProperty {\n  name: string;\n  displayName: string;\n  type: 'string' | 'number' | 'boolean' | 'options';\n  required?: boolean;\n  default?: any;\n  description?: string;\n}",
+        "output": "class CredentialProperty(BaseModel):\n    name: str\n    display_name: str = Field(alias='displayName')\n    type: Literal['string', 'number', 'boolean', 'options']\n    required: bool = False\n    default: Any = None\n    description: str | None = None\n\n    class Config:\n        populate_by_name = True",
+        "notes": "Field(alias='displayName') handles camelCase JSON keys"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["credential", "node"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "ts-py-002",
+    "version": "1.0.0",
+    "name": "TypeScript Async to Sync Python (Celery-safe)",
+    "category": "ts_to_python",
+    "description": "Convert TypeScript async patterns to synchronous Python for Celery compatibility",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]>",
+      "python_pattern": "def execute(self, input_data: list[dict], credentials: dict, parameters: dict) -> list[dict]:",
+      "notes": "CRITICAL: All node execute/trigger methods must be sync. Use requests library with timeout. No async/await, asyncio, aiohttp."
+    },
+    "examples": [
+      {
+        "input": "async function fetchData(url: string): Promise<Response> {\n  const response = await fetch(url);\n  return response.json();\n}",
+        "output": "def fetch_data(url: str) -> dict:\n    \"\"\"Fetch data from URL (sync, Celery-safe).\"\"\"\n    response = requests.get(url, timeout=30)\n    response.raise_for_status()\n    return response.json()",
+        "notes": "timeout=30 is REQUIRED for Celery compatibility"
+      },
+      {
+        "input": "async test(credentials: ICredentialsDecrypted): Promise<INodeCredentialTestResult>",
+        "output": "def test(self, credentials_data: dict) -> bool:\n    \"\"\"Test credential validity.\"\"\"\n    # Note: even test() should be sync in Celery context\n    try:\n        response = self._http.get(self.test_url, headers=self._get_headers(credentials_data), timeout=10)\n        return response.status_code == 200\n    except Exception:\n        return False",
+        "notes": "Credential test methods should also be sync"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["credential", "node"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "ts-py-003",
+    "version": "1.0.0",
+    "name": "TypeScript String Enum to Python Enum",
+    "category": "ts_to_python",
+    "description": "Convert TypeScript string enum to Python Enum inheriting from str",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "enum NodeParameterType { STRING = 'string', NUMBER = 'number', BOOLEAN = 'boolean' }",
+      "python_pattern": "class NodeParameterType(str, Enum): STRING = 'string'; NUMBER = 'number'; BOOLEAN = 'boolean'",
+      "notes": "Inherit from (str, Enum) for JSON serialization compatibility. Values serialize to their string value."
+    },
+    "examples": [
+      {
+        "input": "export type NodeParameterType = 'string' | 'number' | 'boolean' | 'options' | 'collection' | 'fixedCollection' | 'json';",
+        "output": "class NodeParameterType(str, Enum):\n    \"\"\"Node parameter types.\"\"\"\n    STRING = 'string'\n    NUMBER = 'number'\n    BOOLEAN = 'boolean'\n    OPTIONS = 'options'\n    COLLECTION = 'collection'\n    FIXED_COLLECTION = 'fixedCollection'\n    JSON = 'json'",
+        "notes": "TypeScript union type maps to Python str Enum"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["node"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "ts-py-004",
+    "version": "1.0.0",
+    "name": "n8n Expression Evaluation Pattern",
+    "category": "ts_to_python",
+    "description": "Convert n8n expression evaluation to Python pattern",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "this.getNodeParameter('field', itemIndex) with {{$json.field}} expressions",
+      "python_pattern": "ExpressionEngine.evaluate(expression, context) returning resolved value",
+      "notes": "Expression patterns: {{$json.field}}, {{$node['name'].json.field}}, {{$parameter.field}}, {{$env.VAR}}, {{$self['field']}} for credentials"
+    },
+    "examples": [
+      {
+        "input": "const chatId = this.getNodeParameter('chatId', i) as string;",
+        "output": "chat_id = self.get_node_parameter('chatId', parameters, item)\n\ndef get_node_parameter(self, name: str, parameters: dict, item: dict | None = None) -> Any:\n    value = parameters.get(name)\n    if isinstance(value, str) and '{{' in value:\n        return self._expression_engine.evaluate(value, item or {})\n    return value",
+        "notes": "Expression engine handles {{ }} resolution"
+      },
+      {
+        "input": "{{$self['client_id']}} in credential field",
+        "output": "def resolve_credential_expression(self, expression: str, credentials_data: dict) -> str:\n    \"\"\"Resolve {{$self['field']}} patterns in credentials.\"\"\"\n    pattern = r\"\\{\\{\\$self\\['([^']+)'\\]\\}\\}\"\n    def replacer(match):\n        field_name = match.group(1)\n        return str(credentials_data.get(field_name, ''))\n    return re.sub(pattern, replacer, expression)",
+        "notes": "Credentials can self-reference with $self"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["node", "credential"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "ts-py-005",
+    "version": "1.0.0",
+    "name": "TypeScript Optional Chaining to Python",
+    "category": "ts_to_python",
+    "description": "Convert TypeScript optional chaining (?.) to Python equivalents",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "obj?.field?.nested ?? defaultValue",
+      "python_pattern": "(obj or {}).get('field', {}).get('nested') or default_value",
+      "notes": "Python 3.10+ can use match statement. For dicts, use .get() with default. For objects, use getattr() or check None."
+    },
+    "examples": [
+      {
+        "input": "const teamId = tokenData?.team?.id ?? '';",
+        "output": "team_id = (token_data or {}).get('team', {}).get('id') or ''",
+        "notes": "Chained .get() calls with empty dict defaults"
+      },
+      {
+        "input": "const accessToken = response?.authed_user?.access_token;",
+        "output": "access_token = (response or {}).get('authed_user', {}).get('access_token')",
+        "notes": "Handle nested optional access safely"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["node", "credential"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "ts-py-006",
+    "version": "1.0.0",
+    "name": "display_options Conditional Logic",
+    "category": "ts_to_python",
+    "description": "Convert n8n displayOptions to Python display_options dict",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "displayOptions: { show: { resource: ['message'], operation: ['post'] } }",
+      "python_pattern": "display_options={'show': {'resource': ['message'], 'operation': ['post']}}",
+      "notes": "display_options controls parameter visibility based on other parameter values. Used for resource/operation pattern."
+    },
+    "examples": [
+      {
+        "input": "{\n  name: 'channel',\n  displayName: 'Channel',\n  type: 'string',\n  displayOptions: {\n    show: {\n      resource: ['message'],\n      operation: ['post', 'update'],\n    },\n  },\n}",
+        "output": "NodeParameter(\n    name='channel',\n    display_name='Channel',\n    type=NodeParameterType.STRING,\n    display_options={\n        'show': {\n            'resource': ['message'],\n            'operation': ['post', 'update'],\n        },\n    },\n)",
+        "notes": "Parameter shown only when conditions met"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["node"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "ts-py-007",
+    "version": "1.0.0",
+    "name": "Array Methods to List Comprehensions",
+    "category": "ts_to_python",
+    "description": "Convert TypeScript array methods to Pythonic list comprehensions",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "items.filter(x => x.active).map(x => x.name)",
+      "python_pattern": "[x['name'] for x in items if x.get('active')]",
+      "notes": "Python list comprehensions are idiomatic. Use .get() for optional dict keys."
+    },
+    "examples": [
+      {
+        "input": "const filtered = items.filter(item => item.json.active);\nconst mapped = items.map(item => ({ json: item.json.data }));",
+        "output": "filtered = [item for item in items if item.get('json', {}).get('active')]\nmapped = [{'json': item.get('json', {}).get('data')} for item in items]",
+        "notes": "Node execution data uses {'json': ...} wrapper"
+      },
+      {
+        "input": "const found = items.find(x => x.id === targetId);",
+        "output": "found = next((x for x in items if x['id'] == target_id), None)",
+        "notes": "find() → next() with generator and default"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["node"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  }
+]

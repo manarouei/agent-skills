@@ -1,0 +1,18 @@
+{
+  "correlation_id": "convert-clearbit-test001",
+  "node_name": "clearbit",
+  "class_name": "Clearbit",
+  "module_name": "clearbit",
+  "files_created": [
+    "/home/toni/agent-skills/artifacts/convert-clearbit-test001/generated_node/clearbit.py",
+    "/home/toni/agent-skills/artifacts/convert-clearbit-test001/generated_node/__init__.py"
+  ],
+  "generated_at": "2025-12-31T13:01:55.860633",
+  "schema_summary": {
+    "type": "Clearbit",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 1,
+    "credential_count": 0
+  }
+}

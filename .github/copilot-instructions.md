@@ -31,6 +31,18 @@ node-normalize → source-classify → source-ingest → schema-infer → schema
 
 ## Non-Negotiable Constraints
 
+### Hybrid Backbone Execution Modes
+
+Skills are classified into execution modes. When modifying a skill, respect its mode:
+
+| Mode | Skills | AI Usage |
+|------|--------|----------|
+| **DETERMINISTIC** | node-normalize, source-classify, source-ingest, schema-build, node-scaffold, code-validate, pr-prepare | None - pure functions |
+| **HYBRID** | schema-infer, test-generate | Deterministic first, advisor fallback |
+| **ADVISOR_ONLY** | code-convert, code-implement, code-fix | Bounded AI with validation |
+
+All ADVISOR_ONLY outputs are validated by `AdvisorOutputValidator` before side effects.
+
 ### Sync Celery Execution (CRITICAL)
 
 The entire workflow runs in one synchronous Celery task. Any async dependency or long-blocking call stalls the entire workflow. Generated code MUST NOT use:
@@ -105,6 +117,18 @@ sync_celery:
 ---
 ```
 
+## Agent Capabilities Constraints
+
+When implementing or modifying agent-capable skills:
+
+1. **No async/await**: All code must be sync Celery compatible
+2. **No background loops**: Long-lived identity via StateStore, not processes
+3. **DELEGATE state forbidden**: Skills MUST NOT return DELEGATING until router enabled
+4. **All persisted payloads must be redacted**: Use `redact_sensitive()` before storing
+5. **Non-terminal states must include metadata**: Set `metadata.agent_state` for INPUT_REQUIRED/DELEGATING/PAUSED
+6. **Resume token validation**: When `resume=True`, validate token before proceeding
+7. **Contract enforcement**: Only return intermediate states declared in `interaction_outcomes.allowed_intermediate_states`
+
 ## Validation Commands
 
 ```bash
@@ -112,6 +136,42 @@ python3 scripts/validate_skill_contracts.py       # All 12 skills
 python3 scripts/validate_trace_map.py <file>      # Trace evidence
 python3 scripts/validate_sync_celery_compat.py .  # Async detection (file or dir)
 python3 -m pytest -q                              # All tests must pass
+```
+
+## How to Run Gates (Pre-PR)
+
+Before proposing any PR-ready output, run the agent gate with a correlation ID:
+
+```bash
+# Full gate check (scope + trace map + pytest)
+python3 scripts/agent_gate.py --correlation-id <id>
+
+# With explicit paths
+python3 scripts/agent_gate.py --correlation-id <id> --trace-map artifacts/<id>/trace_map.json --repo-path .
+
+# Skip pytest (faster iteration)
+python3 scripts/agent_gate.py --correlation-id <id> --skip-pytest
+```
+
+The gate checks:
+1. **Scope gate**: allowlist.json exists, changed files match patterns
+2. **Trace map gate**: All schema fields have evidence, <30% ASSUMPTION
+3. **Pytest**: All tests pass (unless --skip-pytest)
+
+## Knowledge Base (Learning Loop)
+
+The KB at `runtime/kb/` contains patterns for:
+- `auth` - Authentication/credential patterns
+- `pagination` - Cursor/offset pagination
+- `ts_to_python` - TypeScript to Python idiom conversion
+- `service_quirk` - Service-specific behaviors
+
+Patterns are injected into advisor-facing skills (schema-infer, code-implement, code-convert, code-fix).
+
+To promote artifacts to KB:
+```bash
+python3 scripts/promote_artifact.py list golden           # List available
+python3 scripts/promote_artifact.py golden <id> --category auth  # Promote
 ```
 
 ## When to Ask vs Proceed

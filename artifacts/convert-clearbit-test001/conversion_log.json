@@ -1,0 +1,20 @@
+{
+  "correlation_id": "convert-clearbit-test001",
+  "node_name": "Clearbit",
+  "source_type": "TYPE1",
+  "operations_converted": 3,
+  "files_generated": [
+    "/home/toni/agent-skills/artifacts/convert-clearbit-test001/converted_node/clearbit.py",
+    "/home/toni/agent-skills/artifacts/convert-clearbit-test001/converted_node/__init__.py"
+  ],
+  "notes": [
+    "Found main node class for Clearbit",
+    "Found 3 operation handlers",
+    "Converted person/enrich",
+    "Converted company/enrich",
+    "Converted company/autocomplete",
+    "Converted GenericFunctions.ts to Python helpers",
+    "Using 1 parameters from inferred schema"
+  ],
+  "generated_at": "2025-12-31T13:01:55.867957"
+}

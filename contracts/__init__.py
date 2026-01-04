@@ -14,6 +14,9 @@ from .skill_contract import (
     FailureMode,
     TraceSource,
     ConfidenceLevel,
+    IntermediateState,
+    StatePersistenceLevel,
+    SkillExecutionMode,
     # Config models
     RetryConfig,
     IdempotencyConfig,
@@ -30,6 +33,12 @@ from .skill_contract import (
     # Sync Celery constraints
     BoundedAutonomyConstraints,
     SyncCeleryConstraints,
+    # Interaction outcomes (agent capabilities)
+    InputFieldSchema,
+    InteractionOutcomes,
+    # Skill execution mode helpers
+    SKILL_EXECUTION_MODES,
+    get_skill_execution_mode,
 )
 
 from .basenode_contract import (
@@ -53,6 +62,9 @@ __all__ = [
     "FailureMode",
     "TraceSource",
     "ConfidenceLevel",
+    "IntermediateState",
+    "StatePersistenceLevel",
+    "SkillExecutionMode",
     # Config models
     "RetryConfig",
     "IdempotencyConfig",
@@ -69,6 +81,9 @@ __all__ = [
     # Sync Celery constraints
     "BoundedAutonomyConstraints",
     "SyncCeleryConstraints",
+    # Interaction outcomes (agent capabilities)
+    "InputFieldSchema",
+    "InteractionOutcomes",
     # BaseNode contract
     "BaseNodeSchema",
     "NodeDescription",
@@ -77,4 +92,7 @@ __all__ = [
     "CredentialDefinition",
     "validate_basenode_schema",
     "SchemaValidationResult",
+    # Skill execution mode
+    "SKILL_EXECUTION_MODES",
+    "get_skill_execution_mode",
 ]

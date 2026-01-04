@@ -1,0 +1,58 @@
+{
+  "correlation_id": "convert-bitly-1766927452",
+  "node_type": "Bitly",
+  "trace_entries": [
+    {
+      "field_path": "operations[0].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'getGroups' defined in Bitly.node.ts",
+      "confidence": "high",
+      "source_file": "Bitly.node.ts",
+      "line_range": "L89",
+      "excerpt_hash": "166a69c06b0e"
+    },
+    {
+      "field_path": "operations[1].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'getTags' defined in Bitly.node.ts",
+      "confidence": "high",
+      "source_file": "Bitly.node.ts",
+      "line_range": "L104",
+      "excerpt_hash": "5eaf27d80f61"
+    },
+    {
+      "field_path": "operations[2].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'bitlyApiRequest' defined in GenericFunctions.ts",
+      "confidence": "high",
+      "source_file": "GenericFunctions.ts",
+      "line_range": "L12",
+      "excerpt_hash": "78e30a266a1e"
+    },
+    {
+      "field_path": "operations[3].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'bitlyApiRequestAllItems' defined in GenericFunctions.ts",
+      "confidence": "high",
+      "source_file": "GenericFunctions.ts",
+      "line_range": "L56",
+      "excerpt_hash": "c96b3604a685"
+    },
+    {
+      "field_path": "credentials[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Auth pattern 'oauth' found in source",
+      "confidence": "medium"
+    }
+  ],
+  "generated_at": "2025-12-29T05:23:17.475647",
+  "skill_version": "1.0.0",
+  "_hybrid_metadata": {
+    "source_type": "TYPE1",
+    "extraction_confidence": 0.95,
+    "advisor_used": false,
+    "assumption_ratio": 0.0,
+    "deterministic_operations": 5,
+    "assumption_operations": 0
+  }
+}

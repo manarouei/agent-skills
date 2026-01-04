@@ -44,6 +44,24 @@ agent-skills/
 | [code-fix](skills/code-fix/) | IMPLEMENT | Bounded fix loop (max 3 iterations) |
 | [pr-prepare](skills/pr-prepare/) | SUGGEST | Package artifacts for PR submission |
 
+## Execution Modes (Hybrid Backbone)
+
+Skills are classified into execution modes that determine how AI is used:
+
+| Mode | Description | Skills |
+|------|-------------|--------|
+| **DETERMINISTIC** | Pure functions, no LLM. Reproducible. | node-normalize, source-classify, source-ingest, schema-build, node-scaffold, code-validate, pr-prepare |
+| **HYBRID** | Deterministic first, advisor fallback | schema-infer, test-generate |
+| **ADVISOR_ONLY** | Requires AI reasoning. Still bounded. | code-convert, code-implement, code-fix |
+
+```python
+from contracts import get_skill_execution_mode, SkillExecutionMode
+
+mode = get_skill_execution_mode("schema-infer")  # Returns SkillExecutionMode.HYBRID
+```
+
+See [docs/hybrid_backbone_architecture.md](docs/hybrid_backbone_architecture.md) for details.
+
 ## Contract-First Design
 
 Every skill has enforced contracts in YAML frontmatter:
@@ -191,3 +209,5 @@ MIT
 
 - [BaseNode Contract](contracts/BASENODE_CONTRACT.md)
 - [Skill Contract Schema](contracts/skill_contract.py)
+- [Hybrid Backbone Architecture](docs/hybrid_backbone_architecture.md)
+- [Agent Capabilities MVP](docs/agent_capabilities_mvp.md)

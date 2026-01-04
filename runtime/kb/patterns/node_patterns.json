@@ -1,0 +1,217 @@
+[
+  {
+    "id": "node-001",
+    "version": "1.0.0",
+    "name": "BaseNode Structure",
+    "category": "ts_to_python",
+    "description": "Base node class with execute/trigger pattern - all nodes extend this",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "export class ExampleNode implements INodeType { ... }",
+      "python_pattern": "class ExampleNode(BaseNode): ...",
+      "notes": "Nodes inherit from BaseNode. Define type, version, description, properties dict with parameters/credentials. Implement execute() for regular nodes, trigger() for trigger nodes."
+    },
+    "examples": [
+      {
+        "input": "n8n INodeType interface",
+        "output": "class TelegramNode(BaseNode):\n    type = 'n8n-nodes-base.telegram'\n    version = 1\n    description = {\n        'displayName': 'Telegram',\n        'name': 'telegram',\n        'group': ['output'],\n        'subtitle': '={{$parameter[\"operation\"] + \": \" + $parameter[\"resource\"]}}',\n    }\n    icon = 'file:telegram.svg'\n    color = '#0088cc'\n    properties = {\n        'parameters': [...],\n        'credentials': [...],\n    }",
+        "notes": "description dict mirrors n8n node description"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["regular", "trigger"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "node-002",
+    "version": "1.0.0",
+    "name": "Resource-Operation Pattern",
+    "category": "ts_to_python",
+    "description": "Multi-resource node with resource selector and operation selector pattern",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "resource: { type: 'options', options: [...] }, operation: { type: 'options', displayOptions: { show: { resource: ['message'] } } }",
+      "python_pattern": "NodeParameter with display_options for conditional visibility",
+      "notes": "First parameter is resource selector (message, channel, file, etc). Second is operation selector with display_options showing which resource it applies to. Additional parameters have display_options showing both resource AND operation."
+    },
+    "examples": [
+      {
+        "input": "Slack node with multiple resources",
+        "output": "NodeParameter(\n    name='resource',\n    display_name='Resource',\n    type=NodeParameterType.OPTIONS,\n    required=True,\n    default='message',\n    options=[\n        {'name': 'Message', 'value': 'message'},\n        {'name': 'Channel', 'value': 'channel'},\n        {'name': 'File', 'value': 'file'},\n    ],\n),\nNodeParameter(\n    name='operation',\n    display_name='Operation',\n    type=NodeParameterType.OPTIONS,\n    required=True,\n    default='post',\n    options=[\n        {'name': 'Post', 'value': 'post', 'description': 'Post a message'},\n        {'name': 'Update', 'value': 'update', 'description': 'Update a message'},\n    ],\n    display_options={'show': {'resource': ['message']}},\n),",
+        "notes": "display_options controls when parameter is visible"
+      },
+      {
+        "input": "Operation-specific parameter",
+        "output": "NodeParameter(\n    name='channel',\n    display_name='Channel',\n    type=NodeParameterType.STRING,\n    required=True,\n    description='Channel ID or name to post to',\n    display_options={'show': {'resource': ['message'], 'operation': ['post', 'update']}},\n),",
+        "notes": "Show only for specific resource+operation combos"
+      }
+    ],
+    "applicability": {
+      "services": ["slack", "telegram", "discord", "trello", "github"],
+      "node_types": ["regular"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "node-003",
+    "version": "1.0.0",
+    "name": "Node Execute Method",
+    "category": "ts_to_python",
+    "description": "Pattern for implementing node execute() method with parameter and credential handling",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]>",
+      "python_pattern": "def execute(self, input_data: list[dict], credentials: dict, parameters: dict) -> list[dict]:",
+      "notes": "execute() receives input_data from previous node, credentials dict, and parameters dict. Use get_node_parameter() for expression-enabled params. Return list of output items. Must be sync (no async/await) for Celery compatibility."
+    },
+    "examples": [
+      {
+        "input": "Telegram sendMessage execute",
+        "output": "def execute(self, input_data: list[dict], credentials: dict, parameters: dict) -> list[dict]:\n    resource = self.get_node_parameter('resource', parameters)\n    operation = self.get_node_parameter('operation', parameters)\n    \n    results = []\n    for item in input_data:\n        if resource == 'message' and operation == 'sendMessage':\n            response = self._send_message(\n                credentials=credentials,\n                chat_id=self.get_node_parameter('chatId', parameters, item),\n                text=self.get_node_parameter('text', parameters, item),\n            )\n            results.append({'json': response})\n    return results",
+        "notes": "Loop through input items, call API, return results"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["regular"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "node-004",
+    "version": "1.0.0",
+    "name": "Node Trigger Method",
+    "category": "ts_to_python",
+    "description": "Pattern for implementing trigger node trigger() method for webhook/polling triggers",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "async trigger(this: ITriggerFunctions): Promise<ITriggerResponse>",
+      "python_pattern": "def trigger(self, credentials: dict, parameters: dict, webhook_data: dict | None = None) -> list[dict]:",
+      "notes": "trigger() receives credentials, parameters, and optional webhook_data for incoming webhooks. For polling triggers, fetch data and return new items. For webhook triggers, process webhook_data. Must be sync."
+    },
+    "examples": [
+      {
+        "input": "Webhook trigger node",
+        "output": "def trigger(self, credentials: dict, parameters: dict, webhook_data: dict | None = None) -> list[dict]:\n    if webhook_data:\n        # Process incoming webhook\n        return [{'json': webhook_data}]\n    \n    # Polling mode - fetch new data\n    last_timestamp = parameters.get('_last_timestamp', 0)\n    response = self._http.get(\n        f'{self.base_url}/events',\n        params={'since': last_timestamp},\n        headers=self._get_auth_headers(credentials),\n        timeout=30,\n    )\n    events = response.json()\n    return [{'json': event} for event in events]",
+        "notes": "Handle both webhook and polling modes"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["trigger"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "node-005",
+    "version": "1.0.0",
+    "name": "Expression Evaluation Pattern",
+    "category": "ts_to_python",
+    "description": "Pattern for evaluating n8n expressions in parameter values",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "this.getNodeParameter('field', itemIndex)",
+      "python_pattern": "self.get_node_parameter('field', parameters, item)",
+      "notes": "get_node_parameter() resolves expressions like {{$json.fieldName}}, {{$node.prevNode.json.field}}, {{$parameter.otherParam}}. Pass current item for item-level expression resolution. ExpressionEngine handles the actual resolution."
+    },
+    "examples": [
+      {
+        "input": "Expression patterns in n8n",
+        "output": "# Common expression patterns:\n# {{$json.email}} - Current item's json.email field\n# {{$node['HTTP Request'].json.body}} - Output from specific node\n# {{$parameter.resource}} - Another parameter's value\n# {{$env.API_KEY}} - Environment variable\n# {{$self['client_id']}} - Self-reference in credentials\n\ndef get_node_parameter(self, name: str, parameters: dict, item: dict | None = None) -> Any:\n    value = parameters.get(name)\n    if isinstance(value, str) and '{{' in value:\n        return self._expression_engine.evaluate(value, item or {})\n    return value",
+        "notes": "Expression engine resolves {{ }} patterns"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["regular", "trigger"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "node-006",
+    "version": "1.0.0",
+    "name": "Credential Retrieval Pattern",
+    "category": "ts_to_python",
+    "description": "Pattern for retrieving and decrypting credentials in node execution",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "const credentials = await this.getCredentials('slackOAuth2Api')",
+      "python_pattern": "credentials = self.get_credentials('slackOAuth2Api', workflow_id)",
+      "notes": "get_credentials() fetches credential from database by name/type and workflow association, then decrypts sensitive fields. Returns dict with credential data. Credentials are stored encrypted and decrypted at runtime."
+    },
+    "examples": [
+      {
+        "input": "Credential retrieval in execute",
+        "output": "def execute(self, input_data: list[dict], credentials: dict, parameters: dict) -> list[dict]:\n    # credentials already passed in - retrieved and decrypted by executor\n    api_key = credentials.get('api_key')\n    access_token = credentials.get('access_token')\n    \n    # For OAuth2, check token expiry and refresh if needed\n    if self._is_token_expired(credentials):\n        credentials = self._refresh_token(credentials)\n    \n    headers = {'Authorization': f'Bearer {credentials[\"access_token\"]}'}\n    ...",
+        "notes": "Executor retrieves credentials before calling execute()"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["regular", "trigger"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "node-007",
+    "version": "1.0.0",
+    "name": "NodeParameter Type Mapping",
+    "category": "ts_to_python",
+    "description": "Mapping from n8n parameter types to Python NodeParameterType enum",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "type: 'string' | 'number' | 'boolean' | 'options' | 'collection' | 'fixedCollection' | 'json'",
+      "python_pattern": "NodeParameterType.STRING | NUMBER | BOOLEAN | OPTIONS | COLLECTION | FIXED_COLLECTION | JSON",
+      "notes": "STRING for text, NUMBER for integers/floats, BOOLEAN for toggles, OPTIONS for dropdowns, COLLECTION for repeatable groups, FIXED_COLLECTION for fixed groups, JSON for raw JSON input."
+    },
+    "examples": [
+      {
+        "input": "Parameter type definitions",
+        "output": "class NodeParameterType(str, Enum):\n    STRING = 'string'\n    NUMBER = 'number'\n    BOOLEAN = 'boolean'\n    OPTIONS = 'options'\n    COLLECTION = 'collection'\n    FIXED_COLLECTION = 'fixedCollection'\n    JSON = 'json'\n    DATETIME = 'dateTime'\n    COLOR = 'color'",
+        "notes": "Enum inherits from str for JSON serialization"
+      },
+      {
+        "input": "Parameter with options",
+        "output": "NodeParameter(\n    name='format',\n    display_name='Format',\n    type=NodeParameterType.OPTIONS,\n    options=[\n        {'name': 'JSON', 'value': 'json'},\n        {'name': 'XML', 'value': 'xml'},\n        {'name': 'CSV', 'value': 'csv'},\n    ],\n    default='json',\n)",
+        "notes": "OPTIONS type requires options array"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["regular", "trigger"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  },
+  {
+    "id": "node-008",
+    "version": "1.0.0",
+    "name": "HTTP Request Pattern",
+    "category": "ts_to_python",
+    "description": "Pattern for making HTTP requests in nodes (sync, with timeout)",
+    "pattern": {
+      "type": "ts_to_python",
+      "ts_pattern": "await this.helpers.request(options)",
+      "python_pattern": "response = self._http.request(method, url, timeout=30, **kwargs)",
+      "notes": "CRITICAL: Always include timeout parameter for Celery compatibility. Use requests library. Handle rate limiting with retry logic. Parse response based on content-type."
+    },
+    "examples": [
+      {
+        "input": "HTTP GET with auth",
+        "output": "def _make_request(self, method: str, endpoint: str, credentials: dict, **kwargs) -> dict:\n    url = f'{self.base_url}/{endpoint}'\n    headers = {\n        'Authorization': f'Bearer {credentials[\"access_token\"]}',\n        'Content-Type': 'application/json',\n    }\n    response = self._http.request(\n        method,\n        url,\n        headers=headers,\n        timeout=30,  # REQUIRED for sync Celery\n        **kwargs,\n    )\n    response.raise_for_status()\n    return response.json()",
+        "notes": "timeout=30 is mandatory"
+      },
+      {
+        "input": "HTTP POST with body",
+        "output": "def _post_message(self, credentials: dict, channel: str, text: str) -> dict:\n    return self._make_request(\n        'POST',\n        'chat.postMessage',\n        credentials,\n        json={'channel': channel, 'text': text},\n    )",
+        "notes": "Use json= for JSON body, data= for form data"
+      }
+    ],
+    "applicability": {
+      "services": [],
+      "node_types": ["regular", "trigger"]
+    },
+    "created_at": "2025-01-15T00:00:00Z"
+  }
+]

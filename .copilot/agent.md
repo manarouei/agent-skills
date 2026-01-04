@@ -11,6 +11,19 @@
 8. External calls require timeouts. No background threads/tasks that outlive node execution.
 9. Retries only if safe + idempotent with dedupe key.
 
+## Agent Capabilities Constraints (multi-turn support)
+10. Max message turns per context: 8 (configurable per-skill up to 20).
+11. Max persisted event log: 100 events per context (oldest trimmed).
+12. Max pocket facts per bucket: 50 (oldest trimmed).
+13. INPUT_REQUIRED is NOT an error: skills may pause and request input without failing.
+14. State persistence required: all multi-turn state must be in StateStore, not in memory.
+15. No daemon loops: "long-lived identity" is achieved via context_id + StateStore, not running processes.
+16. DELEGATE state forbidden: skills MUST NOT return DELEGATING until runtime/router.py is implemented.
+17. All persisted payloads MUST be redacted: use redact_sensitive() before storing facts/events.
+18. Non-terminal states MUST include agent_state metadata: INPUT_REQUIRED, DELEGATING, PAUSED responses must set metadata.agent_state.
+19. Resume token validation required: when resume=True with resume_token, validate before proceeding.
+20. Contract enforcement: skills can only return intermediate states declared in interaction_outcomes.allowed_intermediate_states.
+
 ## When to proceed autonomously vs ask
 Proceed autonomously if:
 - change set is inside allowlist

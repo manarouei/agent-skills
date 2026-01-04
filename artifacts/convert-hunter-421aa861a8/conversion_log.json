@@ -1,0 +1,20 @@
+{
+  "correlation_id": "convert-hunter-421aa861a8",
+  "node_name": "Hunter",
+  "source_type": "TYPE1",
+  "operations_converted": 3,
+  "files_generated": [
+    "/home/toni/agent-skills/artifacts/convert-hunter-421aa861a8/converted_node/hunter.py",
+    "/home/toni/agent-skills/artifacts/convert-hunter-421aa861a8/converted_node/__init__.py"
+  ],
+  "notes": [
+    "Found main node class for Hunter",
+    "Found 3 operation handlers",
+    "Converted /domainSearch",
+    "Converted /emailFinder",
+    "Converted /emailVerifier",
+    "Converted GenericFunctions.ts to Python helpers",
+    "Using 13 parameters from inferred schema"
+  ],
+  "generated_at": "2025-12-31T12:59:09.227780"
+}

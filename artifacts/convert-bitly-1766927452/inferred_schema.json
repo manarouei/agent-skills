@@ -1,0 +1,93 @@
+{
+  "type": "Bitly",
+  "version": 1,
+  "description": {
+    "displayName": "Bitly",
+    "name": "bitly",
+    "inputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ]
+  },
+  "properties": {
+    "parameters": [
+      {
+        "name": "resource",
+        "type": "options",
+        "options": [
+          {
+            "name": "getGroups",
+            "value": "getGroups"
+          },
+          {
+            "name": "getTags",
+            "value": "getTags"
+          },
+          {
+            "name": "bitlyApiRequest",
+            "value": "bitlyApiRequest"
+          },
+          {
+            "name": "bitlyApiRequestAllItems",
+            "value": "bitlyApiRequestAllItems"
+          }
+        ],
+        "default": "getGroups",
+        "description": "Select the resource/operation"
+      },
+      {
+        "name": "operation",
+        "type": "options",
+        "options": [
+          {
+            "name": "getGroups",
+            "value": "getGroups"
+          },
+          {
+            "name": "getTags",
+            "value": "getTags"
+          },
+          {
+            "name": "bitlyApiRequest",
+            "value": "bitlyApiRequest"
+          },
+          {
+            "name": "bitlyApiRequestAllItems",
+            "value": "bitlyApiRequestAllItems"
+          }
+        ],
+        "default": "getGroups",
+        "description": "Operation to perform"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "name": "getGroups",
+      "description": "Operation: getGroups"
+    },
+    {
+      "name": "getTags",
+      "description": "Operation: getTags"
+    },
+    {
+      "name": "bitlyApiRequest",
+      "description": "Operation: bitlyApiRequest"
+    },
+    {
+      "name": "bitlyApiRequestAllItems",
+      "description": "Operation: bitlyApiRequestAllItems"
+    }
+  ],
+  "credentials": [
+    "oauth2"
+  ]
+}

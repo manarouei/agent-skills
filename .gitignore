@@ -31,6 +31,19 @@ htmlcov/
 .tox/
 .mypy_cache/
 
+# Test artifacts (StateStore databases)
+artifacts/test-*/
+artifacts/*/.state.db
+
+# Pipeline artifacts (generated during runs)
+artifacts/*/converted_node/
+artifacts/*/generated_node/
+artifacts/*/source_bundle/
+artifacts/*/__pycache__/
+
+# Debug scripts
+scripts/debug_*.py
+
 # Environment
 .env
 .env.local

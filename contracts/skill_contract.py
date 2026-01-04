@@ -120,6 +120,63 @@ class FailureMode(str, Enum):
     PERMISSION_DENIED = "permission_denied"
 
 
+class SkillExecutionMode(str, Enum):
+    """
+    Execution mode classification for hybrid backbone.
+    
+    This determines whether a skill uses AI/LLM reasoning or is purely deterministic.
+    The hybrid backbone uses deterministic transforms as the backbone, with AI advisor
+    invocations only where truly needed.
+    
+    DETERMINISTIC: Pure functions, template expansion, structured transforms.
+                   No LLM involvement. Reproducible given same inputs.
+                   Examples: source-classify, source-ingest, node-scaffold, code-validate, pr-prepare
+    
+    HYBRID: Deterministic first, advisor fallback for ambiguity.
+            Uses deterministic methods (AST parsing, regex) when possible.
+            Falls back to advisor only for unstructured input (docs parsing).
+            Examples: schema-infer (TS: deterministic; docs: advisor), test-generate
+    
+    ADVISOR_ONLY: Requires AI reasoning for core function.
+                  Still bounded: structured output, validation, no direct side effects.
+                  Examples: code-convert, code-implement, code-fix
+    """
+    DETERMINISTIC = "DETERMINISTIC"
+    HYBRID = "HYBRID"
+    ADVISOR_ONLY = "ADVISOR_ONLY"
+
+
+# Skill execution mode classification (canonical mapping)
+# This is the source of truth for which skills use advisor reasoning
+SKILL_EXECUTION_MODES: dict[str, SkillExecutionMode] = {
+    # Pipeline backbone - deterministic transforms
+    "node-normalize": SkillExecutionMode.DETERMINISTIC,
+    "source-classify": SkillExecutionMode.DETERMINISTIC,
+    "source-ingest": SkillExecutionMode.DETERMINISTIC,
+    "schema-build": SkillExecutionMode.DETERMINISTIC,
+    "node-scaffold": SkillExecutionMode.DETERMINISTIC,
+    "code-validate": SkillExecutionMode.DETERMINISTIC,
+    "pr-prepare": SkillExecutionMode.DETERMINISTIC,
+    # Hybrid - deterministic first, advisor fallback
+    "schema-infer": SkillExecutionMode.HYBRID,
+    "test-generate": SkillExecutionMode.HYBRID,
+    # Advisor-only - bounded AI reasoning required
+    "code-convert": SkillExecutionMode.ADVISOR_ONLY,
+    "code-implement": SkillExecutionMode.ADVISOR_ONLY,
+    "code-fix": SkillExecutionMode.ADVISOR_ONLY,
+}
+
+
+def get_skill_execution_mode(skill_name: str) -> SkillExecutionMode:
+    """
+    Get execution mode for a skill.
+    
+    Returns DETERMINISTIC as default (safe fallback).
+    Unknown skills should not bypass advisor validation.
+    """
+    return SKILL_EXECUTION_MODES.get(skill_name, SkillExecutionMode.DETERMINISTIC)
+
+
 class RetryConfig(BaseModel):
     """Retry configuration for skill execution."""
     model_config = ConfigDict(extra="forbid")
@@ -144,6 +201,90 @@ class ArtifactSpec(BaseModel):
     name: str
     type: Literal["json", "yaml", "md", "py", "txt", "diff"]
     description: str
+
+
+# =============================================================================
+# INTERACTION OUTCOMES (Agent Capabilities Extension)
+# =============================================================================
+
+class IntermediateState(str, Enum):
+    """
+    Allowed intermediate states for agent-style skills.
+    
+    These states indicate the skill is not terminal but requires
+    interaction to proceed.
+    """
+    INPUT_REQUIRED = "input_required"  # Skill needs additional inputs
+    DELEGATING = "delegating"          # Skill delegating to another agent
+    PAUSED = "paused"                  # Skill paused, can resume
+
+
+class InputFieldSchema(BaseModel):
+    """Schema for a single input field in interaction outcomes."""
+    model_config = ConfigDict(extra="forbid")
+    
+    name: str = Field(..., description="Field name")
+    type: str = Field(default="string", description="Expected type")
+    description: str = Field(default="", description="Human-readable description")
+    required: bool = Field(default=True, description="Whether field is required")
+
+
+class StatePersistenceLevel(str, Enum):
+    """Level of state persistence for a skill."""
+    NONE = "none"           # No persistence (stateless tool)
+    FACTS_ONLY = "facts_only"  # Only pocket facts (lightweight)
+    FULL_EVENTS = "full_events"  # Full event log + facts (audit trail)
+
+
+class InteractionOutcomes(BaseModel):
+    """
+    Specification for agent-style interaction capabilities.
+    
+    Skills that support multi-turn interaction declare their allowed
+    intermediate states and the schema for input requests.
+    
+    This is OPTIONAL - skills without this behave as one-shot tools.
+    """
+    model_config = ConfigDict(extra="forbid")
+    
+    # Which intermediate states this skill can emit
+    allowed_intermediate_states: List[IntermediateState] = Field(
+        default_factory=list,
+        description="Intermediate states this skill may emit"
+    )
+    
+    # Schema for INPUT_REQUIRED payloads (simple field list)
+    input_request_schema: List[InputFieldSchema] = Field(
+        default_factory=list,
+        description="Fields that may be requested during INPUT_REQUIRED"
+    )
+    
+    # JSON Schema for INPUT_REQUIRED payload validation (strict)
+    # When set, INPUT_REQUIRED responses are validated against this schema
+    input_request_jsonschema: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="JSON Schema object for INPUT_REQUIRED payload validation"
+    )
+    
+    # Max turns before escalation (default: 8)
+    max_turns: int = Field(
+        default=8,
+        ge=1,
+        le=20,
+        description="Maximum conversation turns before escalation"
+    )
+    
+    # Whether skill supports resumption from persisted state
+    supports_resume: bool = Field(
+        default=True,
+        description="Whether skill can resume from StateStore"
+    )
+    
+    # State persistence level (default: facts_only for safety)
+    state_persistence: StatePersistenceLevel = Field(
+        default=StatePersistenceLevel.FACTS_ONLY,
+        description="Level of state to persist between turns"
+    )
 
 
 class SkillContract(BaseModel):
@@ -188,6 +329,13 @@ class SkillContract(BaseModel):
     sync_celery_constraints: Optional[SyncCeleryConstraints] = Field(
         default=None,
         description="Sync Celery execution constraints for node-generation skills"
+    )
+    
+    # Interaction Outcomes (for agent-style skills)
+    # When set, skill can emit intermediate states and request input
+    interaction_outcomes: Optional[InteractionOutcomes] = Field(
+        default=None,
+        description="Agent-style interaction capabilities (multi-turn support)"
     )
     
     @field_validator("name")

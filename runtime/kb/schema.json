@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "KB Pattern Entry",
+  "description": "Schema for Knowledge Base pattern entries",
+  "type": "object",
+  "required": ["id", "version", "category", "name", "description", "pattern"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Unique pattern identifier (lowercase, hyphens)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["auth", "pagination", "ts_to_python", "service_quirk"],
+      "description": "Pattern category"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 100,
+      "description": "Human-readable name"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 1000,
+      "description": "Detailed description"
+    },
+    "applicability": {
+      "type": "object",
+      "properties": {
+        "services": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Applicable services (empty = all)"
+        },
+        "node_types": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Applicable node types: credential, regular, trigger"
+        }
+      }
+    },
+    "pattern": {
+      "type": "object",
+      "description": "Category-specific pattern data",
+      "oneOf": [
+        {
+          "properties": {
+            "type": {"const": "auth"},
+            "auth_type": {"enum": ["oauth2", "api_key", "basic", "bearer", "custom"]},
+            "credential_fields": {"type": "array", "items": {"type": "string"}},
+            "implementation_notes": {"type": "string"}
+          },
+          "required": ["type", "auth_type"]
+        },
+        {
+          "properties": {
+            "type": {"const": "pagination"},
+            "style": {"enum": ["cursor", "offset", "page", "link"]},
+            "max_pages": {"type": ["integer", "null"]},
+            "rate_limit_header": {"type": ["string", "null"]},
+            "implementation_notes": {"type": "string"}
+          },
+          "required": ["type", "style"]
+        },
+        {
+          "properties": {
+            "type": {"const": "ts_to_python"},
+            "ts_pattern": {"type": "string"},
+            "python_pattern": {"type": "string"},
+            "notes": {"type": "string"}
+          },
+          "required": ["type", "ts_pattern", "python_pattern"]
+        },
+        {
+          "properties": {
+            "type": {"const": "service_quirk"},
+            "quirk_type": {"enum": ["rate_limit", "encoding", "header", "response_format", "other"]},
+            "description": {"type": "string"},
+            "workaround": {"type": "string"}
+          },
+          "required": ["type", "quirk_type", "description"]
+        }
+      ]
+    },
+    "examples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "input": {"type": "string", "description": "Example input or context"},
+          "output": {"type": "string", "description": "Example output or implementation"},
+          "notes": {"type": "string", "description": "Additional notes"}
+        },
+        "required": ["input", "output"]
+      },
+      "description": "Concrete examples with input/output pairs"
+    },
+    "promoted_from": {
+      "type": "string",
+      "description": "Correlation ID if promoted from golden artifact"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
