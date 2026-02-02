@@ -211,3 +211,4 @@ MIT
 - [Skill Contract Schema](contracts/skill_contract.py)
 - [Hybrid Backbone Architecture](docs/hybrid_backbone_architecture.md)
 - [Agent Capabilities MVP](docs/agent_capabilities_mvp.md)
+# agent-skills
