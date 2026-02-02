@@ -1,0 +1,98 @@
+# Version control
+.git
+.gitignore
+.github/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.env
+.venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Test files
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+coverage.xml
+*.cover
+.hypothesis/
+pytest-report.xml
+tests/
+
+# Documentation
+docs/
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+
+# Local development
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+
+# Docker
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile
+.dockerignore
+docker-volumes/
+
+# Notebooks and scripts
+*.ipynb
+.ipynb_checkpoints
+scripts/
+
+# Cache files
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Database
+*.sqlite3
+*.db
+migrations/
+
+# Temporary files
+tmp/
+temp/
+
+# Local configuration files
+config.local.py
+*.local.py

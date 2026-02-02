@@ -1,0 +1,52 @@
+stages:
+  - build
+  - deploy_stage
+  - deploy_production
+
+before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY    
+
+build_develop:
+  stage: build
+  only:
+    - develop
+  script:
+    - docker build --tag="$CI_REGISTRY_IMAGE":"$CI_COMMIT_REF_NAME" .
+    - docker push "$CI_REGISTRY_IMAGE":"$CI_COMMIT_REF_NAME"
+
+build_master:
+  stage: build
+  only:
+    - master
+  script:
+    - docker build --tag="$CI_REGISTRY_IMAGE":"$CI_COMMIT_REF_NAME" .
+    - docker push "$CI_REGISTRY_IMAGE":"$CI_COMMIT_REF_NAME"
+
+deploy_stage:
+  stage: deploy_stage
+  only:
+    - develop
+  environment:
+    name: stage
+    url: https://stage.api.avidflow.ir
+  when: manual
+  script:
+    - echo "ENV_FILE_STAGE is '$ENV_FILE_STAGE'"
+    - ls -la "$ENV_FILE_STAGE" || echo "File does not exist"
+    - mkdir -p /var/www/workflow-stage
+    - cp docker-compose.stage.yml /var/www/workflow-stage/docker-compose.yml
+    - cp "$ENV_FILE_STAGE" /var/www/workflow-stage/.env
+    - cd /var/www/workflow-stage && docker compose pull && docker compose up -d && docker system prune -af --volumes
+
+deploy_production:
+  stage: deploy_production
+  only:
+    - master
+  environment:
+    name: production
+    url: https://api.avidflow.ir
+  when: manual
+  script:
+    - cp docker-compose.yml /var/www/workflow/docker-compose.yml
+    - cp $ENV_FILE /var/www/workflow/.env
+    - cd /var/www/workflow && docker compose pull && docker compose up -d && docker system prune -af --volumes

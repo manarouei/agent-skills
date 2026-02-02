@@ -1,0 +1,101 @@
+{
+  "name": "Tavily Tool",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "input data"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        40,
+        0
+      ],
+      "id": "5c439f2a-022a-4b38-a832-98ef649c406e",
+      "name": "Workflow Input Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"api_key\": \"API-Key\",\n    \"query\": \"{{ $json['input data'] }}\",\n    \"search_depth\": \"basic\",\n    \"include_answer\": true,\n    \"topic\": \"news\",\n    \"include_raw_content\": true,\n    \"max_results\": 3\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "cb4494b9-7d98-4e5b-be0d-7729d04e2aae",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2af527a4-bca1-4052-9315-32f7a7709c3b",
+              "name": "response",
+              "value": "=[Source 1]\nURL: {{ $json.results[0].url }}\nContent: {{ $json.results[0].content }}\n\n[Source 2]\nURL: {{ $json.results[1].url }}\nContent: {{ $json.results[1].content }}\n\n[Source 3]\nURL: {{ $json.results[2].url }}\nContent: {{ $json.results[2].content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        440,
+        0
+      ],
+      "id": "2123a500-7554-46f8-9d1a-8c6d22c140af",
+      "name": "Response"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Workflow Input Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "dee4bd5f-8da5-4a65-80b0-230e73a8ad38",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "50618e78906785f75ac298c8b090bb3bd6406a17352da71ebb8b85e6df90fa3a"
+  },
+  "id": "8vaOCCaSr9YH9iME",
+  "tags": []
+}

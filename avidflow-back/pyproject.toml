@@ -1,0 +1,176 @@
+# Python Project Configuration
+# ============================
+# Centralized configuration for all Python tooling
+
+[project]
+name = "workflow-automation-api"
+version = "1.0.0"
+description = "Workflow automation platform with FastAPI, Celery, and RabbitMQ"
+requires-python = ">=3.10"
+
+[tool.black]
+line-length = 88
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+    | \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | venv
+    | _build
+    | buck-out
+    | build
+    | dist
+    | alembic/versions
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["routers", "models", "services", "utils", "database", "auth", "credentials", "nodes", "tasks", "engine"]
+known_third_party = ["fastapi", "celery", "sqlalchemy", "pydantic", "aiohttp", "redis"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+skip = ["venv", ".venv", "alembic/versions"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+exclude = [
+    ".eggs",
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "alembic/versions",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "ANN",    # flake8-annotations
+    "S",      # flake8-bandit (security)
+    "B",      # flake8-bugbear
+    "A",      # flake8-builtins
+    "C4",     # flake8-comprehensions
+    "DTZ",    # flake8-datetimez
+    "T10",    # flake8-debugger
+    "ISC",    # flake8-implicit-str-concat
+    "ICN",    # flake8-import-conventions
+    "PIE",    # flake8-pie
+    "PT",     # flake8-pytest-style
+    "Q",      # flake8-quotes
+    "RSE",    # flake8-raise
+    "RET",    # flake8-return
+    "SLF",    # flake8-self
+    "SIM",    # flake8-simplify
+    "TID",    # flake8-tidy-imports
+    "ARG",    # flake8-unused-arguments
+    "PLC",    # Pylint convention
+    "PLE",    # Pylint error
+    "PLR",    # Pylint refactor
+    "PLW",    # Pylint warning
+    "TRY",    # tryceratops
+    "RUF",    # Ruff-specific rules
+]
+ignore = [
+    "ANN101",  # Missing type annotation for self
+    "ANN102",  # Missing type annotation for cls
+    "ANN401",  # Dynamically typed expressions (Any)
+    "S101",    # Use of assert (needed for tests)
+    "PLR0913", # Too many arguments
+    "PLR2004", # Magic value comparison
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "ARG", "ANN"]
+"alembic/**/*.py" = ["ANN"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["routers", "models", "services", "utils", "database", "auth", "credentials", "nodes", "tasks", "engine"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+exclude = [
+    "venv",
+    "alembic/versions",
+    "tests",
+]
+
+[[tool.mypy.overrides]]
+module = "celery.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "fastapi.*"
+ignore_missing_imports = true
+
+[tool.bandit]
+exclude_dirs = ["tests", "venv", ".venv", "alembic"]
+skips = ["B101"]  # Skip assert warnings
+
+[tool.bandit.assert_used]
+skips = ["*_test.py", "test_*.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "-ra",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/tests/*",
+    "*/venv/*",
+    "*/__pycache__/*",
+    "*/alembic/*",
+    "conftest.py",
+]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+fail_under = 60
+show_missing = true
+
+[tool.pydocstyle]
+convention = "google"
+add-ignore = ["D100", "D104", "D105", "D107"]

@@ -1,0 +1,52 @@
+# Node Access Configuration
+# This file controls which nodes are available to different user tiers
+# Changes to this file take effect automatically (hot-reload on file change)
+
+# Access mode determines how filtering works:
+# - "whitelist": base_nodes lists exactly what free users CAN access (everything else is VIP)
+# - "blacklist": vip_exclusive_nodes lists what free users CANNOT access
+access_mode: "whitelist"
+
+# Nodes that are ONLY available to VIP users (subscription holders)
+# Only used when access_mode is "blacklist"
+vip_exclusive_nodes: []
+
+# Base nodes available to ALL users (including free tier)
+# When access_mode is "whitelist", ONLY these nodes are available to free users
+# Everything NOT in this list becomes VIP-exclusive
+base_nodes:
+  # Core/Essential nodes
+  - "start"
+  - "end"
+  - "set"
+  - "if"
+  - "switch"
+  - "merge"
+  - "iterator"
+  - "filter"
+  
+  # Communication
+  - "chat"
+  - "telegram"
+  - "gmail"
+  - "gmail_trigger"
+  
+  # Google Suite
+  - "googleCalendar"
+  - "googleDocs"
+  - "googleSheets"
+  - "googleDrive"
+  - "googleForm"
+  
+  # Utilities
+  - "http_request"
+  - "stickyNote"
+
+# Category-based access (optional, for future use)
+# Allows VIP-only access to entire categories
+vip_exclusive_categories: []
+
+# Feature flags for gradual rollouts
+feature_flags:
+  enable_vip_filtering: true
+  log_access_denials: false

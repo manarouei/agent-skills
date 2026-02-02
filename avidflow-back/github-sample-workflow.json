@@ -1,0 +1,338 @@
+{
+  "name": "GitHub Integration Test Suite",
+  "description": "Comprehensive test workflow for GitHub Node testing multiple repository operations",
+  "nodes": [
+    {
+      "id": "node_start",
+      "name": "Manual Start",
+      "type": "start",
+      "position": [
+        100,
+        400
+      ],
+      "parameters": {},
+      "credentials": {},
+      "is_start": true,
+      "is_end": false,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    },
+    {
+      "id": "node_get_repos",
+      "name": "1 Get User Repositories",
+      "type": "github",
+      "position": [
+        300,
+        200
+      ],
+      "parameters": {
+        "resource": "user",
+        "operation": "getRepositories",
+        "authentication": "accessToken",
+        "owner": "octocat"
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "e5214689-a019-4a09-b73e-577d7c383ef7",
+          "name": "My GitHub Credential"
+        }
+      },
+      "is_start": false,
+      "is_end": false,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    },
+    {
+      "id": "node_set_repo_data",
+      "name": "2 Set Repository Info",
+      "type": "set",
+      "position": [
+        500,
+        200
+      ],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "fields": [
+          {
+            "name": "owner",
+            "type": "stringValue",
+            "value": "octocat"
+          },
+          {
+            "name": "repository",
+            "type": "stringValue",
+            "value": "Hello-World"
+          }
+        ]
+      },
+      "credentials": {},
+      "is_start": false,
+      "is_end": false,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    },
+    {
+      "id": "node_get_file",
+      "name": "3 Get README File",
+      "type": "github",
+      "position": [
+        300,
+        400
+      ],
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "authentication": "accessToken",
+        "owner": "octocat",
+        "repository": "Hello-World",
+        "filePath": "README",
+        "asBinaryProperty": false
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "e5214689-a019-4a09-b73e-577d7c383ef7",
+          "name": "My GitHub Credential"
+        }
+      },
+      "is_start": false,
+      "is_end": false,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    },
+    {
+      "id": "node_list_issues",
+      "name": "4 List Repository Issues",
+      "type": "github",
+      "position": [
+        500,
+        400
+      ],
+      "parameters": {
+        "resource": "repository",
+        "operation": "getIssues",
+        "authentication": "accessToken",
+        "owner": "octocat",
+        "repository": "Hello-World",
+        "getRepositoryIssuesFilters": {
+          "state": "open",
+          "sort": "created",
+          "direction": "desc"
+        }
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "e5214689-a019-4a09-b73e-577d7c383ef7",
+          "name": "My GitHub Credential"
+        }
+      },
+      "is_start": false,
+      "is_end": false,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    },
+    {
+      "id": "node_list_workflows",
+      "name": "5 List Workflows",
+      "type": "github",
+      "position": [
+        700,
+        400
+      ],
+      "parameters": {
+        "resource": "workflow",
+        "operation": "list",
+        "authentication": "accessToken",
+        "owner": "octocat",
+        "repository": "Hello-World"
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "e5214689-a019-4a09-b73e-577d7c383ef7",
+          "name": "My GitHub Credential"
+        }
+      },
+      "is_start": false,
+      "is_end": false,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    },
+    {
+      "id": "node_get_releases",
+      "name": "6 Get All Releases",
+      "type": "github",
+      "position": [
+        300,
+        600
+      ],
+      "parameters": {
+        "resource": "release",
+        "operation": "getAll",
+        "authentication": "accessToken",
+        "owner": "octocat",
+        "repository": "Hello-World",
+        "returnAll": false,
+        "limit": 10
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "e5214689-a019-4a09-b73e-577d7c383ef7",
+          "name": "My GitHub Credential"
+        }
+      },
+      "is_start": false,
+      "is_end": false,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    },
+    {
+      "id": "node_merge_results",
+      "name": "7 Merge All Results",
+      "type": "merge",
+      "position": [
+        900,
+        400
+      ],
+      "parameters": {
+        "mode": "append",
+        "mergeByFields": {
+          "values": []
+        },
+        "options": {}
+      },
+      "credentials": {},
+      "is_start": false,
+      "is_end": false,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    },
+    {
+      "id": "node_end",
+      "name": "Test Complete",
+      "type": "end",
+      "position": [
+        1100,
+        400
+      ],
+      "parameters": {},
+      "credentials": {},
+      "is_start": false,
+      "is_end": true,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    }
+  ],
+  "connections": {
+    "Manual Start": {
+      "main": [
+        [
+          {
+            "node": "1 Get User Repositories",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "3 Get README File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "6 Get All Releases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1 Get User Repositories": {
+      "main": [
+        [
+          {
+            "node": "2 Set Repository Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2 Set Repository Info": {
+      "main": [
+        [
+          {
+            "node": "7 Merge All Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3 Get README File": {
+      "main": [
+        [
+          {
+            "node": "4 List Repository Issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4 List Repository Issues": {
+      "main": [
+        [
+          {
+            "node": "5 List Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5 List Workflows": {
+      "main": [
+        [
+          {
+            "node": "7 Merge All Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "6 Get All Releases": {
+      "main": [
+        [
+          {
+            "node": "7 Merge All Results",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "7 Merge All Results": {
+      "main": [
+        [
+          {
+            "node": "Test Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": null,
+  "pin_data": null,
+  "active": true,
+  "trigger_count": 0
+}

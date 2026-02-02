@@ -1,0 +1,227 @@
+name: AI-Assisted Code Review Pipeline
+
+# NOTE: This workflow is for GitHub Actions reference.
+# Your primary CI/CD is configured in .gitlab-ci.yml
+# Keep this file if you also mirror to GitHub, otherwise delete it.
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [develop]
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # ==========================================
+  # Code Quality Checks (First Pass - AI Review Prep)
+  # ==========================================
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better AI context
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy bandit safety black isort
+
+      - name: Run Ruff Linter
+        run: |
+          ruff check . --output-format=github
+
+      - name: Run Black Format Check
+        run: |
+          black --check --diff .
+
+      - name: Run isort Import Check
+        run: |
+          isort --check-only --diff .
+
+      - name: Run MyPy Type Check
+        run: |
+          mypy . --ignore-missing-imports --no-error-summary || true
+        continue-on-error: true
+
+  # ==========================================
+  # Security Analysis
+  # ==========================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install security tools
+        run: |
+          pip install bandit safety pip-audit
+
+      - name: Run Bandit Security Linter
+        run: |
+          bandit -r . -x ./tests,./venv -f json -o bandit-report.json || true
+          bandit -r . -x ./tests,./venv -f txt
+
+      - name: Check Dependencies for Vulnerabilities
+        run: |
+          pip-audit --requirement requirements.txt || true
+
+      - name: Upload Bandit Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-security-report
+          path: bandit-report.json
+
+  # ==========================================
+  # Testing Suite
+  # ==========================================
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio httpx
+
+      - name: Run Tests with Coverage
+        env:
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
+          CELERY_BROKER_URL: amqp://guest:guest@localhost:5672//
+          REDIS_URL: redis://localhost:6379
+        run: |
+          pytest tests/ -v --cov=. --cov-report=xml --cov-report=html
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
+
+  # ==========================================
+  # PR Size Check (Best Practice for AI Review)
+  # ==========================================
+  pr-size-check:
+    name: PR Size Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR Size
+        run: |
+          # Get changed files count
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l)
+          ADDED_LINES=$(git diff --stat origin/${{ github.base_ref }}...HEAD | tail -1 | awk '{print $4}' || echo "0")
+          
+          echo "Changed files: $CHANGED_FILES"
+          echo "Lines changed: $ADDED_LINES"
+          
+          # Warn if PR is too large (best practice for AI review)
+          if [ "$CHANGED_FILES" -gt 50 ]; then
+            echo "::warning::This PR modifies $CHANGED_FILES files. Consider breaking it into smaller PRs for better AI review quality."
+          fi
+          
+          if [ "${ADDED_LINES:-0}" -gt 500 ]; then
+            echo "::warning::This PR has significant line changes. Smaller PRs get more accurate AI review feedback."
+          fi
+
+      - name: Generate PR Summary
+        run: |
+          echo "## 📊 PR Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Files Changed | $(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commits | $(git rev-list --count origin/${{ github.base_ref }}...HEAD) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Changed Files:" >> $GITHUB_STEP_SUMMARY
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | head -20 >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================
+  # Documentation Check
+  # ==========================================
+  docs-check:
+    name: Documentation Validation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Check for Missing Docstrings
+        run: |
+          pip install pydocstyle
+          pydocstyle . --count --convention=google || true

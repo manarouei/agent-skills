@@ -1,0 +1,132 @@
+# Pre-commit Configuration for AI-Assisted Code Review
+# =====================================================
+# This configuration ensures code quality BEFORE commits,
+# reducing noise in AI code reviews by catching routine issues early.
+#
+# Installation:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Manual run:
+#   pre-commit run --all-files
+
+repos:
+  # ==========================================
+  # General Hooks
+  # ==========================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]  # Allow custom YAML tags
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: debug-statements  # Catches forgotten breakpoints/pdb
+      - id: check-docstring-first
+
+  # ==========================================
+  # Python Code Formatting
+  # ==========================================
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
+        language_version: python3.12
+        args: [--line-length=88]
+
+  # ==========================================
+  # Import Sorting
+  # ==========================================
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: [--profile=black]
+
+  # ==========================================
+  # Linting with Ruff (Fast Python Linter)
+  # ==========================================
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # ==========================================
+  # Type Checking with MyPy
+  # ==========================================
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.9.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-requests
+          - types-redis
+          - pydantic
+        args: [--ignore-missing-imports, --no-error-summary]
+        exclude: ^(tests/|alembic/|venv/)
+
+  # ==========================================
+  # Security Scanning with Bandit
+  # ==========================================
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.8
+    hooks:
+      - id: bandit
+        args: [-c, pyproject.toml, -r, .]
+        additional_dependencies: ["bandit[toml]"]
+        exclude: ^(tests/|venv/)
+
+  # ==========================================
+  # Docstring Coverage (Optional - Warning Only)
+  # ==========================================
+  - repo: https://github.com/PyCQA/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        args: [--convention=google, --add-ignore=D100,D104,D105]
+        exclude: ^(tests/|alembic/|venv/|__pycache__/)
+
+  # ==========================================
+  # Commit Message Linting
+  # ==========================================
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.21.3
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # ==========================================
+  # YAML Linting (for Docker Compose, CI/CD)
+  # ==========================================
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [-d, "{extends: relaxed, rules: {line-length: {max: 120}}}"]
+
+  # ==========================================
+  # Dockerfile Linting
+  # ==========================================
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        entry: hadolint
+        args: [--ignore, DL3008, --ignore, DL3013]
+
+# ==========================================
+# CI Configuration (GitLab)
+# ==========================================
+# Note: GitLab CI handles most checks in .gitlab-ci.yml
+# Pre-commit runs locally before pushing to develop branch
+ci:
+  skip: [mypy, hadolint-docker]  # Skip slow/docker-dependent checks in CI

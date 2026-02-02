@@ -1,0 +1,156 @@
+# Node Plans Configuration
+# ========================
+# Defines subscription plans and their associated node access.
+# Each user's subscription references a plan_type, which maps to definitions here.
+# Users can have per-user overrides (add/remove nodes) stored in DB.
+#
+# Hot-reload: Changes to this file take effect automatically.
+
+version: "1.0"
+
+# ==============================================================================
+# Node Sets (Reusable groups, referenced via YAML anchors)
+# ==============================================================================
+node_sets:
+  # Core workflow nodes - essential for any automation
+  core: &core
+    - start
+    - end
+    - set
+    - if
+    - switch
+    - merge
+    - iterator
+    - filter
+    - stickyNote
+
+  # Google Workspace integration
+  google: &google
+    - gmail
+    - gmail_trigger
+    - googleCalendar
+    - googleDocs
+    - googleSheets
+    - googleDrive
+    - googleForm
+
+  # Communication & messaging
+  communication: &communication
+    - telegram
+    - bale
+    - baleTrigger
+    - chat
+
+  # Web & API tools
+  web: &web
+    - http_request
+    - webhook
+    - webhookTrigger
+
+  # Social media
+  social: &social
+    - linkedin
+    - twitter
+    - facebook
+    - facebookTrigger
+    - instagram
+
+  # E-commerce
+  ecommerce: &ecommerce
+    - woocommerce
+    - woocommerceTrigger
+    - shopify
+    - shopifyTrigger
+
+  # Database & storage
+  database: &database
+    - postgres
+    - redis
+    - supabase
+    - qdrant
+
+  # AI & Machine Learning
+  ai: &ai
+    - ai_agent
+    - deepseek
+    - openai
+    - qwen
+    - gemini
+    - grok
+    - cohere
+    - openRouter
+
+  # Memory nodes for AI
+  ai_memory: &ai_memory
+    - bufferMemory
+    - redisMemory
+    - windowBufferMemory
+
+  # DevOps & Development
+  devops: &devops
+    - gitlab
+    - gitlabTrigger
+
+  # Project Management
+  project_management: &project_management
+    - trello
+    - openProject
+
+  # CMS
+  cms: &cms
+    - wordpress
+
+# ==============================================================================
+# Plan Definitions
+# ==============================================================================
+plans:
+  # --------------------------------------------------------------------------
+  # Free Plan - Basic automation capabilities (for users without subscription)
+  # --------------------------------------------------------------------------
+  free:
+    display_name: "Free Plan"
+    description: "Basic workflow automation for getting started"
+    include_sets:
+      - core
+      - google
+      - communication
+      - web
+
+  # --------------------------------------------------------------------------
+  # Custom Plan - Per-user node access defined in database
+  # --------------------------------------------------------------------------
+  custom:
+    display_name: "Custom Plan"
+    description: "Customized node access - nodes defined per user in database"
+    inherit: free
+    # Actual accessible nodes come from user's node_overrides.nodes in database
+
+# ==============================================================================
+# Default Settings
+# ==============================================================================
+defaults:
+  # Plan assigned to users without subscription
+  unsubscribed_plan: "free"
+  
+  # Plan assigned to new subscriptions if not specified
+  default_subscription_plan: "custom"
+
+# ==============================================================================
+# Feature Flags
+# ==============================================================================
+feature_flags:
+  # Master switch for the entire filtering system
+  # DISABLED (2024-12): Node VISIBILITY is now unrestricted for all users.
+  # All users can see all node types in the UI and via APIs.
+  # Node EXECUTION limits are enforced separately in tasks/workflow.py
+  enable_filtering: false
+  
+  # Log when users are denied access to nodes (for debugging)
+  log_access_denials: false
+  
+  # Allow admins to override any user's access via API
+  allow_admin_overrides: true
+  
+  # Cache user's resolved node list (improves performance)
+  cache_user_nodes: true
+  cache_ttl_seconds: 300  # 5 minutes

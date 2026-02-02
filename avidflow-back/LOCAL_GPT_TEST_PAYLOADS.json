@@ -1,0 +1,118 @@
+{
+  "credential_payload": {
+    "description": "POST to /api/credentials to create the localGptApi credential",
+    "endpoint": "/api/credentials",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer YOUR_TOKEN"
+    },
+    "body": {
+      "name": "Local GPT Server",
+      "type": "localGptApi",
+      "data": {
+        "username": "madna@email.com",
+        "password": "lavashaj"
+      }
+    }
+  },
+  "workflow_payload": {
+    "description": "POST to /api/workflows to create a test workflow. Replace CREDENTIAL_ID with the ID returned from credential creation.",
+    "endpoint": "/api/workflows",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer YOUR_TOKEN"
+    },
+    "body": {
+      "name": "Local GPT Test Workflow",
+      "description": "Test workflow for Local GPT integration",
+      "nodes": [
+        {
+          "id": "start-node-001",
+          "name": "Start",
+          "type": "start",
+          "position": [100, 250],
+          "parameters": {},
+          "is_start": true,
+          "is_end": false,
+          "is_webhook": false,
+          "is_schedule": false,
+          "webhook_id": null
+        },
+        {
+          "id": "local-gpt-node-002",
+          "name": "Local GPT Chat",
+          "type": "localGpt",
+          "position": [320, 250],
+          "parameters": {
+            "resource": "chat",
+            "operation": "complete",
+            "baseUrl": "http://178.131.134.191:11300",
+            "endpointPath": "/api/chat/completions",
+            "authType": "bearer",
+            "loginEndpoint": "/api/v1/auths/signin",
+            "timeout": 60,
+            "model": "gpt-oss:120b",
+            "systemMessage": "You are a helpful AI assistant.",
+            "message": "Hello! Please introduce yourself.",
+            "temperature": 0.7,
+            "maxTokens": 1000,
+            "topP": 1,
+            "frequencyPenalty": 0,
+            "presencePenalty": 0,
+            "stream": false,
+            "simplifyOutput": true
+          },
+          "credentials": {
+            "localGptApi": {
+              "id": "e42e4b11-6d00-4fab-ae37-8c8f94956ac7",
+              "name": "Local GPT Server"
+            }
+          },
+          "is_start": false,
+          "is_end": false,
+          "is_webhook": false,
+          "is_schedule": false,
+          "webhook_id": null
+        },
+        {
+          "id": "end-node-003",
+          "name": "End",
+          "type": "end",
+          "position": [540, 250],
+          "parameters": {},
+          "is_start": false,
+          "is_end": true,
+          "is_webhook": false,
+          "is_schedule": false,
+          "webhook_id": null
+        }
+      ],
+      "connections": {
+        "Start": {
+          "main": [
+            [
+              {
+                "node": "Local GPT Chat",
+                "index": 0,
+                "type": "main"
+              }
+            ]
+          ]
+        },
+        "Local GPT Chat": {
+          "main": [
+            [
+              {
+                "node": "End",
+                "index": 0,
+                "type": "main"
+              }
+            ]
+          ]
+        }
+      }
+    }
+  }
+}
