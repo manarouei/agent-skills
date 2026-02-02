@@ -1,0 +1,149 @@
+# GitHub Node Execution Contract
+# Golden Reference - DO NOT MODIFY (without explicit approval)
+# This is the authoritative contract for the agent-generated GitHub node
+#
+# IMPORTANT: This contract declares idempotent=true to allow transient retries (network/timeout).
+# While GitHub write operations (create issue, create file) are NOT semantically idempotent,
+# the retry_policy=transient ensures only network-level errors are retried, not logical errors
+# (e.g., "issue already exists"). This prevents data corruption while maintaining resilience.
+
+node_type: github
+version: "1.0.0"
+semantic_class: http_rest
+
+# Input Schema (Strict)
+input_schema:
+  fields:
+    - name: resource
+      type: string
+      required: true
+      description: "Resource type to operate on"
+      enum:
+        - file
+        - issue
+        - organization
+        - release
+        - repository
+        - review
+        - user
+        - workflow
+      
+    - name: operation
+      type: string
+      required: true
+      description: "Operation to perform on resource"
+      # Note: Valid operations depend on resource (validated at runtime)
+      
+    - name: owner
+      type: string
+      required: true
+      description: "Repository owner (username or organization)"
+      pattern: "^[a-zA-Z0-9][-a-zA-Z0-9]*$"
+      min_length: 1
+      max_length: 39
+      
+    - name: repository
+      type: string
+      required: true
+      description: "Repository name"
+      pattern: "^[a-zA-Z0-9_.-]+$"
+      min_length: 1
+      max_length: 100
+      
+    - name: authentication
+      type: string
+      required: false
+      description: "Authentication method"
+      enum:
+        - accessToken
+        - oAuth2
+      default: "accessToken"
+      
+  additional_properties: false
+  strict: true
+
+# Output Schema (Deterministic)
+output_schema:
+  success_fields:
+    - name: json
+      type: object
+      description: "GitHub API response data"
+      
+    - name: statusCode
+      type: number
+      description: "HTTP status code"
+      
+    - name: headers
+      type: object
+      description: "Response headers"
+      nullable: true
+      
+  error_fields:
+    - name: error
+      type: string
+      description: "Error message"
+      
+    - name: errorCategory
+      type: string
+      description: "Normalized error category"
+      
+    - name: statusCode
+      type: number
+      description: "HTTP status code"
+      nullable: true
+      
+  deterministic: true
+
+# Error Categories (Normalized)
+error_categories:
+  - auth_failed        # 401, 403, invalid token
+  - rate_limit         # 429, rate limit exceeded
+  - not_found          # 404, repo/resource not found
+  - validation         # 400, invalid input
+  - timeout            # Operation timeout
+  - network            # Connection failures
+  - server_error       # 5xx errors
+  - conflict           # 409, state conflicts
+
+# Side-Effects Declaration
+side_effects:
+  types:
+    - network
+  network_destinations:
+    - api.github.com
+  database_operations: null
+  filesystem_paths: null
+
+# Credential Scope & Security
+credential_scope:
+  credential_type: githubApi
+  required: true
+  host_allowlist:
+    - api.github.com
+  database_allowlist: null
+  path_allowlist: null
+
+# Execution Semantics
+execution_semantics:
+  timeout_seconds: 60          # Hard timeout
+  retry_policy: transient      # Retry only on transient errors (network/timeout)
+  idempotent: true             # GET operations are idempotent (safe to retry)
+  transactional: false         # HTTP operations not transactional
+  max_retries: 2               # Max 2 retries on transient errors
+  retry_delay_seconds: 2       # 2-second delay between retries
+
+# n8n Semantic Normalization
+n8n_normalization:
+  defaults_explicit: true
+  expression_boundaries:
+    - owner
+    - repository
+    - workflowId
+    - ref
+    - inputs
+  eval_disabled: false
+
+# Generation Metadata
+generated_by: "agent-skills/code-convert/http_rest"
+correlation_id: "github-systemicfix-001"
+generated_at: "2026-02-01T12:45:22.947584Z"

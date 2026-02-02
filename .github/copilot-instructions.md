@@ -174,6 +174,28 @@ python3 scripts/promote_artifact.py list golden           # List available
 python3 scripts/promote_artifact.py golden <id> --category auth  # Promote
 ```
 
+## Systemic Failure Handling Mandate
+
+When a node or workflow execution fails, treat the failure as evidence of a broken system invariant, not a defect in a single node implementation.
+
+**You must:**
+1. Identify the invariant that was violated (parameter contract, URL construction rule, API semantic mismatch, execution assumption, or conversion rule)
+2. Apply the correction at the lowest shared abstraction layer (node conversion rules, base node behavior, parameter resolution, API request builder), so the fix applies to all nodes
+3. Only modify individual nodes after the systemic rule is defined and enforced
+
+**Forbidden actions:**
+- Fixing only the failing node
+- Adding defensive conditionals (`if None`, `try/except`) without defining and enforcing a contract
+- Encoding service-specific assumptions without documenting them as conversion rules
+
+All fixes must eliminate an entire class of failures, not just the observed instance.
+
+## Markdown Usage Constraint
+
+Do not generate markdown files intended for human reading (tutorials, explanations, reports).
+
+Markdown files may only be created or modified when they act as operational configuration or instruction inputs (e.g. copilot-instructions.md), and must be: short, normative, machine-actionable.
+
 ## When to Ask vs Proceed
 
 **Proceed autonomously:** Changes within allowlist, all gates pass, no new deps
