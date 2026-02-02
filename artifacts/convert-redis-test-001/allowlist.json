@@ -1,0 +1,18 @@
+{
+  "node_name": "redis",
+  "allowed_paths": [
+    "nodes/redis*",
+    "nodes/redis*",
+    "tests/*redis*",
+    "tests/*redis*",
+    "credentials/*redis*",
+    "credentials/*redis*"
+  ],
+  "forbidden_paths": [
+    "**/base.py",
+    "**/Base*.py",
+    "**/__init__.py"
+  ],
+  "generated_at": "2026-02-01T14:48:47.918404",
+  "correlation_id": "convert-redis-test-001"
+}

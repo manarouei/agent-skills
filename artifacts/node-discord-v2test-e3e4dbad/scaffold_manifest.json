@@ -1,0 +1,18 @@
+{
+  "correlation_id": "node-discord-v2test-e3e4dbad",
+  "node_name": "discord",
+  "class_name": "Discord",
+  "module_name": "discord",
+  "files_created": [
+    "/home/toni/agent-skills/artifacts/node-discord-v2test-e3e4dbad/generated_node/discord.py",
+    "/home/toni/agent-skills/artifacts/node-discord-v2test-e3e4dbad/generated_node/__init__.py"
+  ],
+  "generated_at": "2026-01-06T04:47:27.206669",
+  "schema_summary": {
+    "type": "discord",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 2,
+    "credential_count": 1
+  }
+}

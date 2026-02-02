@@ -1,0 +1,18 @@
+{
+  "correlation_id": "node-discord-v2test-4001e842",
+  "node_name": "discord",
+  "class_name": "Discord",
+  "module_name": "discord",
+  "files_created": [
+    "/home/toni/agent-skills/artifacts/node-discord-v2test-4001e842/generated_node/discord.py",
+    "/home/toni/agent-skills/artifacts/node-discord-v2test-4001e842/generated_node/__init__.py"
+  ],
+  "generated_at": "2026-01-06T04:51:06.056141",
+  "schema_summary": {
+    "type": "discord",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 5,
+    "credential_count": 1
+  }
+}

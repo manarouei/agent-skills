@@ -1,0 +1,11 @@
+{
+  "correlation_id": "hunter-fresh-test",
+  "timestamp": "2026-01-04T05:05:09.002103",
+  "source_type": "TYPE1",
+  "source_files": [
+    "GenericFunctions.ts",
+    "Hunter.node.ts"
+  ],
+  "node_name": "Hunter",
+  "target_language": "python"
+}

@@ -1,0 +1,179 @@
+{
+  "correlation_id": "convert-redis-test-004",
+  "node_type": "redis",
+  "trace_entries": [
+    {
+      "field_path": "operations[0].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'delete' (display: 'Delete') in Redis.node.ts",
+      "confidence": "high",
+      "source_file": "Redis.node.ts",
+      "line_range": "L42",
+      "excerpt_hash": "762cadbe0268"
+    },
+    {
+      "field_path": "operations[1].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'get' (display: 'Get') in Redis.node.ts",
+      "confidence": "high",
+      "source_file": "Redis.node.ts",
+      "line_range": "L42",
+      "excerpt_hash": "c9d917f6e0c5"
+    },
+    {
+      "field_path": "operations[2].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'incr' (display: 'Increment') in Redis.node.ts",
+      "confidence": "high",
+      "source_file": "Redis.node.ts",
+      "line_range": "L42",
+      "excerpt_hash": "fd79c76ae160"
+    },
+    {
+      "field_path": "operations[3].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'info' (display: 'Info') in Redis.node.ts",
+      "confidence": "high",
+      "source_file": "Redis.node.ts",
+      "line_range": "L42",
+      "excerpt_hash": "b65c974301fb"
+    },
+    {
+      "field_path": "operations[4].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'keys' (display: 'Keys') in Redis.node.ts",
+      "confidence": "high",
+      "source_file": "Redis.node.ts",
+      "line_range": "L42",
+      "excerpt_hash": "e095cc304207"
+    },
+    {
+      "field_path": "operations[5].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'pop' (display: 'Pop') in Redis.node.ts",
+      "confidence": "high",
+      "source_file": "Redis.node.ts",
+      "line_range": "L42",
+      "excerpt_hash": "7b6e2846d044"
+    },
+    {
+      "field_path": "operations[6].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'publish' (display: 'Publish') in Redis.node.ts",
+      "confidence": "high",
+      "source_file": "Redis.node.ts",
+      "line_range": "L42",
+      "excerpt_hash": "89c2f708a4fa"
+    },
+    {
+      "field_path": "operations[7].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'push' (display: 'Push') in Redis.node.ts",
+      "confidence": "high",
+      "source_file": "Redis.node.ts",
+      "line_range": "L42",
+      "excerpt_hash": "c15d260785b8"
+    },
+    {
+      "field_path": "operations[8].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'set' (display: 'Set') in Redis.node.ts",
+      "confidence": "high",
+      "source_file": "Redis.node.ts",
+      "line_range": "L42",
+      "excerpt_hash": "ed0d55c489a4"
+    },
+    {
+      "field_path": "operations[9].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'setupRedisClient' defined in utils.ts",
+      "confidence": "high",
+      "source_file": "utils.ts",
+      "line_range": "L13",
+      "excerpt_hash": "f5f3909aa436"
+    },
+    {
+      "field_path": "operations[10].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'redisConnectionTest' defined in utils.ts",
+      "confidence": "high",
+      "source_file": "utils.ts",
+      "line_range": "L26",
+      "excerpt_hash": "8e11b0ce0943"
+    },
+    {
+      "field_path": "operations[11].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'getParsedValue' defined in utils.ts",
+      "confidence": "high",
+      "source_file": "utils.ts",
+      "line_range": "L49",
+      "excerpt_hash": "6e4be5906558"
+    },
+    {
+      "field_path": "operations[12].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'convertInfoToObject' defined in utils.ts",
+      "confidence": "high",
+      "source_file": "utils.ts",
+      "line_range": "L60",
+      "excerpt_hash": "5ac7cf367f22"
+    },
+    {
+      "field_path": "operations[13].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'getValue' defined in utils.ts",
+      "confidence": "high",
+      "source_file": "utils.ts",
+      "line_range": "L89",
+      "excerpt_hash": "9e3caaa460ac"
+    },
+    {
+      "field_path": "operations[14].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'setValue' defined in utils.ts",
+      "confidence": "high",
+      "source_file": "utils.ts",
+      "line_range": "L106",
+      "excerpt_hash": "8d431dcfedba"
+    },
+    {
+      "field_path": "description.displayName",
+      "source": "SOURCE_CODE",
+      "evidence": "displayName: 'Redis' in Redis.node.ts",
+      "confidence": "high",
+      "source_file": "Redis.node.ts"
+    },
+    {
+      "field_path": "parameters.operation",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation parameter with 9 options in Redis.node.ts",
+      "confidence": "high",
+      "source_file": "Redis.node.ts"
+    },
+    {
+      "field_path": "credentials[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Credential 'redis' (required=True) in Redis.node.ts",
+      "confidence": "high",
+      "source_file": "Redis.node.ts"
+    },
+    {
+      "field_path": "execution_contract.semantic_class",
+      "source": "SOURCE_CODE",
+      "evidence": "Detected semantic class 'tcp_client' from code patterns and node type",
+      "confidence": "high",
+      "source_file": "multiple"
+    }
+  ],
+  "generated_at": "2026-02-02T05:24:41.872866",
+  "skill_version": "1.0.0",
+  "_hybrid_metadata": {
+    "source_type": "TYPE1",
+    "extraction_confidence": 0.95,
+    "advisor_used": false,
+    "assumption_ratio": 0.0,
+    "deterministic_operations": 19,
+    "assumption_operations": 0
+  }
+}

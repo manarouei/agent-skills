@@ -1,0 +1,220 @@
+{
+  "correlation_id": "node-discord-v2test3",
+  "node_type": "node",
+  "trace_entries": [
+    {
+      "field_path": "operations[6].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'sendLegacy' (display: 'Send a Message') in v2/actions/webhook/index.ts",
+      "confidence": "high",
+      "source_file": "v2/actions/webhook/index.ts",
+      "line_range": "L9",
+      "excerpt_hash": "fd3cec6eea12"
+    },
+    {
+      "field_path": "operations[1].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'parseDiscordError' defined in v2/helpers/utils.ts",
+      "confidence": "high",
+      "source_file": "v2/helpers/utils.ts",
+      "line_range": "L31",
+      "excerpt_hash": "42372fe2e01d"
+    },
+    {
+      "field_path": "operations[2].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'prepareErrorData' defined in v2/helpers/utils.ts",
+      "confidence": "high",
+      "source_file": "v2/helpers/utils.ts",
+      "line_range": "L85",
+      "excerpt_hash": "b6633c8b90ae"
+    },
+    {
+      "field_path": "operations[3].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'prepareOptions' defined in v2/helpers/utils.ts",
+      "confidence": "high",
+      "source_file": "v2/helpers/utils.ts",
+      "line_range": "L98",
+      "excerpt_hash": "da613906b237"
+    },
+    {
+      "field_path": "operations[4].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'prepareEmbeds' defined in v2/helpers/utils.ts",
+      "confidence": "high",
+      "source_file": "v2/helpers/utils.ts",
+      "line_range": "L119",
+      "excerpt_hash": "e5f387c655c2"
+    },
+    {
+      "field_path": "operations[5].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'prepareMultiPartForm' defined in v2/helpers/utils.ts",
+      "confidence": "high",
+      "source_file": "v2/helpers/utils.ts",
+      "line_range": "L174",
+      "excerpt_hash": "996c807696ed"
+    },
+    {
+      "field_path": "operations[6].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'checkAccessToGuild' defined in v2/helpers/utils.ts",
+      "confidence": "high",
+      "source_file": "v2/helpers/utils.ts",
+      "line_range": "L232",
+      "excerpt_hash": "9701125899e2"
+    },
+    {
+      "field_path": "operations[7].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'checkAccessToChannel' defined in v2/helpers/utils.ts",
+      "confidence": "high",
+      "source_file": "v2/helpers/utils.ts",
+      "line_range": "L250",
+      "excerpt_hash": "5e594774dff5"
+    },
+    {
+      "field_path": "operations[8].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'setupChannelGetter' defined in v2/helpers/utils.ts",
+      "confidence": "high",
+      "source_file": "v2/helpers/utils.ts",
+      "line_range": "L276",
+      "excerpt_hash": "c9b498a52d11"
+    },
+    {
+      "field_path": "operations[9].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'sendDiscordMessage' defined in v2/helpers/utils.ts",
+      "confidence": "high",
+      "source_file": "v2/helpers/utils.ts",
+      "line_range": "L290",
+      "excerpt_hash": "1f5515c2b7c5"
+    },
+    {
+      "field_path": "operations[10].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'createSendAndWaitMessageBody' defined in v2/helpers/utils.ts",
+      "confidence": "high",
+      "source_file": "v2/helpers/utils.ts",
+      "line_range": "L393",
+      "excerpt_hash": "331ea5ba48ff"
+    },
+    {
+      "field_path": "operations[11].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'getGuildId' defined in v2/methods/listSearch.ts",
+      "confidence": "high",
+      "source_file": "v2/methods/listSearch.ts",
+      "line_range": "L10",
+      "excerpt_hash": "f2f58ca622df"
+    },
+    {
+      "field_path": "operations[12].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'checkBotAccessToGuild' defined in v2/methods/listSearch.ts",
+      "confidence": "high",
+      "source_file": "v2/methods/listSearch.ts",
+      "line_range": "L30",
+      "excerpt_hash": "f0669cf1ab4d"
+    },
+    {
+      "field_path": "operations[13].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'guildSearch' defined in v2/methods/listSearch.ts",
+      "confidence": "high",
+      "source_file": "v2/methods/listSearch.ts",
+      "line_range": "L46",
+      "excerpt_hash": "b04bf300ebbf"
+    },
+    {
+      "field_path": "operations[14].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'channelSearch' defined in v2/methods/listSearch.ts",
+      "confidence": "high",
+      "source_file": "v2/methods/listSearch.ts",
+      "line_range": "L77",
+      "excerpt_hash": "819f0a046606"
+    },
+    {
+      "field_path": "operations[15].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'textChannelSearch' defined in v2/methods/listSearch.ts",
+      "confidence": "high",
+      "source_file": "v2/methods/listSearch.ts",
+      "line_range": "L92",
+      "excerpt_hash": "ac9743386f20"
+    },
+    {
+      "field_path": "operations[16].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'categorySearch' defined in v2/methods/listSearch.ts",
+      "confidence": "high",
+      "source_file": "v2/methods/listSearch.ts",
+      "line_range": "L110",
+      "excerpt_hash": "4106e9133377"
+    },
+    {
+      "field_path": "operations[17].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'userSearch' defined in v2/methods/listSearch.ts",
+      "confidence": "high",
+      "source_file": "v2/methods/listSearch.ts",
+      "line_range": "L126",
+      "excerpt_hash": "9a26f1450f53"
+    },
+    {
+      "field_path": "operations[18].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'getRoles' defined in v2/methods/loadOptions.ts",
+      "confidence": "high",
+      "source_file": "v2/methods/loadOptions.ts",
+      "line_range": "L6",
+      "excerpt_hash": "c278e41447fc"
+    },
+    {
+      "field_path": "operations[19].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'discordApiRequest' defined in v2/transport/discord.api.ts",
+      "confidence": "high",
+      "source_file": "v2/transport/discord.api.ts",
+      "line_range": "L15",
+      "excerpt_hash": "42374a6a2976"
+    },
+    {
+      "field_path": "operations[20].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'discordApiMultiPartRequest' defined in v2/transport/discord.api.ts",
+      "confidence": "high",
+      "source_file": "v2/transport/discord.api.ts",
+      "line_range": "L59",
+      "excerpt_hash": "6517fe6ed0be"
+    },
+    {
+      "field_path": "operations[21].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'requestApi' defined in v2/transport/helpers.ts",
+      "confidence": "high",
+      "source_file": "v2/transport/helpers.ts",
+      "line_range": "L28",
+      "excerpt_hash": "2e2a06acc0d6"
+    },
+    {
+      "field_path": "credentials[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Auth pattern 'oauth' found in source",
+      "confidence": "medium"
+    }
+  ],
+  "generated_at": "2026-01-06T04:37:52.855502",
+  "skill_version": "1.0.0",
+  "_hybrid_metadata": {
+    "source_type": "TYPE1",
+    "extraction_confidence": 0.7374999999999999,
+    "advisor_used": false,
+    "assumption_ratio": 0.0,
+    "deterministic_operations": 23,
+    "assumption_operations": 0
+  }
+}

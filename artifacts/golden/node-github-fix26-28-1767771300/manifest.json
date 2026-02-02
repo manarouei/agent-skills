@@ -1,0 +1,1208 @@
+{
+  "correlation_id": "node-github-fix26-28-1767771300",
+  "node_type": null,
+  "skill_name": "code-convert",
+  "created_at": "2026-01-07T07:50:34.179592",
+  "generated_code": {
+    "github.py": "#!/usr/bin/env python3\n\"\"\"\nGithub Node\n\nConverted from TypeScript by agent-skills/code-convert\nCorrelation ID: node-github-fix26-28-1767771300\nGenerated: 2026-01-07T07:50:34.163179\n\nSYNC-CELERY SAFE: All methods are synchronous with timeouts.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport logging\nfrom typing import Any, Dict, List\n\nimport requests\n\nfrom .base import BaseNode, NodeParameterType, NodeExecutionData\n\nlogger = logging.getLogger(__name__)\n\n\nclass GithubNode(BaseNode):\n    \"\"\"\n    GitHub node.\n    \n    \n    \"\"\"\n\n    type = \"github\"\n    version = 1\n    \n    description = {\n        \"displayName\": \"GitHub\",\n        \"name\": \"github\",\n        \"icon\": \"file:github.svg\",\n        \"group\": ['output'],\n        \"description\": \"\",\n        \"inputs\": [{\"name\": \"main\", \"type\": \"main\", \"required\": True}],\n        \"outputs\": [{\"name\": \"main\", \"type\": \"main\", \"required\": True}],\n    }\n    \n    properties = {\n        \"parameters\": [\n            {\"name\": \"resource\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Resource\", \"options\": [\n                {\"name\": \"File\", \"value\": \"file\"},\n                {\"name\": \"Issue\", \"value\": \"issue\"},\n                {\"name\": \"Organization\", \"value\": \"organization\"},\n                {\"name\": \"Release\", \"value\": \"release\"},\n                {\"name\": \"Repository\", \"value\": \"repository\"},\n                {\"name\": \"Review\", \"value\": \"review\"},\n                {\"name\": \"User\", \"value\": \"user\"},\n                {\"name\": \"Workflow\", \"value\": \"workflow\"}\n            ], \"default\": \"issue\", \"description\": \"The resource to operate on\"},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Get Repositories\", \"value\": \"getRepositories\", \"description\": \"Returns all repositories of an organization\"},\n                {\"name\": \"Create\", \"value\": \"create\", \"description\": \"Create a new issue\"},\n                {\"name\": \"Create Comment\", \"value\": \"createComment\", \"description\": \"Create a new comment on an issue\"},\n                {\"name\": \"Edit\", \"value\": \"edit\", \"description\": \"Edit an issue\"},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get the data of a single issue\"},\n                {\"name\": \"Lock\", \"value\": \"lock\", \"description\": \"Lock an issue\"},\n                {\"name\": \"Delete\", \"value\": \"delete\", \"description\": \"Delete a file in repository\"},\n                {\"name\": \"List\", \"value\": \"list\", \"description\": \"List contents of a folder\"},\n                {\"name\": \"Get Issues\", \"value\": \"getIssues\", \"description\": \"Returns issues of a repository\"},\n                {\"name\": \"Get License\", \"value\": \"getLicense\", \"description\": \"Returns the contents of the repository\"},\n                {\"name\": \"Get Pull Requests\", \"value\": \"getPullRequests\", \"description\": \"Returns pull requests of a repository\"},\n                {\"name\": \"List Popular Paths\", \"value\": \"listPopularPaths\", \"description\": \"Get the top 10 popular content paths over the last 14 days\"},\n                {\"name\": \"List Referrers\", \"value\": \"listReferrers\", \"description\": \"Get the top 10 referrering domains over the last 14 days\"},\n                {\"name\": \"Invite\", \"value\": \"invite\", \"description\": \"Invites a user to an organization\"},\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Get many repository releases\"},\n                {\"name\": \"Update\", \"value\": \"update\", \"description\": \"Update a release\"},\n                {\"name\": \"Disable\", \"value\": \"disable\", \"description\": \"Disable a workflow\"},\n                {\"name\": \"Dispatch\", \"value\": \"dispatch\", \"description\": \"Dispatch a workflow event\"},\n                {\"name\": \"Enable\", \"value\": \"enable\", \"description\": \"Enable a workflow\"},\n                {\"name\": \"Get Usage\", \"value\": \"getUsage\", \"description\": \"Get the usage of a workflow\"}\n            ], \"default\": \"getRepositories\", \"description\": \"Operation to perform\"},\n            {\"name\": \"authentication\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Authentication\", \"options\": [\n                {\"name\": \"Access Token\", \"value\": \"accessToken\"},\n                {\"name\": \"OAuth2\", \"value\": \"oAuth2\"}\n            ], \"default\": \"accessToken\"},\n            {\"name\": \"webhookNotice\", \"type\": NodeParameterType.STRING, \"display_name\": \"Your execution will pause until a webhook is called. This URL will be generated at runtime and passed to your Github workflow as a resumeUrl input.\", \"default\": \"\", \"display_options\": {'show': {'operation': ['dispatchAndWait'], 'resource': ['workflow']}}},\n            {\"name\": \"owner\", \"type\": NodeParameterType.STRING, \"display_name\": \"Repository Owner\", \"default\": \"\", \"required\": True, \"display_options\": {'show': {'operation': ['update', 'getRepositories', 'getAll', 'get', 'dispatch', 'list', 'getUsage', 'enable', 'edit', 'disable', 'getLicense', 'delete', 'listPopularPaths', 'create', 'lock', 'getIssues', 'createComment', 'getPullRequests', 'listReferrers']}}},\n            {\"name\": \"repository\", \"type\": NodeParameterType.STRING, \"display_name\": \"Repository Name\", \"default\": \"\", \"required\": True, \"display_options\": {'show': {'operation': ['create', 'dispatch', 'listReferrers', 'list', 'lock', 'getLicense', 'createComment', 'update', 'getIssues', 'getUsage', 'enable', 'getPullRequests', 'edit', 'disable', 'getAll', 'get', 'delete', 'listPopularPaths']}}},\n            {\"name\": \"workflowId\", \"type\": NodeParameterType.STRING, \"display_name\": \"Workflow\", \"default\": \"\", \"required\": True, \"description\": \"The workflow to dispatch\", \"display_options\": {'show': {'operation': ['disable', 'dispatch', 'dispatchAndWait', 'get', 'getUsage', 'enable'], 'resource': ['workflow']}}},\n            {\"name\": \"ref\", \"type\": NodeParameterType.STRING, \"display_name\": \"Ref\", \"default\": \"main\", \"required\": True, \"description\": \"The git reference for the workflow dispatch (branch or tag name)\", \"display_options\": {'show': {'operation': ['dispatch', 'dispatchAndWait'], 'resource': ['workflow']}}},\n            {\"name\": \"inputs\", \"type\": NodeParameterType.JSON, \"display_name\": \"Inputs\", \"default\": \"{}\", \"description\": \"JSON object with input parameters for the workflow\", \"display_options\": {'show': {'operation': ['dispatch', 'dispatchAndWait'], 'resource': ['workflow']}}},\n            {\"name\": \"filePath\", \"type\": NodeParameterType.STRING, \"display_name\": \"File Path\", \"default\": \"\", \"required\": True, \"description\": \"The file path of the file. Has to contain the full path.\", \"display_options\": {'show': {'resource': ['file']}}},\n            {\"name\": \"binaryData\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Binary File\", \"default\": False, \"required\": True, \"description\": \"Whether the data to upload should be taken from binary field\", \"display_options\": {'show': {'operation': ['create', 'edit'], 'resource': ['file']}}},\n            {\"name\": \"fileContent\", \"type\": NodeParameterType.STRING, \"display_name\": \"File Content\", \"default\": \"\", \"required\": True, \"description\": \"The text content of the file\", \"display_options\": {'show': {'operation': ['create', 'edit'], 'resource': ['file']}}},\n            {\"name\": \"binaryPropertyName\", \"type\": NodeParameterType.STRING, \"display_name\": \"Input Binary Field\", \"default\": \"data\", \"required\": True, \"display_options\": {'show': {'operation': ['create', 'edit'], 'resource': ['file']}}},\n            {\"name\": \"commitMessage\", \"type\": NodeParameterType.STRING, \"display_name\": \"Commit Message\", \"default\": \"\", \"required\": True, \"display_options\": {'show': {'operation': ['create', 'delete', 'edit'], 'resource': ['file']}}},\n            {\"name\": \"additionalParameters\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Additional Parameters\", \"default\": \"\", \"description\": \"Additional fields to add\", \"display_options\": {'show': {'operation': ['create', 'delete', 'edit'], 'resource': ['file']}}},\n            {\"name\": \"asBinaryProperty\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"As Binary Property\", \"default\": True, \"description\": \"Whether to set the data of the file as binary property instead of returning the raw API response\", \"display_options\": {'show': {'operation': ['get'], 'resource': ['file']}}},\n            {\"name\": \"title\", \"type\": NodeParameterType.STRING, \"display_name\": \"Title\", \"default\": \"\", \"required\": True, \"description\": \"The title of the issue\", \"display_options\": {'show': {'operation': ['create'], 'resource': ['issue']}}},\n            {\"name\": \"body\", \"type\": NodeParameterType.STRING, \"display_name\": \"Body\", \"default\": \"\", \"description\": \"The body of the issue\", \"display_options\": {'show': {'operation': ['create'], 'resource': ['issue']}}},\n            {\"name\": \"labels\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Labels\", \"default\": \"\", \"description\": \"Label to add to issue\", \"display_options\": {'show': {'operation': ['create'], 'resource': ['issue']}}},\n            {\"name\": \"assignees\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Assignees\", \"default\": \"\", \"description\": \"User to assign issue too\", \"display_options\": {'show': {'operation': ['create'], 'resource': ['issue']}}},\n            {\"name\": \"issueNumber\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Issue Number\", \"default\": 0, \"required\": True, \"description\": \"The number of the issue on which to create the comment on\", \"display_options\": {'show': {'operation': ['createComment'], 'resource': ['issue']}}},\n            {\"name\": \"editFields\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Edit Fields\", \"default\": \"\", \"description\": \"User to assign issue to\", \"display_options\": {'show': {'operation': ['edit'], 'resource': ['issue']}}},\n            {\"name\": \"lockReason\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Lock Reason\", \"options\": [\n                {\"name\": \"Off-Topic\", \"value\": \"off-topic\"},\n                {\"name\": \"Too Heated\", \"value\": \"too heated\"},\n                {\"name\": \"Resolved\", \"value\": \"resolved\"},\n                {\"name\": \"Spam\", \"value\": \"spam\"}\n            ], \"default\": \"resolved\", \"description\": \"The issue is Off-Topic\", \"display_options\": {'show': {'operation': ['lock'], 'resource': ['issue']}}},\n            {\"name\": \"releaseTag\", \"type\": NodeParameterType.STRING, \"display_name\": \"Tag\", \"default\": \"\", \"required\": True, \"description\": \"The tag of the release\", \"display_options\": {'show': {'operation': ['create'], 'resource': ['release']}}},\n            {\"name\": \"additionalFields\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Additional Fields\", \"default\": \"\", \"description\": \"The name of the issue\", \"display_options\": {'show': {'operation': ['create'], 'resource': ['release']}}},\n            {\"name\": \"release_id\", \"type\": NodeParameterType.STRING, \"display_name\": \"Release ID\", \"default\": \"\", \"required\": True, \"display_options\": {'show': {'operation': ['get', 'delete', 'update'], 'resource': ['release']}}},\n            {\"name\": \"returnAll\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Return All\", \"default\": False, \"description\": \"Whether to return all results or only up to a given limit\", \"display_options\": {'show': {'operation': ['getAll'], 'resource': ['release']}}},\n            {\"name\": \"limit\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Limit\", \"default\": 50, \"description\": \"Max number of results to return\", \"display_options\": {'show': {'operation': ['getAll'], 'resource': ['release']}}},\n            {\"name\": \"getRepositoryIssuesFilters\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Filters\", \"default\": \"\", \"description\": \"Return only issues which are assigned to a specific user\", \"display_options\": {'show': {'operation': ['getIssues'], 'resource': ['repository']}}},\n            {\"name\": \"getRepositoryPullRequestsFilters\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Filters\", \"default\": \"\", \"description\": \"Returns pull requests with any state\", \"display_options\": {'show': {'operation': ['getPullRequests'], 'resource': ['repository']}}},\n            {\"name\": \"pullRequestNumber\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"PR Number\", \"default\": 0, \"required\": True, \"description\": \"The number of the pull request\", \"display_options\": {'show': {'operation': ['get', 'update'], 'resource': ['review']}}},\n            {\"name\": \"reviewId\", \"type\": NodeParameterType.STRING, \"display_name\": \"Review ID\", \"default\": \"\", \"required\": True, \"description\": \"ID of the review\", \"display_options\": {'show': {'operation': ['get', 'update'], 'resource': ['review']}}},\n            {\"name\": \"event\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Event\", \"options\": [\n                {\"name\": \"Approve\", \"value\": \"approve\"},\n                {\"name\": \"Request Change\", \"value\": \"requestChanges\"},\n                {\"name\": \"Comment\", \"value\": \"comment\"},\n                {\"name\": \"Pending\", \"value\": \"pending\"}\n            ], \"default\": \"approve\", \"description\": \"Approve the pull request\", \"display_options\": {'show': {'operation': ['create'], 'resource': ['review']}}},\n            {\"name\": \"organization\", \"type\": NodeParameterType.STRING, \"display_name\": \"Organization\", \"default\": \"\", \"required\": True, \"description\": \"The GitHub organization that the user is being invited to\", \"display_options\": {'show': {'operation': ['invite'], 'resource': ['user']}}},\n            {\"name\": \"email\", \"type\": NodeParameterType.STRING, \"display_name\": \"Email\", \"default\": \"\", \"required\": True, \"description\": \"The email address of the invited user\", \"display_options\": {'show': {'operation': ['invite'], 'resource': ['user']}}},\n            {\"name\": \"notice\", \"type\": NodeParameterType.STRING, \"display_name\": \"Only members with owner privileges for an organization or admin privileges for a repository can set up the webhooks this node requires.\", \"default\": \"\"},\n            {\"name\": \"events\", \"type\": NodeParameterType.MULTI_OPTIONS, \"display_name\": \"Events\", \"options\": [\n                {\"name\": \"*\", \"value\": \"*\"},\n                {\"name\": \"Check Run\", \"value\": \"check_run\"},\n                {\"name\": \"Check Suite\", \"value\": \"check_suite\"},\n                {\"name\": \"Commit Comment\", \"value\": \"commit_comment\"},\n                {\"name\": \"Create\", \"value\": \"create\"},\n                {\"name\": \"Delete\", \"value\": \"delete\"},\n                {\"name\": \"Deploy Key\", \"value\": \"deploy_key\"},\n                {\"name\": \"Deployment\", \"value\": \"deployment\"},\n                {\"name\": \"Deployment Status\", \"value\": \"deployment_status\"},\n                {\"name\": \"Fork\", \"value\": \"fork\"},\n                {\"name\": \"Github App Authorization\", \"value\": \"github_app_authorization\"},\n                {\"name\": \"Gollum\", \"value\": \"gollum\"},\n                {\"name\": \"Installation\", \"value\": \"installation\"},\n                {\"name\": \"Installation Repositories\", \"value\": \"installation_repositories\"},\n                {\"name\": \"Issue Comment\", \"value\": \"issue_comment\"},\n                {\"name\": \"Issues\", \"value\": \"issues\"},\n                {\"name\": \"Label\", \"value\": \"label\"},\n                {\"name\": \"Marketplace Purchase\", \"value\": \"marketplace_purchase\"},\n                {\"name\": \"Member\", \"value\": \"member\"},\n                {\"name\": \"Membership\", \"value\": \"membership\"},\n                {\"name\": \"Meta\", \"value\": \"meta\"},\n                {\"name\": \"Milestone\", \"value\": \"milestone\"},\n                {\"name\": \"Org Block\", \"value\": \"org_block\"},\n                {\"name\": \"Organization\", \"value\": \"organization\"},\n                {\"name\": \"Page Build\", \"value\": \"page_build\"},\n                {\"name\": \"Project\", \"value\": \"project\"},\n                {\"name\": \"Project Card\", \"value\": \"project_card\"},\n                {\"name\": \"Project Column\", \"value\": \"project_column\"},\n                {\"name\": \"Public\", \"value\": \"public\"},\n                {\"name\": \"Pull Request\", \"value\": \"pull_request\"},\n                {\"name\": \"Pull Request Review\", \"value\": \"pull_request_review\"},\n                {\"name\": \"Pull Request Review Comment\", \"value\": \"pull_request_review_comment\"},\n                {\"name\": \"Push\", \"value\": \"push\"},\n                {\"name\": \"Release\", \"value\": \"release\"},\n                {\"name\": \"Repository\", \"value\": \"repository\"},\n                {\"name\": \"Repository Import\", \"value\": \"repository_import\"},\n                {\"name\": \"Repository Vulnerability Alert\", \"value\": \"repository_vulnerability_alert\"},\n                {\"name\": \"Security Advisory\", \"value\": \"security_advisory\"},\n                {\"name\": \"Star\", \"value\": \"star\"},\n                {\"name\": \"Status\", \"value\": \"status\"},\n                {\"name\": \"Team\", \"value\": \"team\"},\n                {\"name\": \"Team Add\", \"value\": \"team_add\"},\n                {\"name\": \"Watch\", \"value\": \"watch\"}\n            ], \"default\": [], \"required\": True, \"description\": \"Any time any event is triggered (Wildcard Event)\"},\n            {\"name\": \"options\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Options\", \"default\": \"\", \"description\": \"Whether the SSL certificate of the n8n host be verified by GitHub when delivering payloads\"}\n        ],\n        \"credentials\": [\n            {\"name\": \"githubApi\", \"required\": False},\n            {\"name\": \"githubOAuth2Api\", \"required\": False}\n        ]\n    }\n    \n    icon = \"github.svg\"\n\n    def execute(self) -> List[List[NodeExecutionData]]:\n        \"\"\"\n        Execute the node operations.\n        \n        SYNC-CELERY SAFE: All HTTP calls use timeout parameter.\n        \n        Returns:\n            List[List[NodeExecutionData]]: Nested list where outer list is output branches,\n            inner list is items in that branch.\n        \"\"\"\n        # Get input data from previous node\n        input_data = self.get_input_data()\n        \n        # Handle empty input\n        if not input_data:\n            return [[]]\n        \n        return_items: List[NodeExecutionData] = []\n\n        for i, item in enumerate(input_data):\n            try:\n                resource = self.get_node_parameter(\"resource\", i)\n                operation = self.get_node_parameter(\"operation\", i)\n                item_data = item.json_data if hasattr(item, 'json_data') else item.get('json', {})\n                \n                if resource == \"file\" and operation == \"edit\":\n                    result = self._file_edit(i, item_data)\n                elif resource == \"file\" and operation == \"delete\":\n                    result = self._file_delete(i, item_data)\n                elif resource == \"file\" and operation == \"get\":\n                    result = self._file_get(i, item_data)\n                elif resource == \"file\" and operation == \"list\":\n                    result = self._file_list(i, item_data)\n                elif resource == \"issue\" and operation == \"create\":\n                    result = self._issue_create(i, item_data)\n                elif resource == \"issue\" and operation == \"createComment\":\n                    result = self._issue_createComment(i, item_data)\n                elif resource == \"issue\" and operation == \"edit\":\n                    result = self._issue_edit(i, item_data)\n                elif resource == \"issue\" and operation == \"get\":\n                    result = self._issue_get(i, item_data)\n                elif resource == \"issue\" and operation == \"lock\":\n                    result = self._issue_lock(i, item_data)\n                elif resource == \"release\" and operation == \"create\":\n                    result = self._release_create(i, item_data)\n                elif resource == \"release\" and operation == \"delete\":\n                    result = self._release_delete(i, item_data)\n                elif resource == \"release\" and operation == \"get\":\n                    result = self._release_get(i, item_data)\n                elif resource == \"release\" and operation == \"getAll\":\n                    result = self._release_getAll(i, item_data)\n                elif resource == \"release\" and operation == \"update\":\n                    result = self._release_update(i, item_data)\n                elif resource == \"repository\" and operation == \"listPopularPaths\":\n                    result = self._repository_listPopularPaths(i, item_data)\n                elif resource == \"repository\" and operation == \"listReferrers\":\n                    result = self._repository_listReferrers(i, item_data)\n                elif resource == \"repository\" and operation == \"get\":\n                    result = self._repository_get(i, item_data)\n                elif resource == \"repository\" and operation == \"getLicense\":\n                    result = self._repository_getLicense(i, item_data)\n                elif resource == \"repository\" and operation == \"getIssues\":\n                    result = self._repository_getIssues(i, item_data)\n                elif resource == \"repository\" and operation == \"getPullRequests\":\n                    result = self._repository_getPullRequests(i, item_data)\n                elif resource == \"review\" and operation == \"get\":\n                    result = self._review_get(i, item_data)\n                elif resource == \"review\" and operation == \"getAll\":\n                    result = self._review_getAll(i, item_data)\n                elif resource == \"review\" and operation == \"create\":\n                    result = self._review_create(i, item_data)\n                elif resource == \"review\" and operation == \"update\":\n                    result = self._review_update(i, item_data)\n                elif resource == \"user\" and operation == \"getRepositories\":\n                    result = self._user_getRepositories(i, item_data)\n                elif resource == \"user\" and operation == \"invite\":\n                    result = self._user_invite(i, item_data)\n                elif resource == \"organization\" and operation == \"getRepositories\":\n                    result = self._organization_getRepositories(i, item_data)\n                elif resource == \"workflow\" and operation == \"disable\":\n                    result = self._workflow_disable(i, item_data)\n                elif resource == \"workflow\" and operation == \"dispatch\":\n                    result = self._workflow_dispatch(i, item_data)\n                elif resource == \"workflow\" and operation == \"enable\":\n                    result = self._workflow_enable(i, item_data)\n                elif resource == \"workflow\" and operation == \"get\":\n                    result = self._workflow_get(i, item_data)\n                elif resource == \"workflow\" and operation == \"getUsage\":\n                    result = self._workflow_getUsage(i, item_data)\n                elif resource == \"workflow\" and operation == \"list\":\n                    result = self._workflow_list(i, item_data)\n                else:\n                    raise ValueError(f\"Unknown resource/operation: {resource}/{operation}\")\n                \n                # Handle array results\n                if isinstance(result, list):\n                    for r in result:\n                        return_items.append(NodeExecutionData(json_data=r))\n                else:\n                    return_items.append(NodeExecutionData(json_data=result))\n                \n            except Exception as e:\n                logger.error(f\"Error in {resource}/{operation}: {e}\")\n                if self.node_data.continue_on_fail:\n                    return_items.append(NodeExecutionData(json_data={\"error\": str(e)}))\n                else:\n                    raise\n        \n        return [return_items]\n\n    # API Base URL\n    BASE_URL = \"https://api.github.com\"\n    \n    def _api_request(\n        self,\n        method: str,\n        endpoint: str,\n        body: Dict[str, Any] | None = None,\n        query: Dict[str, Any] | None = None,\n    ) -> Dict[str, Any]:\n        \"\"\"\n        Make authenticated API request.\n        \n        SYNC-CELERY SAFE: Uses requests with timeout.\n        \"\"\"\n        import requests\n\n        # FIX #22: Respect authentication selector\n        auth_type = self.get_node_parameter('authentication', 0)\n        if auth_type == 'oAuth2':\n            credentials = self.get_credentials(\"githubOAuth2Api\")\n        else:\n            credentials = self.get_credentials(\"githubApi\")\n        \n        # Build full URL\n        url = f\"{self.BASE_URL}{endpoint}\"\n        \n        # Get auth headers\n        headers = self._get_auth_headers(credentials)\n        \n        response = requests.request(\n            method=method,\n            url=url,\n            headers=headers,\n            json=body,\n            params=query,\n            timeout=30,  # REQUIRED for Celery\n        )\n        response.raise_for_status()\n        return response.json()\n    \n    def _api_request_all_items(\n        self,\n        method: str,\n        endpoint: str,\n        body: Dict[str, Any] | None = None,\n        query: Dict[str, Any] | None = None,\n    ) -> List[Dict[str, Any]]:\n        \"\"\"\n        Make paginated API request and return all items.\n        \n        SYNC-CELERY SAFE: Uses requests with timeout.\n        \"\"\"\n        import requests\n\n        # FIX #22: Respect authentication selector\n        auth_type = self.get_node_parameter('authentication', 0)\n        if auth_type == 'oAuth2':\n            credentials = self.get_credentials(\"githubOAuth2Api\")\n        else:\n            credentials = self.get_credentials(\"githubApi\")\n        \n        results = []\n        query = query or {}\n        page = 1\n        per_page = 100\n        \n        while True:\n            # Add pagination params\n            page_query = query.copy()\n            page_query[\"page\"] = page\n            page_query[\"per_page\"] = per_page\n            \n            url = f\"{self.BASE_URL}{endpoint}\"\n            headers = self._get_auth_headers(credentials)\n            \n            response = requests.request(\n                method=method,\n                url=url,\n                headers=headers,\n                json=body,\n                params=page_query,\n                timeout=30,\n            )\n            response.raise_for_status()\n            data = response.json()\n            \n            # Handle different pagination response formats\n            if isinstance(data, list):\n                if not data:\n                    break\n                results.extend(data)\n                if len(data) < per_page:\n                    break\n            elif isinstance(data, dict):\n                items = data.get(\"items\", data.get(\"data\", []))\n                if not items:\n                    break\n                results.extend(items)\n                if len(items) < per_page:\n                    break\n            else:\n                break\n            \n            page += 1\n        \n        return results\n    \n    def _get_auth_headers(self, credentials: Dict[str, Any]) -> Dict[str, str]:\n        \"\"\"Get authentication headers from credentials.\"\"\"\n        headers = {\"Content-Type\": \"application/json\"}\n        \n        # FIXED: Use Bearer token for GitHub/GitLab/Discord, not \"Bot\"\n        if \"accessToken\" in credentials:\n            headers[\"Authorization\"] = f\"Bearer {credentials['accessToken']}\"\n        elif \"access_token\" in credentials:\n            headers[\"Authorization\"] = f\"Bearer {credentials['access_token']}\"\n        elif \"token\" in credentials:\n            headers[\"Authorization\"] = f\"Bearer {credentials['token']}\"\n        elif \"apiKey\" in credentials:\n            # API key in header (some services)\n            headers[\"Authorization\"] = f\"Bearer {credentials['apiKey']}\"\n        \n        return headers\n\n\n    def _file_edit(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        File Edit operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        \n        # ============================================================================\n        # LACK OF IMPLEMENTATION IN AVIDFLOW PLATFORM\n        # ============================================================================\n        # Operation: file/edit\n        #\n        # This operation requires async helper functions that are not available\n        # in the AvidFlow platform. The TypeScript code uses:\n        #   - getFile() or getFileSha() helper\n        #   - Pattern: Get metadata \u2192 Extract file path \u2192 Download file\n        #   - See: runtime/kb/binary_handling/file_download_pattern.py\n        #   - async/await calls\n        #   - Must be converted to synchronous requests\n        #   - See: runtime/kb/async_to_sync/conversion_guide.py\n        #\n        # TODO: Implement this operation manually by:\n        #   1. Reading the TypeScript source code for this operation\n        #   2. Following patterns in runtime/kb/ for similar operations\n        #   3. Using requests library with timeout (Celery+gevent safe)\n        #   4. Testing with real API credentials\n        # ============================================================================\n        \n        raise NotImplementedError(\n            f'file/edit operation not yet implemented in AvidFlow platform. '\n            'This operation requires complex logic or helper functions that are '\n            'not available. See the TODO comment above for implementation guidance.'\n        )\n\n    def _file_delete(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        File Delete operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        additional_parameters = self.get_node_parameter('additionalParameters', item_index)\n        message = self.get_node_parameter('commitMessage', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        file_path = self.get_node_parameter('filePath', item_index)\n        \n        # Build request body\n        body = {'message': message}\n        \n        # Make API request\n        response = self._api_request('DELETE', f'/repos/{owner}/{repository}/contents/{file_path}', body=body, query=None)\n        \n        return response\n\n    def _file_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        File Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        additional_parameters = self.get_node_parameter('additionalParameters', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        file_path = self.get_node_parameter('filePath', item_index)\n        \n        # Build query parameters\n        query = {}\n        query['ref'] = additional_parameters.get('reference')\n        \n        # Make API request\n        response = self._api_request('GET', f'/repos/{owner}/{repository}/contents/{file_path}', body=None, query=query)\n        \n        return response\n\n    def _file_list(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        File List operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        file_path = self.get_node_parameter('filePath', item_index)\n        \n        # Make API request\n        response = self._api_request('GET', f'/repos/{owner}/{repository}/contents/{file_path}', body=None, query=None)\n        \n        return response\n\n    def _issue_create(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Issue Create operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        title = self.get_node_parameter('title', item_index)\n        body = self.get_node_parameter('body', item_index)\n        labels = self.get_node_parameter('labels', item_index)\n        assignees = self.get_node_parameter('assignees', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        title_text = self.get_node_parameter('title', item_index)\n        body_text = self.get_node_parameter('body', item_index)\n        \n        # Build request body (avoid parameter shadowing)\n        body = {'title': title_text, 'body': body, 'labels': labels, 'assignees': assignees}\n        \n        # Make API request\n        response = self._api_request('POST', f'/repos/{owner}/{repository}/issues', body=body, query=None)\n        \n        return response\n\n    def _issue_createComment(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Issue Createcomment operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        issue_number = self.get_node_parameter('issueNumber', item_index)\n        body = self.get_node_parameter('body', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        body_text = self.get_node_parameter('body', item_index)\n        \n        # Build request body (avoid parameter shadowing)\n        body = {'body': body}\n        \n        # Make API request\n        response = self._api_request('POST', f'/repos/{owner}/{repository}/issues/{issue_number}/comments', body=body, query=None)\n        \n        return response\n\n    def _issue_edit(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Issue Edit operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        issue_number = self.get_node_parameter('issueNumber', item_index)\n        body = self.get_node_parameter('editFields', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        response = self._api_request('PATCH', f'/repos/{owner}/{repository}/issues/{issue_number}', body=body, query=None)\n        \n        return response\n\n    def _issue_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Issue Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        issue_number = self.get_node_parameter('issueNumber', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        response = self._api_request('GET', f'/repos/{owner}/{repository}/issues/{issue_number}', body=None, query=None)\n        \n        return response\n\n    def _issue_lock(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Issue Lock operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        issue_number = self.get_node_parameter('issueNumber', item_index)\n        lock_reason = self.get_node_parameter('lockReason', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Build query parameters\n        query = {}\n        query['lock_reason'] = lock_reason\n        \n        \n        # Build request body (extracted parameters)\n        body = {}\n        # Make API request\n        response = self._api_request('PUT', f'/repos/{owner}/{repository}/issues/{issue_number}/lock', body=body, query=query)\n        \n        return response\n\n    def _release_create(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Release Create operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        body = self.get_node_parameter('additionalFields', item_index)\n        tag_name = self.get_node_parameter('releaseTag', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Add required fields to body\n        body['tag_name'] = tag_name\n        \n        # Make API request\n        response = self._api_request('POST', f'/repos/{owner}/{repository}/releases', body=body, query=None)\n        \n        return response\n\n    def _release_delete(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Release Delete operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        release_id = self.get_node_parameter('release_id', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        response = self._api_request('DELETE', f'/repos/{owner}/{repository}/releases/{release_id}', body=None, query=None)\n        \n        return response\n\n    def _release_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Release Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        release_id = self.get_node_parameter('release_id', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        response = self._api_request('GET', f'/repos/{owner}/{repository}/releases/{release_id}', body=None, query=None)\n        \n        return response\n\n    def _release_getAll(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Release Getall operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        return_all = self.get_node_parameter('returnAll', item_index)\n        per_page = self.get_node_parameter('limit', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        if return_all:\n            response = self._api_request_all_items('GET', f'/repos/{owner}/{repository}/releases', body=None, query=None)\n        else:\n            query = {}\n            query['per_page'] = per_page\n            response = self._api_request('GET', f'/repos/{owner}/{repository}/releases', body=None, query=query)\n        \n        return response\n\n    def _release_update(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Release Update operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        release_id = self.get_node_parameter('release_id', item_index)\n        body = self.get_node_parameter('additionalFields', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        response = self._api_request('PATCH', f'/repos/{owner}/{repository}/releases/{release_id}', body=body, query=None)\n        \n        return response\n\n    def _repository_listPopularPaths(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Repository Listpopularpaths operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        response = self._api_request('GET', f'/repos/{owner}/{repository}/traffic/popular/paths', body=None, query=None)\n        \n        return response\n\n    def _repository_listReferrers(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Repository Listreferrers operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        response = self._api_request('GET', f'/repos/{owner}/{repository}/traffic/popular/referrers', body=None, query=None)\n        \n        return response\n\n    def _repository_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Repository Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        response = self._api_request('GET', f'/repos/{owner}/{repository}', body=None, query=None)\n        \n        return response\n\n    def _repository_getLicense(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Repository Getlicense operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        response = self._api_request('GET', f'/repos/{owner}/{repository}/license', body=None, query=None)\n        \n        return response\n\n    def _repository_getIssues(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Repository Getissues operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        qs = self.get_node_parameter('getRepositoryIssuesFilters', item_index)\n        return_all = self.get_node_parameter('returnAll', item_index)\n        per_page = self.get_node_parameter('limit', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        if return_all:\n            response = self._api_request_all_items('GET', f'/repos/{owner}/{repository}/issues', body=None, query=None)\n        else:\n            query = {}\n            query['per_page'] = per_page\n            response = self._api_request('GET', f'/repos/{owner}/{repository}/issues', body=None, query=query)\n        \n        return response\n\n    def _repository_getPullRequests(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Repository Getpullrequests operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        qs = self.get_node_parameter('getRepositoryPullRequestsFilters', item_index)\n        return_all = self.get_node_parameter('returnAll', item_index)\n        per_page = self.get_node_parameter('limit', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        if return_all:\n            response = self._api_request_all_items('GET', f'/repos/{owner}/{repository}/pulls', body=None, query=None)\n        else:\n            query = {}\n            query['per_page'] = per_page\n            response = self._api_request('GET', f'/repos/{owner}/{repository}/pulls', body=None, query=query)\n        \n        return response\n\n    def _review_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Review Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        review_id = self.get_node_parameter('reviewId', item_index)\n        pull_request_number = self.get_node_parameter('pullRequestNumber', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        response = self._api_request('GET', f'/repos/{owner}/{repository}/pulls/{pull_request_number}/reviews/{review_id}', body=None, query=None)\n        \n        return response\n\n    def _review_getAll(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Review Getall operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        return_all = self.get_node_parameter('returnAll', item_index)\n        pull_request_number = self.get_node_parameter('pullRequestNumber', item_index)\n        per_page = self.get_node_parameter('limit', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        if return_all:\n            response = self._api_request_all_items('GET', f'/repos/{owner}/{repository}/pulls/{pull_request_number}/reviews', body=None, query=None)\n        else:\n            query = {}\n            query['per_page'] = per_page\n            response = self._api_request('GET', f'/repos/{owner}/{repository}/pulls/{pull_request_number}/reviews', body=None, query=query)\n        \n        return response\n\n    def _review_create(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Review Create operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        pull_request_number = self.get_node_parameter('pullRequestNumber', item_index)\n        additional_fields = self.get_node_parameter('additionalFields', item_index)\n        body = self.get_node_parameter('body', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        event_text = self.get_node_parameter('event', item_index)\n        body_text = self.get_node_parameter('body', item_index)\n        \n        # Add required fields to body\n        body['event'] = event_text\n        body['event'] = body_text\n        \n        # Make API request\n        response = self._api_request('POST', f'/repos/{owner}/{repository}/pulls/{pull_request_number}/reviews', body=body, query=None)\n        \n        return response\n\n    def _review_update(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Review Update operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        pull_request_number = self.get_node_parameter('pullRequestNumber', item_index)\n        review_id = self.get_node_parameter('reviewId', item_index)\n        body = self.get_node_parameter('body', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        body_text = self.get_node_parameter('body', item_index)\n        \n        # Build request body (avoid parameter shadowing)\n        body = {'body': body}\n        \n        # Make API request\n        response = self._api_request('PUT', f'/repos/{owner}/{repository}/pulls/{pull_request_number}/reviews/{review_id}', body=body, query=None)\n        \n        return response\n\n    def _user_getRepositories(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        User Getrepositories operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        return_all = self.get_node_parameter('returnAll', item_index)\n        per_page = self.get_node_parameter('limit', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        \n        # Make API request\n        if return_all:\n            response = self._api_request_all_items('GET', f'/users/{owner}/repos', body=None, query=None)\n        else:\n            query = {}\n            query['per_page'] = per_page\n            response = self._api_request('GET', f'/users/{owner}/repos', body=None, query=query)\n        \n        return response\n\n    def _user_invite(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        User Invite operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        org = self.get_node_parameter('organization', item_index)\n        email = self.get_node_parameter('email', item_index)\n        email_text = self.get_node_parameter('email', item_index)\n        \n        # Build request body\n        body = {'email': email_text}\n        \n        # Make API request\n        response = self._api_request('POST', f'/orgs/{org}/invitations', body=body, query=None)\n        \n        return response\n\n    def _organization_getRepositories(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Organization Getrepositories operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        return_all = self.get_node_parameter('returnAll', item_index)\n        per_page = self.get_node_parameter('limit', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        \n        # Make API request\n        if return_all:\n            response = self._api_request_all_items('GET', f'/orgs/{owner}/repos', body=None, query=None)\n        else:\n            query = {}\n            query['per_page'] = per_page\n            response = self._api_request('GET', f'/orgs/{owner}/repos', body=None, query=query)\n        \n        return response\n\n    def _workflow_disable(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Workflow Disable operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        workflow_id = self.get_node_parameter('workflowId', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        \n        # Build request body (extracted parameters)\n        body = {}\n        # Make API request\n        response = self._api_request('PUT', f'/repos/{owner}/{repository}/actions/workflows/{workflow_id}/disable', body=body, query=None)\n        \n        return response\n\n    def _workflow_dispatch(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Workflow Dispatch operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        workflow_id = self.get_node_parameter('workflowId', item_index)\n        ref = self.get_node_parameter('ref', item_index)\n        # Parse JSON parameter 'inputs'\n        inputs_str = self.get_node_parameter('inputs', item_index)\n        try:\n            import json\n            inputs = json.loads(inputs_str) if inputs_str else {}\n        except json.JSONDecodeError:\n            raise ValueError(f\"Invalid JSON in 'inputs' parameter\")\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Build request body\n        body = {'ref': ref, 'inputs': inputs}\n        \n        # Make API request\n        response = self._api_request('POST', f'/repos/{owner}/{repository}/actions/workflows/{workflow_id}/dispatches', body=body, query=None)\n        \n        return response\n\n    def _workflow_enable(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Workflow Enable operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        workflow_id = self.get_node_parameter('workflowId', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        \n        # Build request body (extracted parameters)\n        body = {}\n        # Make API request\n        response = self._api_request('PUT', f'/repos/{owner}/{repository}/actions/workflows/{workflow_id}/enable', body=body, query=None)\n        \n        return response\n\n    def _workflow_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Workflow Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        workflow_id = self.get_node_parameter('workflowId', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        response = self._api_request('GET', f'/repos/{owner}/{repository}/actions/workflows/{workflow_id}', body=None, query=None)\n        \n        return response\n\n    def _workflow_getUsage(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Workflow Getusage operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        workflow_id = self.get_node_parameter('workflowId', item_index)\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        response = self._api_request('GET', f'/repos/{owner}/{repository}/actions/workflows/{workflow_id}/timing', body=None, query=None)\n        \n        return response\n\n    def _workflow_list(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Workflow List operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        owner = self.get_node_parameter('owner', item_index)\n        repository = self.get_node_parameter('repository', item_index)\n        \n        # Make API request\n        response = self._api_request('GET', f'/repos/{owner}/{repository}/actions/workflows', body=None, query=None)\n        \n        return response\n\n",
+    "__init__.py": "\"\"\"\nGithub Node Package\nConverted from TypeScript by agent-skills/code-convert\n\"\"\"\n\nfrom .github import GithubNode\n\n__all__ = [\"GithubNode\"]\n"
+  },
+  "node_schema": {
+    "type": "github",
+    "version": 1,
+    "description": {
+      "displayName": "GitHub",
+      "name": "github",
+      "inputs": [
+        {
+          "name": "main",
+          "type": "main"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "main",
+          "type": "main"
+        }
+      ]
+    },
+    "properties": {
+      "parameters": [
+        {
+          "name": "resource",
+          "display_name": "Resource",
+          "type": "OPTIONS",
+          "options": [
+            {
+              "name": "File",
+              "value": "file"
+            },
+            {
+              "name": "Issue",
+              "value": "issue"
+            },
+            {
+              "name": "Organization",
+              "value": "organization"
+            },
+            {
+              "name": "Release",
+              "value": "release"
+            },
+            {
+              "name": "Repository",
+              "value": "repository"
+            },
+            {
+              "name": "Review",
+              "value": "review"
+            },
+            {
+              "name": "User",
+              "value": "user"
+            },
+            {
+              "name": "Workflow",
+              "value": "workflow"
+            }
+          ],
+          "default": "issue",
+          "description": "The resource to operate on"
+        },
+        {
+          "name": "operation",
+          "display_name": "Operation",
+          "type": "OPTIONS",
+          "options": [
+            {
+              "name": "Get Repositories",
+              "value": "getRepositories",
+              "description": "Returns all repositories of an organization"
+            },
+            {
+              "name": "Create",
+              "value": "create",
+              "description": "Create a new issue"
+            },
+            {
+              "name": "Create Comment",
+              "value": "createComment",
+              "description": "Create a new comment on an issue"
+            },
+            {
+              "name": "Edit",
+              "value": "edit",
+              "description": "Edit an issue"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get the data of a single issue"
+            },
+            {
+              "name": "Lock",
+              "value": "lock",
+              "description": "Lock an issue"
+            },
+            {
+              "name": "Delete",
+              "value": "delete",
+              "description": "Delete a file in repository"
+            },
+            {
+              "name": "List",
+              "value": "list",
+              "description": "List contents of a folder"
+            },
+            {
+              "name": "Get Issues",
+              "value": "getIssues",
+              "description": "Returns issues of a repository"
+            },
+            {
+              "name": "Get License",
+              "value": "getLicense",
+              "description": "Returns the contents of the repository"
+            },
+            {
+              "name": "Get Profile",
+              "value": "getProfile",
+              "description": "Get the community profile of a repository with metrics, health score, description, license, etc"
+            },
+            {
+              "name": "Get Pull Requests",
+              "value": "getPullRequests",
+              "description": "Returns pull requests of a repository"
+            },
+            {
+              "name": "List Popular Paths",
+              "value": "listPopularPaths",
+              "description": "Get the top 10 popular content paths over the last 14 days"
+            },
+            {
+              "name": "List Referrers",
+              "value": "listReferrers",
+              "description": "Get the top 10 referrering domains over the last 14 days"
+            },
+            {
+              "name": "Invite",
+              "value": "invite",
+              "description": "Invites a user to an organization"
+            },
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Get many repository releases"
+            },
+            {
+              "name": "Update",
+              "value": "update",
+              "description": "Update a release"
+            },
+            {
+              "name": "Disable",
+              "value": "disable",
+              "description": "Disable a workflow"
+            },
+            {
+              "name": "Dispatch",
+              "value": "dispatch",
+              "description": "Dispatch a workflow event"
+            },
+            {
+              "name": "Dispatch and Wait for Completion",
+              "value": "dispatchAndWait",
+              "description": "Dispatch a workflow event and wait for a webhook to be called before proceeding"
+            },
+            {
+              "name": "Enable",
+              "value": "enable",
+              "description": "Enable a workflow"
+            },
+            {
+              "name": "Get Usage",
+              "value": "getUsage",
+              "description": "Get the usage of a workflow"
+            }
+          ],
+          "default": "getRepositories",
+          "description": "Operation to perform"
+        },
+        {
+          "name": "authentication",
+          "display_name": "Authentication",
+          "type": "OPTIONS",
+          "default": "accessToken",
+          "options": [
+            {
+              "name": "Access Token",
+              "value": "accessToken"
+            },
+            {
+              "name": "OAuth2",
+              "value": "oAuth2"
+            }
+          ]
+        },
+        {
+          "name": "webhookNotice",
+          "display_name": "Your execution will pause until a webhook is called. This URL will be generated at runtime and passed to your Github workflow as a resumeUrl input.",
+          "type": "NOTICE",
+          "default": "",
+          "display_options": {
+            "show": {
+              "operation": [
+                "dispatchAndWait"
+              ],
+              "resource": [
+                "workflow"
+              ]
+            }
+          }
+        },
+        {
+          "name": "owner",
+          "display_name": "Repository Owner",
+          "type": "RESOURCELOCATOR",
+          "default": "",
+          "required": true
+        },
+        {
+          "name": "repository",
+          "display_name": "Repository Name",
+          "type": "RESOURCELOCATOR",
+          "default": "",
+          "required": true
+        },
+        {
+          "name": "workflowId",
+          "display_name": "Workflow",
+          "type": "RESOURCELOCATOR",
+          "default": "",
+          "required": true,
+          "description": "The workflow to dispatch",
+          "display_options": {
+            "show": {
+              "operation": [
+                "disable",
+                "dispatch",
+                "dispatchAndWait",
+                "get",
+                "getUsage",
+                "enable"
+              ],
+              "resource": [
+                "workflow"
+              ]
+            }
+          }
+        },
+        {
+          "name": "ref",
+          "display_name": "Ref",
+          "type": "STRING",
+          "default": "main",
+          "required": true,
+          "description": "The git reference for the workflow dispatch (branch or tag name)",
+          "display_options": {
+            "show": {
+              "operation": [
+                "dispatch",
+                "dispatchAndWait"
+              ],
+              "resource": [
+                "workflow"
+              ]
+            }
+          }
+        },
+        {
+          "name": "inputs",
+          "display_name": "Inputs",
+          "type": "JSON",
+          "default": "{}",
+          "description": "JSON object with input parameters for the workflow",
+          "display_options": {
+            "show": {
+              "operation": [
+                "dispatch",
+                "dispatchAndWait"
+              ],
+              "resource": [
+                "workflow"
+              ]
+            }
+          }
+        },
+        {
+          "name": "filePath",
+          "display_name": "File Path",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "The file path of the file. Has to contain the full path.",
+          "display_options": {
+            "show": {
+              "resource": [
+                "file"
+              ]
+            }
+          }
+        },
+        {
+          "name": "binaryData",
+          "display_name": "Binary File",
+          "type": "BOOLEAN",
+          "default": false,
+          "required": true,
+          "description": "Whether the data to upload should be taken from binary field",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create",
+                "edit"
+              ],
+              "resource": [
+                "file"
+              ]
+            }
+          }
+        },
+        {
+          "name": "fileContent",
+          "display_name": "File Content",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "The text content of the file",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create",
+                "edit"
+              ],
+              "resource": [
+                "file"
+              ]
+            }
+          }
+        },
+        {
+          "name": "binaryPropertyName",
+          "display_name": "Input Binary Field",
+          "type": "STRING",
+          "default": "data",
+          "required": true,
+          "display_options": {
+            "show": {
+              "operation": [
+                "create",
+                "edit"
+              ],
+              "resource": [
+                "file"
+              ]
+            }
+          }
+        },
+        {
+          "name": "commitMessage",
+          "display_name": "Commit Message",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "display_options": {
+            "show": {
+              "operation": [
+                "create",
+                "delete",
+                "edit"
+              ],
+              "resource": [
+                "file"
+              ]
+            }
+          }
+        },
+        {
+          "name": "additionalParameters",
+          "display_name": "Additional Parameters",
+          "type": "COLLECTION",
+          "default": "",
+          "description": "Additional fields to add",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create",
+                "delete",
+                "edit"
+              ],
+              "resource": [
+                "file"
+              ]
+            }
+          }
+        },
+        {
+          "name": "asBinaryProperty",
+          "display_name": "As Binary Property",
+          "type": "BOOLEAN",
+          "default": true,
+          "description": "Whether to set the data of the file as binary property instead of returning the raw API response",
+          "display_options": {
+            "show": {
+              "operation": [
+                "get"
+              ],
+              "resource": [
+                "file"
+              ]
+            }
+          }
+        },
+        {
+          "name": "title",
+          "display_name": "Title",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "The title of the issue",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ],
+              "resource": [
+                "issue"
+              ]
+            }
+          }
+        },
+        {
+          "name": "body",
+          "display_name": "Body",
+          "type": "STRING",
+          "default": "",
+          "description": "The body of the issue",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ],
+              "resource": [
+                "issue"
+              ]
+            }
+          }
+        },
+        {
+          "name": "labels",
+          "display_name": "Labels",
+          "type": "COLLECTION",
+          "default": "",
+          "description": "Label to add to issue",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ],
+              "resource": [
+                "issue"
+              ]
+            }
+          }
+        },
+        {
+          "name": "assignees",
+          "display_name": "Assignees",
+          "type": "COLLECTION",
+          "default": "",
+          "description": "User to assign issue too",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ],
+              "resource": [
+                "issue"
+              ]
+            }
+          }
+        },
+        {
+          "name": "issueNumber",
+          "display_name": "Issue Number",
+          "type": "NUMBER",
+          "default": 0,
+          "required": true,
+          "description": "The number of the issue on which to create the comment on",
+          "display_options": {
+            "show": {
+              "operation": [
+                "createComment"
+              ],
+              "resource": [
+                "issue"
+              ]
+            }
+          }
+        },
+        {
+          "name": "editFields",
+          "display_name": "Edit Fields",
+          "type": "COLLECTION",
+          "default": "",
+          "description": "User to assign issue to",
+          "display_options": {
+            "show": {
+              "operation": [
+                "edit"
+              ],
+              "resource": [
+                "issue"
+              ]
+            }
+          }
+        },
+        {
+          "name": "lockReason",
+          "display_name": "Lock Reason",
+          "type": "OPTIONS",
+          "default": "resolved",
+          "description": "The issue is Off-Topic",
+          "display_options": {
+            "show": {
+              "operation": [
+                "lock"
+              ],
+              "resource": [
+                "issue"
+              ]
+            }
+          },
+          "options": [
+            {
+              "name": "Off-Topic",
+              "value": "off-topic"
+            },
+            {
+              "name": "Too Heated",
+              "value": "too heated"
+            },
+            {
+              "name": "Resolved",
+              "value": "resolved"
+            },
+            {
+              "name": "Spam",
+              "value": "spam"
+            }
+          ]
+        },
+        {
+          "name": "releaseTag",
+          "display_name": "Tag",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "The tag of the release",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ],
+              "resource": [
+                "release"
+              ]
+            }
+          }
+        },
+        {
+          "name": "additionalFields",
+          "display_name": "Additional Fields",
+          "type": "COLLECTION",
+          "default": "",
+          "description": "The name of the issue",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ],
+              "resource": [
+                "release"
+              ]
+            }
+          }
+        },
+        {
+          "name": "release_id",
+          "display_name": "Release ID",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "display_options": {
+            "show": {
+              "operation": [
+                "get",
+                "delete",
+                "update"
+              ],
+              "resource": [
+                "release"
+              ]
+            }
+          }
+        },
+        {
+          "name": "returnAll",
+          "display_name": "Return All",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether to return all results or only up to a given limit",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getAll"
+              ],
+              "resource": [
+                "release"
+              ]
+            }
+          }
+        },
+        {
+          "name": "limit",
+          "display_name": "Limit",
+          "type": "NUMBER",
+          "default": 50,
+          "description": "Max number of results to return",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getAll"
+              ],
+              "resource": [
+                "release"
+              ]
+            }
+          }
+        },
+        {
+          "name": "getRepositoryIssuesFilters",
+          "display_name": "Filters",
+          "type": "COLLECTION",
+          "default": "",
+          "description": "Return only issues which are assigned to a specific user",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getIssues"
+              ],
+              "resource": [
+                "repository"
+              ]
+            }
+          }
+        },
+        {
+          "name": "getRepositoryPullRequestsFilters",
+          "display_name": "Filters",
+          "type": "COLLECTION",
+          "default": "",
+          "description": "Returns pull requests with any state",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getPullRequests"
+              ],
+              "resource": [
+                "repository"
+              ]
+            }
+          }
+        },
+        {
+          "name": "pullRequestNumber",
+          "display_name": "PR Number",
+          "type": "NUMBER",
+          "default": 0,
+          "required": true,
+          "description": "The number of the pull request",
+          "display_options": {
+            "show": {
+              "operation": [
+                "get",
+                "update"
+              ],
+              "resource": [
+                "review"
+              ]
+            }
+          }
+        },
+        {
+          "name": "reviewId",
+          "display_name": "Review ID",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "ID of the review",
+          "display_options": {
+            "show": {
+              "operation": [
+                "get",
+                "update"
+              ],
+              "resource": [
+                "review"
+              ]
+            }
+          }
+        },
+        {
+          "name": "event",
+          "display_name": "Event",
+          "type": "OPTIONS",
+          "default": "approve",
+          "description": "Approve the pull request",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ],
+              "resource": [
+                "review"
+              ]
+            }
+          },
+          "options": [
+            {
+              "name": "Approve",
+              "value": "approve"
+            },
+            {
+              "name": "Request Change",
+              "value": "requestChanges"
+            },
+            {
+              "name": "Comment",
+              "value": "comment"
+            },
+            {
+              "name": "Pending",
+              "value": "pending"
+            }
+          ]
+        },
+        {
+          "name": "organization",
+          "display_name": "Organization",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "The GitHub organization that the user is being invited to",
+          "display_options": {
+            "show": {
+              "operation": [
+                "invite"
+              ],
+              "resource": [
+                "user"
+              ]
+            }
+          }
+        },
+        {
+          "name": "email",
+          "display_name": "Email",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "The email address of the invited user",
+          "display_options": {
+            "show": {
+              "operation": [
+                "invite"
+              ],
+              "resource": [
+                "user"
+              ]
+            }
+          }
+        },
+        {
+          "name": "notice",
+          "display_name": "Only members with owner privileges for an organization or admin privileges for a repository can set up the webhooks this node requires.",
+          "type": "NOTICE",
+          "default": ""
+        },
+        {
+          "name": "events",
+          "display_name": "Events",
+          "type": "MULTIOPTIONS",
+          "default": [],
+          "required": true,
+          "description": "Any time any event is triggered (Wildcard Event)",
+          "options": [
+            {
+              "name": "*",
+              "value": "*"
+            },
+            {
+              "name": "Check Run",
+              "value": "check_run"
+            },
+            {
+              "name": "Check Suite",
+              "value": "check_suite"
+            },
+            {
+              "name": "Commit Comment",
+              "value": "commit_comment"
+            },
+            {
+              "name": "Create",
+              "value": "create"
+            },
+            {
+              "name": "Delete",
+              "value": "delete"
+            },
+            {
+              "name": "Deploy Key",
+              "value": "deploy_key"
+            },
+            {
+              "name": "Deployment",
+              "value": "deployment"
+            },
+            {
+              "name": "Deployment Status",
+              "value": "deployment_status"
+            },
+            {
+              "name": "Fork",
+              "value": "fork"
+            },
+            {
+              "name": "Github App Authorization",
+              "value": "github_app_authorization"
+            },
+            {
+              "name": "Gollum",
+              "value": "gollum"
+            },
+            {
+              "name": "Installation",
+              "value": "installation"
+            },
+            {
+              "name": "Installation Repositories",
+              "value": "installation_repositories"
+            },
+            {
+              "name": "Issue Comment",
+              "value": "issue_comment"
+            },
+            {
+              "name": "Issues",
+              "value": "issues"
+            },
+            {
+              "name": "Label",
+              "value": "label"
+            },
+            {
+              "name": "Marketplace Purchase",
+              "value": "marketplace_purchase"
+            },
+            {
+              "name": "Member",
+              "value": "member"
+            },
+            {
+              "name": "Membership",
+              "value": "membership"
+            },
+            {
+              "name": "Meta",
+              "value": "meta"
+            },
+            {
+              "name": "Milestone",
+              "value": "milestone"
+            },
+            {
+              "name": "Org Block",
+              "value": "org_block"
+            },
+            {
+              "name": "Organization",
+              "value": "organization"
+            },
+            {
+              "name": "Page Build",
+              "value": "page_build"
+            },
+            {
+              "name": "Project",
+              "value": "project"
+            },
+            {
+              "name": "Project Card",
+              "value": "project_card"
+            },
+            {
+              "name": "Project Column",
+              "value": "project_column"
+            },
+            {
+              "name": "Public",
+              "value": "public"
+            },
+            {
+              "name": "Pull Request",
+              "value": "pull_request"
+            },
+            {
+              "name": "Pull Request Review",
+              "value": "pull_request_review"
+            },
+            {
+              "name": "Pull Request Review Comment",
+              "value": "pull_request_review_comment"
+            },
+            {
+              "name": "Push",
+              "value": "push"
+            },
+            {
+              "name": "Release",
+              "value": "release"
+            },
+            {
+              "name": "Repository",
+              "value": "repository"
+            },
+            {
+              "name": "Repository Import",
+              "value": "repository_import"
+            },
+            {
+              "name": "Repository Vulnerability Alert",
+              "value": "repository_vulnerability_alert"
+            },
+            {
+              "name": "Security Advisory",
+              "value": "security_advisory"
+            },
+            {
+              "name": "Star",
+              "value": "star"
+            },
+            {
+              "name": "Status",
+              "value": "status"
+            },
+            {
+              "name": "Team",
+              "value": "team"
+            },
+            {
+              "name": "Team Add",
+              "value": "team_add"
+            },
+            {
+              "name": "Watch",
+              "value": "watch"
+            }
+          ]
+        },
+        {
+          "name": "options",
+          "display_name": "Options",
+          "type": "COLLECTION",
+          "default": "",
+          "description": "Whether the SSL certificate of the n8n host be verified by GitHub when delivering payloads"
+        }
+      ],
+      "credentials": [
+        {
+          "name": "githubApi",
+          "required": true
+        },
+        {
+          "name": "githubOAuth2Api",
+          "required": true
+        }
+      ]
+    },
+    "operations": [
+      {
+        "name": "getRepositories",
+        "display_name": "Get Repositories",
+        "description": "Returns all repositories of an organization"
+      },
+      {
+        "name": "checkExists",
+        "description": "Operation: checkExists"
+      },
+      {
+        "name": "create",
+        "description": "Operation: create"
+      },
+      {
+        "name": "webhook",
+        "description": "Operation: webhook"
+      },
+      {
+        "name": "getUsers",
+        "description": "Operation: getUsers"
+      },
+      {
+        "name": "getRepositories",
+        "description": "Operation: getRepositories"
+      },
+      {
+        "name": "getWorkflows",
+        "description": "Operation: getWorkflows"
+      },
+      {
+        "name": "getRefs",
+        "description": "Operation: getRefs"
+      }
+    ],
+    "resources": [
+      {
+        "name": "File",
+        "value": "file"
+      },
+      {
+        "name": "Issue",
+        "value": "issue"
+      },
+      {
+        "name": "Organization",
+        "value": "organization"
+      },
+      {
+        "name": "Release",
+        "value": "release"
+      },
+      {
+        "name": "Repository",
+        "value": "repository"
+      },
+      {
+        "name": "Review",
+        "value": "review"
+      },
+      {
+        "name": "User",
+        "value": "user"
+      },
+      {
+        "name": "Workflow",
+        "value": "workflow"
+      }
+    ],
+    "credentials": [
+      {
+        "name": "githubApi",
+        "required": true
+      },
+      {
+        "name": "githubOAuth2Api",
+        "required": true
+      }
+    ]
+  },
+  "trace_map": {
+    "correlation_id": "node-github-fix26-28-1767771300",
+    "node_type": "github",
+    "trace_entries": [
+      {
+        "field_path": "operations[6].name",
+        "source": "SOURCE_CODE",
+        "evidence": "n8n operation 'getRepositories' (display: 'Get Repositories') in Github.node.ts",
+        "confidence": "high",
+        "source_file": "Github.node.ts",
+        "line_range": "L141",
+        "excerpt_hash": "6b82a17354ab"
+      },
+      {
+        "field_path": "operations[1].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'checkExists' defined in GithubTrigger.node.ts",
+        "confidence": "high",
+        "source_file": "GithubTrigger.node.ts",
+        "line_range": "L459",
+        "excerpt_hash": "5be11dd57b5f"
+      },
+      {
+        "field_path": "operations[2].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'create' defined in GithubTrigger.node.ts",
+        "confidence": "high",
+        "source_file": "GithubTrigger.node.ts",
+        "line_range": "L491",
+        "excerpt_hash": "537a3dc6a4d7"
+      },
+      {
+        "field_path": "operations[3].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'webhook' defined in GithubTrigger.node.ts",
+        "confidence": "high",
+        "source_file": "GithubTrigger.node.ts",
+        "line_range": "L611",
+        "excerpt_hash": "d4d633bde3c3"
+      },
+      {
+        "field_path": "operations[4].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'getUsers' defined in SearchFunctions.ts",
+        "confidence": "high",
+        "source_file": "SearchFunctions.ts",
+        "line_range": "L33",
+        "excerpt_hash": "acb150b818af"
+      },
+      {
+        "field_path": "operations[5].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'getRepositories' defined in SearchFunctions.ts",
+        "confidence": "high",
+        "source_file": "SearchFunctions.ts",
+        "line_range": "L68",
+        "excerpt_hash": "0ad2a01442a6"
+      },
+      {
+        "field_path": "operations[6].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'getWorkflows' defined in SearchFunctions.ts",
+        "confidence": "high",
+        "source_file": "SearchFunctions.ts",
+        "line_range": "L104",
+        "excerpt_hash": "8985deabe145"
+      },
+      {
+        "field_path": "operations[7].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'getRefs' defined in SearchFunctions.ts",
+        "confidence": "high",
+        "source_file": "SearchFunctions.ts",
+        "line_range": "L133",
+        "excerpt_hash": "a77f95c7d15e"
+      },
+      {
+        "field_path": "description.displayName",
+        "source": "SOURCE_CODE",
+        "evidence": "displayName: 'GitHub' in Github.node.ts",
+        "confidence": "high",
+        "source_file": "Github.node.ts"
+      },
+      {
+        "field_path": "parameters.resource",
+        "source": "SOURCE_CODE",
+        "evidence": "Resource parameter with 8 options in Github.node.ts",
+        "confidence": "high",
+        "source_file": "Github.node.ts"
+      },
+      {
+        "field_path": "parameters.operation",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation parameter with 22 options in Github.node.ts",
+        "confidence": "high",
+        "source_file": "Github.node.ts"
+      },
+      {
+        "field_path": "credentials[0]",
+        "source": "SOURCE_CODE",
+        "evidence": "Credential 'githubApi' (required=True) in Github.node.ts",
+        "confidence": "high",
+        "source_file": "Github.node.ts"
+      },
+      {
+        "field_path": "credentials[1]",
+        "source": "SOURCE_CODE",
+        "evidence": "Credential 'githubOAuth2Api' (required=True) in Github.node.ts",
+        "confidence": "high",
+        "source_file": "Github.node.ts"
+      }
+    ],
+    "generated_at": "2026-01-07T07:50:33.816390",
+    "skill_version": "1.0.0",
+    "_hybrid_metadata": {
+      "source_type": "TYPE1",
+      "extraction_confidence": 0.8333333333333333,
+      "advisor_used": false,
+      "assumption_ratio": 0.0,
+      "deterministic_operations": 13,
+      "assumption_operations": 0
+    }
+  },
+  "tests_passed": false,
+  "validation_passed": true,
+  "fix_iterations": 0,
+  "source_files": [],
+  "source_hash": null
+}

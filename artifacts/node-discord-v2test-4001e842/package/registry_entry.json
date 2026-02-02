@@ -1,0 +1,7 @@
+{
+  "import_statement": "from .discord import DiscordNode",
+  "dict_entry": "'discord': {'node_class': DiscordNode, 'type': 'regular'}",
+  "node_type": "discord",
+  "node_class": "DiscordNode",
+  "module_name": "discord"
+}

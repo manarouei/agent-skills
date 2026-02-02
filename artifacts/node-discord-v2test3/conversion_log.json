@@ -1,0 +1,23 @@
+{
+  "correlation_id": "node-discord-v2test3",
+  "node_name": "Discord",
+  "source_type": "TYPE1",
+  "operations_converted": 0,
+  "artifact_paths": [
+    "artifacts/node-discord-v2test3/converted/discord.py",
+    "artifacts/node-discord-v2test3/converted/__init__.py"
+  ],
+  "target_paths": [
+    "nodes/discord.py"
+  ],
+  "all_target_files": [
+    "nodes/discord.py",
+    "nodes/__init__.py"
+  ],
+  "notes": [
+    "Found main node class for Discord",
+    "Found 0 operation handlers",
+    "Using 15 parameters from inferred schema"
+  ],
+  "generated_at": "2026-01-06T04:37:53.282416"
+}

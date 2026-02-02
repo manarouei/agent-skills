@@ -1,0 +1,18 @@
+{
+  "correlation_id": "node-discord-v2test3",
+  "node_name": "discord",
+  "class_name": "Discord",
+  "module_name": "discord",
+  "files_created": [
+    "artifacts/node-discord-v2test3/generated_node/discord.py",
+    "artifacts/node-discord-v2test3/generated_node/__init__.py"
+  ],
+  "generated_at": "2026-01-06T04:37:53.258263",
+  "schema_summary": {
+    "type": "node",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 15,
+    "credential_count": 1
+  }
+}

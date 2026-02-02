@@ -1,0 +1,14 @@
+{
+  "basenode_contract_path": "nodes/base.py",
+  "node_loader_paths": [
+    "venv/lib/python3.12/site-packages/yaml/loader.py"
+  ],
+  "golden_node_paths": [
+    "nodes/http_request.py",
+    "venv/lib/python3.12/site-packages/langchain_community/chat_loaders/slack.py",
+    "venv/lib/python3.12/site-packages/tqdm/contrib/slack.py",
+    "venv/lib/python3.12/site-packages/langchain/chat_loaders/slack.py",
+    "nodes/slack.py"
+  ],
+  "test_command": "pytest"
+}

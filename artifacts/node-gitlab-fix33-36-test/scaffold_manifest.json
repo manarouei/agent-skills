@@ -1,0 +1,18 @@
+{
+  "correlation_id": "node-gitlab-fix33-36-test",
+  "node_name": "gitlab",
+  "class_name": "Gitlab",
+  "module_name": "gitlab",
+  "files_created": [
+    "/home/toni/agent-skills/artifacts/node-gitlab-fix33-36-test/generated_node/gitlab.py",
+    "/home/toni/agent-skills/artifacts/node-gitlab-fix33-36-test/generated_node/__init__.py"
+  ],
+  "generated_at": "2026-01-07T08:37:43.582595",
+  "schema_summary": {
+    "type": "gitlab",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 30,
+    "credential_count": 2
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "pipeline_name": "convert_node_v1",
+  "correlation_id": "node-bitly-39b2d292",
+  "status": "blocked",
+  "started_at": "2026-01-04T09:11:55.882613",
+  "completed_at": "2026-01-04T09:11:55.883116",
+  "duration_ms": 0,
+  "steps": [
+    {
+      "step_name": "normalize",
+      "skill_name": "node-normalize",
+      "status": "completed",
+      "started_at": "2026-01-04T09:11:55.882823",
+      "completed_at": "2026-01-04T09:11:55.882840",
+      "duration_ms": 0,
+      "outputs": {
+        "dry_run": true
+      },
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Dry run mode"
+    },
+    {
+      "step_name": "classify",
+      "skill_name": "source-classify",
+      "status": "completed",
+      "started_at": "2026-01-04T09:11:55.882865",
+      "completed_at": "2026-01-04T09:11:55.882875",
+      "duration_ms": 0,
+      "outputs": {
+        "dry_run": true
+      },
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Dry run mode"
+    },
+    {
+      "step_name": "ground",
+      "skill_name": "repo-ground",
+      "status": "completed",
+      "started_at": "2026-01-04T09:11:55.882890",
+      "completed_at": "2026-01-04T09:11:55.882898",
+      "duration_ms": 0,
+      "outputs": {
+        "dry_run": true
+      },
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Dry run mode"
+    },
+    {
+      "step_name": "ingest",
+      "skill_name": "source-ingest",
+      "status": "completed",
+      "started_at": "2026-01-04T09:11:55.882916",
+      "completed_at": "2026-01-04T09:11:55.882925",
+      "duration_ms": 0,
+      "outputs": {
+        "dry_run": true
+      },
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Dry run mode"
+    },
+    {
+      "step_name": "infer-schema",
+      "skill_name": "schema-infer",
+      "status": "blocked",
+      "started_at": "2026-01-04T09:11:55.882937",
+      "completed_at": "2026-01-04T09:11:55.882975",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required artifacts: ['repo_facts.json']"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "scaffold",
+      "skill_name": "node-scaffold",
+      "status": "blocked",
+      "started_at": "2026-01-04T09:11:55.883009",
+      "completed_at": "2026-01-04T09:11:55.883034",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required artifacts: ['schema/inferred_schema.json']"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "convert",
+      "skill_name": "code-convert",
+      "status": "blocked",
+      "started_at": "2026-01-04T09:11:55.883056",
+      "completed_at": "2026-01-04T09:11:55.883093",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required artifacts: ['allowlist.json', 'repo_facts.json']"
+      ],
+      "skipped_reason": null
+    }
+  ],
+  "outputs": {
+    "normalize": {
+      "dry_run": true
+    },
+    "classify": {
+      "dry_run": true
+    },
+    "ground": {
+      "dry_run": true
+    },
+    "ingest": {
+      "dry_run": true
+    },
+    "infer-schema": {},
+    "scaffold": {},
+    "convert": {}
+  },
+  "artifacts_dir": "/home/toni/agent-skills/artifacts/node-bitly-39b2d292",
+  "errors": [
+    "Step 'infer-schema' blocked by gate",
+    "Step 'scaffold' blocked by gate",
+    "Step 'convert' blocked by gate"
+  ]
+}

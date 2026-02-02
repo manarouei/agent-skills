@@ -1,0 +1,44 @@
+{
+  "correlation_id": "gitlab-FINAL-WITH-ALL-FIXES",
+  "node_name": "Gitlab",
+  "source_type": "TYPE1",
+  "operations_converted": 16,
+  "artifact_paths": [
+    "/home/toni/agent-skills/artifacts/gitlab-FINAL-WITH-ALL-FIXES/converted/gitlab.py",
+    "/home/toni/agent-skills/artifacts/gitlab-FINAL-WITH-ALL-FIXES/converted/__init__.py"
+  ],
+  "target_paths": [
+    "nodes/gitlab.py"
+  ],
+  "all_target_files": [
+    "nodes/gitlab.py",
+    "nodes/__init__.py"
+  ],
+  "notes": [
+    "Selected Gitlab.node.ts as main node (name match)",
+    "Found main node class for Gitlab",
+    "Found 16 operation handlers",
+    "Converted issue/create",
+    "Converted issue/createComment",
+    "Converted issue/edit",
+    "Converted issue/get",
+    "Converted issue/lock",
+    "Converted release/create",
+    "Converted release/delete",
+    "Converted release/get",
+    "Converted release/getAll",
+    "Converted release/update",
+    "Converted repository/get",
+    "Converted repository/getIssues",
+    "Converted user/getRepositories",
+    "Converted file/delete",
+    "Converted file/get",
+    "Converted file/list",
+    "Using 30 parameters from inferred schema",
+    "Converted GenericFunctions.ts to Python helpers",
+    "Added resource-based display_options to operation parameter",
+    "Added conditional display_options for owner (11 operations)",
+    "Added conditional display_options for repository (11 operations)"
+  ],
+  "generated_at": "2026-01-07T09:03:25.302924"
+}

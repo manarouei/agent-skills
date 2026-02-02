@@ -1,0 +1,18 @@
+{
+  "source-ingest:8f22577f81e0bc79": {
+    "completed_at": "2026-01-06T08:04:38.496759",
+    "skill": "source-ingest"
+  },
+  "schema-infer:8f22577f81e0bc79": {
+    "completed_at": "2026-01-06T08:04:39.043428",
+    "skill": "schema-infer"
+  },
+  "node-scaffold:8f22577f81e0bc79": {
+    "completed_at": "2026-01-06T08:04:39.061370",
+    "skill": "node-scaffold"
+  },
+  "repo-ground:8f22577f81e0bc79": {
+    "completed_at": "2026-01-06T08:04:39.065678",
+    "skill": "repo-ground"
+  }
+}

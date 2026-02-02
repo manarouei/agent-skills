@@ -1,0 +1,2936 @@
+// === File: PostgresV2.node.ts ===
+import type {
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeType,
+	INodeTypeBaseDescription,
+	INodeTypeDescription,
+} from 'n8n-workflow';
+
+import { router } from './actions/router';
+import { versionDescription } from './actions/versionDescription';
+import { credentialTest, listSearch, loadOptions, resourceMapping } from './methods';
+
+export class PostgresV2 implements INodeType {
+	description: INodeTypeDescription;
+
+	constructor(baseDescription: INodeTypeBaseDescription) {
+		this.description = {
+			...baseDescription,
+			...versionDescription,
+		};
+	}
+
+	methods = { credentialTest, listSearch, loadOptions, resourceMapping };
+
+	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+		return await router.call(this);
+	}
+}
+
+
+// === File: actions/common.descriptions.ts ===
+import type { INodeProperties } from 'n8n-workflow';
+
+export const optionsCollection: INodeProperties = {
+	displayName: 'Options',
+	name: 'options',
+	type: 'collection',
+	placeholder: 'Add option',
+	default: {},
+	options: [
+		{
+			displayName: 'Cascade',
+			name: 'cascade',
+			type: 'boolean',
+			default: false,
+			description:
+				'Whether to drop all objects that depend on the table, such as views and sequences',
+			displayOptions: {
+				show: {
+					'/operation': ['deleteTable'],
+				},
+				hide: {
+					'/deleteCommand': ['delete'],
+				},
+			},
+		},
+		{
+			displayName: 'Connection Timeout',
+			name: 'connectionTimeout',
+			type: 'number',
+			default: 30,
+			description: 'Number of seconds reserved for connecting to the database',
+		},
+		{
+			displayName: 'Delay Closing Idle Connection',
+			name: 'delayClosingIdleConnection',
+			type: 'number',
+			default: 0,
+			description: 'Number of seconds to wait before idle connection would be eligible for closing',
+			typeOptions: {
+				minValue: 0,
+			},
+		},
+		{
+			displayName: 'Query Batching',
+			name: 'queryBatching',
+			type: 'options',
+			noDataExpression: true,
+			options: [
+				{
+					name: 'Single Query',
+					value: 'single',
+					description: 'A single query for all incoming items',
+				},
+				{
+					name: 'Independent',
+					value: 'independently',
+					description: 'Execute one query per incoming item of the run',
+				},
+				{
+					name: 'Transaction',
+					value: 'transaction',
+					description:
+						'Execute all queries in a transaction, if a failure occurs, all changes are rolled back',
+				},
+			],
+			default: 'single',
+			description: 'The way queries should be sent to the database',
+		},
+		{
+			displayName: 'Query Parameters',
+			name: 'queryReplacement',
+			type: 'string',
+			default: '',
+			description:
+				'Comma-separated list of the values you want to use as query parameters. <a href="https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.postgres/#use-query-parameters" target="_blank">More info</a>.',
+			hint: 'Comma-separated list of values: reference them in your query as $1, $2, $3…',
+			placeholder: 'e.g. value1,value2,value3',
+			displayOptions: {
+				show: { '/operation': ['executeQuery'] },
+			},
+		},
+		{
+			// eslint-disable-next-line n8n-nodes-base/node-param-display-name-miscased
+			displayName: 'Treat query parameters in single quotes as text',
+			name: 'treatQueryParametersInSingleQuotesAsText',
+			type: 'boolean',
+			default: false,
+			description: "Whether to treat query parameters enclosed in single quotes as text e.g. '$1'",
+			displayOptions: {
+				show: { queryReplacement: [{ _cnd: { exists: true } }] },
+			},
+		},
+		{
+			// eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-multi-options
+			displayName: 'Output Columns',
+			name: 'outputColumns',
+			type: 'multiOptions',
+			// eslint-disable-next-line n8n-nodes-base/node-param-description-wrong-for-dynamic-multi-options
+			description:
+				'Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/" target="_blank">expression</a>',
+			typeOptions: {
+				loadOptionsMethod: 'getColumnsMultiOptions',
+				loadOptionsDependsOn: ['table.value'],
+			},
+			default: [],
+			displayOptions: {
+				show: { '/operation': ['select', 'insert', 'update', 'upsert'] },
+			},
+		},
+		{
+			displayName: 'Output Large-Format Numbers As',
+			name: 'largeNumbersOutput',
+			type: 'options',
+			options: [
+				{
+					name: 'Numbers',
+					value: 'numbers',
+				},
+				{
+					name: 'Text',
+					value: 'text',
+					description:
+						'Use this if you expect numbers longer than 16 digits (otherwise numbers may be incorrect)',
+				},
+			],
+			hint: 'Applies to NUMERIC and BIGINT columns only',
+			default: 'text',
+		},
+		{
+			displayName: 'Skip on Conflict',
+			name: 'skipOnConflict',
+			type: 'boolean',
+			default: false,
+			description:
+				'Whether to skip the row and do not throw error if a unique constraint or exclusion constraint is violated',
+			displayOptions: {
+				show: {
+					'/operation': ['insert'],
+				},
+			},
+		},
+		{
+			displayName: 'Replace Empty Strings with NULL',
+			name: 'replaceEmptyStrings',
+			type: 'boolean',
+			default: false,
+			description:
+				'Whether to replace empty strings with NULL in input, could be useful when data come from spreadsheet',
+			displayOptions: {
+				show: {
+					'/operation': ['insert', 'update', 'upsert', 'executeQuery'],
+				},
+			},
+		},
+	],
+};
+
+export const schemaRLC: INodeProperties = {
+	displayName: 'Schema',
+	name: 'schema',
+	type: 'resourceLocator',
+	default: { mode: 'list', value: 'public' },
+	required: true,
+	placeholder: 'e.g. public',
+	description: 'The schema that contains the table you want to work on',
+	modes: [
+		{
+			displayName: 'From List',
+			name: 'list',
+			type: 'list',
+			typeOptions: {
+				searchListMethod: 'schemaSearch',
+			},
+		},
+		{
+			displayName: 'By Name',
+			name: 'name',
+			type: 'string',
+		},
+	],
+};
+
+export const tableRLC: INodeProperties = {
+	displayName: 'Table',
+	name: 'table',
+	type: 'resourceLocator',
+	default: { mode: 'list', value: '' },
+	required: true,
+	description: 'The table you want to work on',
+	modes: [
+		{
+			displayName: 'From List',
+			name: 'list',
+			type: 'list',
+			typeOptions: {
+				searchListMethod: 'tableSearch',
+			},
+		},
+		{
+			displayName: 'By Name',
+			name: 'name',
+			type: 'string',
+		},
+	],
+};
+
+export const whereFixedCollection: INodeProperties = {
+	displayName: 'Select Rows',
+	name: 'where',
+	type: 'fixedCollection',
+	typeOptions: {
+		multipleValues: true,
+	},
+	placeholder: 'Add Condition',
+	default: {},
+	description: 'If not set, all rows will be selected',
+	options: [
+		{
+			displayName: 'Values',
+			name: 'values',
+			values: [
+				{
+					// eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options
+					displayName: 'Column',
+					name: 'column',
+					type: 'options',
+					// eslint-disable-next-line n8n-nodes-base/node-param-description-wrong-for-dynamic-options
+					description:
+						'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/" target="_blank">expression</a>',
+					default: '',
+					placeholder: 'e.g. ID',
+					typeOptions: {
+						loadOptionsMethod: 'getColumns',
+						loadOptionsDependsOn: ['schema.value', 'table.value'],
+					},
+				},
+				{
+					displayName: 'Operator',
+					name: 'condition',
+					type: 'options',
+					description:
+						"The operator to check the column against. When using 'LIKE' operator percent sign ( %) matches zero or more characters, underscore ( _ ) matches any single character.",
+					// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
+					options: [
+						{
+							name: 'Equal',
+							value: 'equal',
+						},
+						{
+							name: 'Not Equal',
+							value: '!=',
+						},
+						{
+							name: 'Like',
+							value: 'LIKE',
+						},
+						{
+							name: 'Greater Than',
+							value: '>',
+						},
+						{
+							name: 'Less Than',
+							value: '<',
+						},
+						{
+							name: 'Greater Than Or Equal',
+							value: '>=',
+						},
+						{
+							name: 'Less Than Or Equal',
+							value: '<=',
+						},
+						{
+							name: 'Is Null',
+							value: 'IS NULL',
+						},
+						{
+							name: 'Is Not Null',
+							value: 'IS NOT NULL',
+						},
+					],
+					default: 'equal',
+				},
+				{
+					displayName: 'Value',
+					name: 'value',
+					type: 'string',
+					displayOptions: {
+						hide: {
+							condition: ['IS NULL', 'IS NOT NULL'],
+						},
+					},
+					default: '',
+				},
+			],
+		},
+	],
+};
+
+export const sortFixedCollection: INodeProperties = {
+	displayName: 'Sort',
+	name: 'sort',
+	type: 'fixedCollection',
+	typeOptions: {
+		multipleValues: true,
+	},
+	placeholder: 'Add Sort Rule',
+	default: {},
+	options: [
+		{
+			displayName: 'Values',
+			name: 'values',
+			values: [
+				{
+					// eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options
+					displayName: 'Column',
+					name: 'column',
+					type: 'options',
+					// eslint-disable-next-line n8n-nodes-base/node-param-description-wrong-for-dynamic-options
+					description:
+						'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/" target="_blank">expression</a>',
+					default: '',
+					typeOptions: {
+						loadOptionsMethod: 'getColumns',
+						loadOptionsDependsOn: ['schema.value', 'table.value'],
+					},
+				},
+				{
+					displayName: 'Direction',
+					name: 'direction',
+					type: 'options',
+					options: [
+						{
+							name: 'ASC',
+							value: 'ASC',
+						},
+						{
+							name: 'DESC',
+							value: 'DESC',
+						},
+					],
+					default: 'ASC',
+				},
+			],
+		},
+	],
+};
+
+export const combineConditionsCollection: INodeProperties = {
+	displayName: 'Combine Conditions',
+	name: 'combineConditions',
+	type: 'options',
+	description:
+		'How to combine the conditions defined in "Select Rows": AND requires all conditions to be true, OR requires at least one condition to be true',
+	options: [
+		{
+			name: 'AND',
+			value: 'AND',
+			description: 'Only rows that meet all the conditions are selected',
+		},
+		{
+			name: 'OR',
+			value: 'OR',
+			description: 'Rows that meet at least one condition are selected',
+		},
+	],
+	default: 'AND',
+};
+
+
+// === File: actions/database/Database.resource.ts ===
+import type { INodeProperties } from 'n8n-workflow';
+
+import * as deleteTable from './deleteTable.operation';
+import * as executeQuery from './executeQuery.operation';
+import * as insert from './insert.operation';
+import * as select from './select.operation';
+import * as update from './update.operation';
+import * as upsert from './upsert.operation';
+import { schemaRLC, tableRLC } from '../common.descriptions';
+
+export { deleteTable, executeQuery, insert, select, update, upsert };
+
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		options: [
+			{
+				name: 'Delete',
+				value: 'deleteTable',
+				description: 'Delete an entire table or rows in a table',
+				action: 'Delete table or rows',
+			},
+			{
+				name: 'Execute Query',
+				value: 'executeQuery',
+				description: 'Execute an SQL query',
+				action: 'Execute a SQL query',
+			},
+			{
+				name: 'Insert',
+				value: 'insert',
+				description: 'Insert rows in a table',
+				action: 'Insert rows in a table',
+			},
+			{
+				// eslint-disable-next-line n8n-nodes-base/node-param-option-name-wrong-for-upsert
+				name: 'Insert or Update',
+				value: 'upsert',
+				// eslint-disable-next-line n8n-nodes-base/node-param-description-wrong-for-upsert
+				description: 'Insert or update rows in a table',
+				action: 'Insert or update rows in a table',
+			},
+			{
+				name: 'Select',
+				value: 'select',
+				description: 'Select rows from a table',
+				action: 'Select rows from a table',
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				description: 'Update rows in a table',
+				action: 'Update rows in a table',
+			},
+		],
+		displayOptions: {
+			show: {
+				resource: ['database'],
+			},
+		},
+		default: 'insert',
+	},
+	{ ...schemaRLC, displayOptions: { hide: { operation: ['executeQuery'] } } },
+	{ ...tableRLC, displayOptions: { hide: { operation: ['executeQuery'] } } },
+	...deleteTable.description,
+	...executeQuery.description,
+	...insert.description,
+	...select.description,
+	...update.description,
+	...upsert.description,
+];
+
+
+// === File: actions/database/deleteTable.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
+
+import { updateDisplayOptions } from '@utils/utilities';
+
+import type {
+	PgpDatabase,
+	PostgresNodeOptions,
+	QueriesRunner,
+	QueryValues,
+	QueryWithValues,
+	WhereClause,
+} from '../../helpers/interfaces';
+import { addWhereClauses } from '../../helpers/utils';
+import {
+	combineConditionsCollection,
+	optionsCollection,
+	whereFixedCollection,
+} from '../common.descriptions';
+
+const properties: INodeProperties[] = [
+	{
+		displayName: 'Command',
+		name: 'deleteCommand',
+		type: 'options',
+		default: 'truncate',
+		options: [
+			{
+				name: 'Truncate',
+				value: 'truncate',
+				description: "Only removes the table's data and preserves the table's structure",
+			},
+			{
+				name: 'Delete',
+				value: 'delete',
+				description:
+					"Delete the rows that match the 'Select Rows' conditions below. If no selection is made, all rows in the table are deleted.",
+			},
+			{
+				name: 'Drop',
+				value: 'drop',
+				description: "Deletes the table's data and also the table's structure permanently",
+			},
+		],
+	},
+	{
+		displayName: 'Restart Sequences',
+		name: 'restartSequences',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to reset identity (auto-increment) columns to their initial values',
+		displayOptions: {
+			show: {
+				deleteCommand: ['truncate'],
+			},
+		},
+	},
+	{
+		...whereFixedCollection,
+		displayOptions: {
+			show: {
+				deleteCommand: ['delete'],
+			},
+		},
+	},
+	{
+		...combineConditionsCollection,
+		displayOptions: {
+			show: {
+				deleteCommand: ['delete'],
+			},
+		},
+	},
+	optionsCollection,
+];
+
+const displayOptions = {
+	show: {
+		resource: ['database'],
+		operation: ['deleteTable'],
+	},
+	hide: {
+		table: [''],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	runQueries: QueriesRunner,
+	items: INodeExecutionData[],
+	nodeOptions: PostgresNodeOptions,
+	_db?: PgpDatabase,
+): Promise<INodeExecutionData[]> {
+	const queries: QueryWithValues[] = [];
+
+	for (let i = 0; i < items.length; i++) {
+		const options = this.getNodeParameter('options', i, {});
+
+		const schema = this.getNodeParameter('schema', i, undefined, {
+			extractValue: true,
+		}) as string;
+
+		const table = this.getNodeParameter('table', i, undefined, {
+			extractValue: true,
+		}) as string;
+
+		const deleteCommand = this.getNodeParameter('deleteCommand', i) as string;
+
+		let query = '';
+		let values: QueryValues = [schema, table];
+
+		if (deleteCommand === 'drop') {
+			const cascade = options.cascade ? ' CASCADE' : '';
+			query = `DROP TABLE IF EXISTS $1:name.$2:name${cascade}`;
+		}
+
+		if (deleteCommand === 'truncate') {
+			const identity = this.getNodeParameter('restartSequences', i, false)
+				? ' RESTART IDENTITY'
+				: '';
+			const cascade = options.cascade ? ' CASCADE' : '';
+			query = `TRUNCATE TABLE $1:name.$2:name${identity}${cascade}`;
+		}
+
+		if (deleteCommand === 'delete') {
+			const whereClauses =
+				((this.getNodeParameter('where', i, []) as IDataObject).values as WhereClause[]) || [];
+
+			const combineConditions = this.getNodeParameter('combineConditions', i, 'AND') as string;
+
+			[query, values] = addWhereClauses(
+				this.getNode(),
+				i,
+				'DELETE FROM $1:name.$2:name',
+				whereClauses,
+				values,
+				combineConditions,
+			);
+		}
+
+		if (query === '') {
+			throw new NodeOperationError(
+				this.getNode(),
+				'Invalid delete command, only drop, delete and truncate are supported ',
+				{ itemIndex: i },
+			);
+		}
+
+		const queryWithValues = { query, values };
+
+		queries.push(queryWithValues);
+	}
+
+	return await runQueries(queries, items, nodeOptions);
+}
+
+
+// === File: actions/database/executeQuery.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
+
+import { getResolvables, updateDisplayOptions } from '@utils/utilities';
+
+import type {
+	PgpDatabase,
+	PostgresNodeOptions,
+	QueriesRunner,
+	QueryWithValues,
+} from '../../helpers/interfaces';
+import {
+	evaluateExpression,
+	isJSON,
+	replaceEmptyStringsByNulls,
+	stringToArray,
+} from '../../helpers/utils';
+import { optionsCollection } from '../common.descriptions';
+
+const properties: INodeProperties[] = [
+	{
+		displayName: 'Query',
+		name: 'query',
+		type: 'string',
+		default: '',
+		placeholder: 'e.g. SELECT id, name FROM product WHERE quantity > $1 AND price <= $2',
+		noDataExpression: true,
+		required: true,
+		description:
+			"The SQL query to execute. You can use n8n expressions and $1, $2, $3, etc to refer to the 'Query Parameters' set in options below.",
+		typeOptions: {
+			editor: 'sqlEditor',
+			sqlDialect: 'PostgreSQL',
+		},
+		hint: 'Consider using query parameters to prevent SQL injection attacks. Add them in the options below',
+	},
+	optionsCollection,
+];
+
+const displayOptions = {
+	show: {
+		resource: ['database'],
+		operation: ['executeQuery'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	runQueries: QueriesRunner,
+	items: INodeExecutionData[],
+	nodeOptions: PostgresNodeOptions,
+	_db?: PgpDatabase,
+): Promise<INodeExecutionData[]> {
+	const queries: QueryWithValues[] = replaceEmptyStringsByNulls(
+		items,
+		nodeOptions.replaceEmptyStrings as boolean,
+	).map((_, index) => {
+		let query = this.getNodeParameter('query', index) as string;
+
+		for (const resolvable of getResolvables(query)) {
+			query = query.replace(resolvable, this.evaluateExpression(resolvable, index) as string);
+		}
+
+		let values: Array<IDataObject | string> = [];
+
+		let queryReplacement = this.getNodeParameter('options.queryReplacement', index, '');
+
+		if (typeof queryReplacement === 'number') {
+			queryReplacement = String(queryReplacement);
+		}
+
+		if (typeof queryReplacement === 'string') {
+			const node = this.getNode();
+
+			const rawReplacements = (node.parameters.options as IDataObject)?.queryReplacement as string;
+
+			if (rawReplacements) {
+				const nodeVersion = nodeOptions.nodeVersion as number;
+
+				if (nodeVersion >= 2.5) {
+					const rawValues = rawReplacements.replace(/^=+/, '');
+					const resolvables = getResolvables(rawValues);
+					if (resolvables.length) {
+						for (const resolvable of resolvables) {
+							const evaluatedExpression = evaluateExpression(
+								this.evaluateExpression(`${resolvable}`, index),
+							);
+							const evaluatedValues = isJSON(evaluatedExpression)
+								? [evaluatedExpression]
+								: stringToArray(evaluatedExpression);
+
+							if (evaluatedValues.length) values.push(...evaluatedValues);
+						}
+					} else {
+						values.push(...stringToArray(rawValues));
+					}
+				} else {
+					const rawValues = rawReplacements
+						.replace(/^=+/, '')
+						.split(',')
+						.filter((entry) => entry)
+						.map((entry) => entry.trim());
+
+					for (const rawValue of rawValues) {
+						const resolvables = getResolvables(rawValue);
+
+						if (resolvables.length) {
+							for (const resolvable of resolvables) {
+								values.push(this.evaluateExpression(`${resolvable}`, index) as IDataObject);
+							}
+						} else {
+							values.push(rawValue);
+						}
+					}
+				}
+			}
+		} else {
+			if (Array.isArray(queryReplacement)) {
+				values = queryReplacement as IDataObject[];
+			} else {
+				throw new NodeOperationError(
+					this.getNode(),
+					'Query Parameters must be a string of comma-separated values or an array of values',
+					{ itemIndex: index },
+				);
+			}
+		}
+
+		if (!queryReplacement || nodeOptions.treatQueryParametersInSingleQuotesAsText) {
+			let nextValueIndex = values.length + 1;
+			const literals = query.match(/'\$[0-9]+'/g) ?? [];
+			for (const literal of literals) {
+				query = query.replace(literal, `$${nextValueIndex}`);
+				values.push(literal.replace(/'/g, ''));
+				nextValueIndex++;
+			}
+		}
+
+		return { query, values, options: { partial: true } };
+	});
+
+	return await runQueries(queries, items, nodeOptions);
+}
+
+
+// === File: actions/database/insert.operation.ts ===
+import {
+	type IDataObject,
+	type IExecuteFunctions,
+	type INodeExecutionData,
+	type INodeProperties,
+} from 'n8n-workflow';
+
+import { updateDisplayOptions } from '@utils/utilities';
+
+import type {
+	PgpClient,
+	PgpDatabase,
+	PostgresNodeOptions,
+	QueriesRunner,
+	QueryValues,
+	QueryWithValues,
+} from '../../helpers/interfaces';
+import {
+	addReturning,
+	checkItemAgainstSchema,
+	configureTableSchemaUpdater,
+	getTableSchema,
+	prepareItem,
+	convertArraysToPostgresFormat,
+	replaceEmptyStringsByNulls,
+	hasJsonDataTypeInSchema,
+	convertValuesToJsonWithPgp,
+} from '../../helpers/utils';
+import { optionsCollection } from '../common.descriptions';
+
+const properties: INodeProperties[] = [
+	{
+		displayName: 'Data Mode',
+		name: 'dataMode',
+		type: 'options',
+		options: [
+			{
+				name: 'Auto-Map Input Data to Columns',
+				value: 'autoMapInputData',
+				description: 'Use when node input properties names exactly match the table column names',
+			},
+			{
+				name: 'Map Each Column Manually',
+				value: 'defineBelow',
+				description: 'Set the value for each destination column manually',
+			},
+		],
+		default: 'autoMapInputData',
+		description:
+			'Whether to map node input properties and the table data automatically or manually',
+		displayOptions: {
+			show: {
+				'@version': [2, 2.1],
+			},
+		},
+	},
+	{
+		displayName: `
+		In this mode, make sure incoming data fields are named the same as the columns in your table. If needed, use an 'Edit Fields' node before this node to change the field names.
+		`,
+		name: 'notice',
+		type: 'notice',
+		default: '',
+		displayOptions: {
+			show: {
+				dataMode: ['autoMapInputData'],
+				'@version': [2, 2.1],
+			},
+		},
+	},
+	{
+		displayName: 'Values to Send',
+		name: 'valuesToSend',
+		placeholder: 'Add Value',
+		type: 'fixedCollection',
+		typeOptions: {
+			multipleValueButtonText: 'Add Value',
+			multipleValues: true,
+		},
+		displayOptions: {
+			show: {
+				dataMode: ['defineBelow'],
+				'@version': [2, 2.1],
+			},
+		},
+		default: {},
+		options: [
+			{
+				displayName: 'Values',
+				name: 'values',
+				values: [
+					{
+						// eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options
+						displayName: 'Column',
+						name: 'column',
+						type: 'options',
+						// eslint-disable-next-line n8n-nodes-base/node-param-description-wrong-for-dynamic-options
+						description:
+							'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/" target="_blank">expression</a>',
+						typeOptions: {
+							loadOptionsMethod: 'getColumns',
+							loadOptionsDependsOn: ['schema.value', 'table.value'],
+						},
+						default: [],
+					},
+					{
+						displayName: 'Value',
+						name: 'value',
+						type: 'string',
+						default: '',
+					},
+				],
+			},
+		],
+	},
+	{
+		displayName: 'Columns',
+		name: 'columns',
+		type: 'resourceMapper',
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		noDataExpression: true,
+		required: true,
+		typeOptions: {
+			loadOptionsDependsOn: ['table.value', 'operation'],
+			resourceMapper: {
+				resourceMapperMethod: 'getMappingColumns',
+				mode: 'add',
+				fieldWords: {
+					singular: 'column',
+					plural: 'columns',
+				},
+				addAllFields: true,
+				multiKeyMatch: true,
+			},
+		},
+		displayOptions: {
+			show: {
+				'@version': [{ _cnd: { gte: 2.2 } }],
+			},
+		},
+	},
+	optionsCollection,
+];
+
+const displayOptions = {
+	show: {
+		resource: ['database'],
+		operation: ['insert'],
+	},
+	hide: {
+		table: [''],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	runQueries: QueriesRunner,
+	items: INodeExecutionData[],
+	nodeOptions: PostgresNodeOptions,
+	db: PgpDatabase,
+	pgp: PgpClient,
+): Promise<INodeExecutionData[]> {
+	items = replaceEmptyStringsByNulls(items, nodeOptions.replaceEmptyStrings as boolean);
+	const nodeVersion = nodeOptions.nodeVersion as number;
+
+	let schema = this.getNodeParameter('schema', 0, undefined, {
+		extractValue: true,
+	}) as string;
+
+	let table = this.getNodeParameter('table', 0, undefined, {
+		extractValue: true,
+	}) as string;
+
+	const updateTableSchema = configureTableSchemaUpdater(schema, table);
+
+	let tableSchema = await getTableSchema(db, schema, table);
+
+	const queries: QueryWithValues[] = [];
+
+	for (let i = 0; i < items.length; i++) {
+		schema = this.getNodeParameter('schema', i, undefined, {
+			extractValue: true,
+		}) as string;
+
+		table = this.getNodeParameter('table', i, undefined, {
+			extractValue: true,
+		}) as string;
+
+		const options = this.getNodeParameter('options', i, {});
+
+		let onConflict = '';
+		if (options.skipOnConflict) {
+			onConflict = ' ON CONFLICT DO NOTHING';
+		}
+
+		let query = `INSERT INTO $1:name.$2:name($3:name) VALUES($3:csv)${onConflict}`;
+		let values: QueryValues = [schema, table];
+
+		const dataMode =
+			nodeVersion < 2.2
+				? (this.getNodeParameter('dataMode', i) as string)
+				: (this.getNodeParameter('columns.mappingMode', i) as string);
+
+		let item: IDataObject = {};
+
+		if (dataMode === 'autoMapInputData') {
+			item = items[i].json;
+		}
+
+		if (dataMode === 'defineBelow') {
+			const valuesToSend =
+				nodeVersion < 2.2
+					? ((this.getNodeParameter('valuesToSend', i, []) as IDataObject).values as IDataObject[])
+					: ((this.getNodeParameter('columns.values', i, []) as IDataObject)
+							.values as IDataObject[]);
+
+			item =
+				nodeVersion < 2.2
+					? prepareItem(valuesToSend)
+					: hasJsonDataTypeInSchema(tableSchema)
+						? convertValuesToJsonWithPgp(
+								pgp,
+								tableSchema,
+								(this.getNodeParameter('columns', i) as IDataObject)?.value as IDataObject,
+							)
+						: (this.getNodeParameter('columns.value', i) as IDataObject);
+		}
+
+		tableSchema = await updateTableSchema(db, tableSchema, schema, table);
+
+		if (nodeVersion >= 2.4) {
+			convertArraysToPostgresFormat(item, tableSchema, this.getNode(), i);
+		}
+
+		values.push(checkItemAgainstSchema(this.getNode(), item, tableSchema, i));
+
+		const outputColumns = this.getNodeParameter('options.outputColumns', i, ['*']) as string[];
+
+		if (nodeVersion >= 2.6 && Object.keys(item).length === 0) {
+			query = 'INSERT INTO $1:name.$2:name DEFAULT VALUES';
+		}
+
+		[query, values] = addReturning(query, outputColumns, values);
+
+		queries.push({ query, values });
+	}
+
+	return await runQueries(queries, items, nodeOptions);
+}
+
+
+// === File: actions/database/select.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { updateDisplayOptions } from '@utils/utilities';
+
+import type {
+	PgpDatabase,
+	PostgresNodeOptions,
+	QueriesRunner,
+	QueryValues,
+	QueryWithValues,
+	SortRule,
+	WhereClause,
+} from '../../helpers/interfaces';
+import { addSortRules, addWhereClauses, replaceEmptyStringsByNulls } from '../../helpers/utils';
+import {
+	combineConditionsCollection,
+	optionsCollection,
+	sortFixedCollection,
+	whereFixedCollection,
+} from '../common.descriptions';
+
+const properties: INodeProperties[] = [
+	{
+		displayName: 'Return All',
+		name: 'returnAll',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to return all results or only up to a given limit',
+		displayOptions: {
+			show: {
+				resource: ['event'],
+				operation: ['getAll'],
+			},
+		},
+	},
+	{
+		displayName: 'Limit',
+		name: 'limit',
+		type: 'number',
+		default: 50,
+		description: 'Max number of results to return',
+		typeOptions: {
+			minValue: 1,
+		},
+		displayOptions: {
+			show: {
+				returnAll: [false],
+			},
+		},
+	},
+	whereFixedCollection,
+	combineConditionsCollection,
+	sortFixedCollection,
+	optionsCollection,
+];
+
+const displayOptions = {
+	show: {
+		resource: ['database'],
+		operation: ['select'],
+	},
+	hide: {
+		table: [''],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	runQueries: QueriesRunner,
+	items: INodeExecutionData[],
+	nodeOptions: PostgresNodeOptions,
+	_db?: PgpDatabase,
+): Promise<INodeExecutionData[]> {
+	items = replaceEmptyStringsByNulls(items, nodeOptions.replaceEmptyStrings as boolean);
+
+	const queries: QueryWithValues[] = [];
+
+	for (let i = 0; i < items.length; i++) {
+		const schema = this.getNodeParameter('schema', i, undefined, {
+			extractValue: true,
+		}) as string;
+
+		const table = this.getNodeParameter('table', i, undefined, {
+			extractValue: true,
+		}) as string;
+
+		let values: QueryValues = [schema, table];
+
+		const outputColumns = this.getNodeParameter('options.outputColumns', i, ['*']) as string[];
+
+		let query = '';
+
+		if (outputColumns.includes('*')) {
+			query = 'SELECT * FROM $1:name.$2:name';
+		} else {
+			values.push(outputColumns);
+			query = `SELECT $${values.length}:name FROM $1:name.$2:name`;
+		}
+
+		const whereClauses =
+			((this.getNodeParameter('where', i, []) as IDataObject).values as WhereClause[]) || [];
+
+		const combineConditions = this.getNodeParameter('combineConditions', i, 'AND') as string;
+
+		[query, values] = addWhereClauses(
+			this.getNode(),
+			i,
+			query,
+			whereClauses,
+			values,
+			combineConditions,
+		);
+
+		const sortRules =
+			((this.getNodeParameter('sort', i, []) as IDataObject).values as SortRule[]) || [];
+
+		[query, values] = addSortRules(query, sortRules, values);
+
+		const returnAll = this.getNodeParameter('returnAll', i, false);
+		if (!returnAll) {
+			const limit = this.getNodeParameter('limit', i, 50);
+			query += ` LIMIT ${limit}`;
+		}
+
+		const queryWithValues = { query, values };
+		queries.push(queryWithValues);
+	}
+
+	return await runQueries(queries, items, nodeOptions);
+}
+
+
+// === File: actions/database/update.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
+
+import { updateDisplayOptions } from '@utils/utilities';
+
+import type {
+	PgpDatabase,
+	PostgresNodeOptions,
+	QueriesRunner,
+	QueryValues,
+	QueryWithValues,
+} from '../../helpers/interfaces';
+import {
+	addReturning,
+	checkItemAgainstSchema,
+	configureTableSchemaUpdater,
+	doesRowExist,
+	getTableSchema,
+	prepareItem,
+	convertArraysToPostgresFormat,
+	replaceEmptyStringsByNulls,
+} from '../../helpers/utils';
+import { optionsCollection } from '../common.descriptions';
+
+const properties: INodeProperties[] = [
+	{
+		displayName: 'Data Mode',
+		name: 'dataMode',
+		type: 'options',
+		options: [
+			{
+				name: 'Auto-Map Input Data to Columns',
+				value: 'autoMapInputData',
+				description: 'Use when node input properties names exactly match the table column names',
+			},
+			{
+				name: 'Map Each Column Manually',
+				value: 'defineBelow',
+				description: 'Set the value for each destination column manually',
+			},
+		],
+		default: 'autoMapInputData',
+		description:
+			'Whether to map node input properties and the table data automatically or manually',
+		displayOptions: {
+			show: {
+				'@version': [2, 2.1],
+			},
+		},
+	},
+	{
+		displayName: `
+		In this mode, make sure incoming data fields are named the same as the columns in your table. If needed, use an 'Edit Fields' node before this node to change the field names.
+		`,
+		name: 'notice',
+		type: 'notice',
+		default: '',
+		displayOptions: {
+			show: {
+				dataMode: ['autoMapInputData'],
+				'@version': [2],
+			},
+		},
+	},
+	{
+		// eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options
+		displayName: 'Column to Match On',
+		name: 'columnToMatchOn',
+		type: 'options',
+		required: true,
+		// eslint-disable-next-line n8n-nodes-base/node-param-description-wrong-for-dynamic-options
+		description:
+			'The column to compare when finding the rows to update. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/" target="_blank">expression</a>.',
+		typeOptions: {
+			loadOptionsMethod: 'getColumns',
+			loadOptionsDependsOn: ['schema.value', 'table.value'],
+		},
+		default: '',
+		hint: 'The column to use when matching rows in Postgres to the input items of this node. Usually an ID.',
+		displayOptions: {
+			show: {
+				'@version': [2, 2.1],
+			},
+		},
+	},
+	{
+		displayName: 'Value of Column to Match On',
+		name: 'valueToMatchOn',
+		type: 'string',
+		default: '',
+		description:
+			'Rows with a value in the specified "Column to Match On" that corresponds to the value in this field will be updated',
+		displayOptions: {
+			show: {
+				dataMode: ['defineBelow'],
+				'@version': [2, 2.1],
+			},
+		},
+	},
+	{
+		displayName: 'Values to Send',
+		name: 'valuesToSend',
+		placeholder: 'Add Value',
+		type: 'fixedCollection',
+		typeOptions: {
+			multipleValueButtonText: 'Add Value',
+			multipleValues: true,
+		},
+		displayOptions: {
+			show: {
+				dataMode: ['defineBelow'],
+				'@version': [2, 2.1],
+			},
+		},
+		default: {},
+		options: [
+			{
+				displayName: 'Values',
+				name: 'values',
+				values: [
+					{
+						// eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options
+						displayName: 'Column',
+						name: 'column',
+						type: 'options',
+						// eslint-disable-next-line n8n-nodes-base/node-param-description-wrong-for-dynamic-options
+						description:
+							'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/" target="_blank">expression</a>',
+						typeOptions: {
+							loadOptionsMethod: 'getColumnsWithoutColumnToMatchOn',
+							loadOptionsDependsOn: ['schema.value', 'table.value'],
+						},
+						default: [],
+					},
+					{
+						displayName: 'Value',
+						name: 'value',
+						type: 'string',
+						default: '',
+					},
+				],
+			},
+		],
+	},
+	{
+		displayName: 'Columns',
+		name: 'columns',
+		type: 'resourceMapper',
+		noDataExpression: true,
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		required: true,
+		typeOptions: {
+			loadOptionsDependsOn: ['table.value', 'operation'],
+			resourceMapper: {
+				resourceMapperMethod: 'getMappingColumns',
+				mode: 'update',
+				fieldWords: {
+					singular: 'column',
+					plural: 'columns',
+				},
+				addAllFields: true,
+				multiKeyMatch: true,
+			},
+		},
+		displayOptions: {
+			show: {
+				'@version': [{ _cnd: { gte: 2.2 } }],
+			},
+		},
+	},
+	optionsCollection,
+];
+
+const displayOptions = {
+	show: {
+		resource: ['database'],
+		operation: ['update'],
+	},
+	hide: {
+		table: [''],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	runQueries: QueriesRunner,
+	items: INodeExecutionData[],
+	nodeOptions: PostgresNodeOptions,
+	db: PgpDatabase,
+): Promise<INodeExecutionData[]> {
+	items = replaceEmptyStringsByNulls(items, nodeOptions.replaceEmptyStrings as boolean);
+	const nodeVersion = nodeOptions.nodeVersion as number;
+
+	let schema = this.getNodeParameter('schema', 0, undefined, {
+		extractValue: true,
+	}) as string;
+
+	let table = this.getNodeParameter('table', 0, undefined, {
+		extractValue: true,
+	}) as string;
+
+	const updateTableSchema = configureTableSchemaUpdater(schema, table);
+
+	let tableSchema = await getTableSchema(db, schema, table);
+
+	const queries: QueryWithValues[] = [];
+
+	for (let i = 0; i < items.length; i++) {
+		schema = this.getNodeParameter('schema', i, undefined, {
+			extractValue: true,
+		}) as string;
+
+		table = this.getNodeParameter('table', i, undefined, {
+			extractValue: true,
+		}) as string;
+
+		const columnsToMatchOn: string[] =
+			nodeVersion < 2.2
+				? [this.getNodeParameter('columnToMatchOn', i) as string]
+				: (this.getNodeParameter('columns.matchingColumns', i) as string[]);
+
+		const dataMode =
+			nodeVersion < 2.2
+				? (this.getNodeParameter('dataMode', i) as string)
+				: (this.getNodeParameter('columns.mappingMode', i) as string);
+
+		let item: IDataObject = {};
+		let valueToMatchOn: string | IDataObject = '';
+		if (nodeVersion < 2.2) {
+			valueToMatchOn = this.getNodeParameter('valueToMatchOn', i) as string;
+		}
+
+		if (dataMode === 'autoMapInputData') {
+			item = items[i].json;
+			if (nodeVersion < 2.2) {
+				valueToMatchOn = item[columnsToMatchOn[0]] as string;
+			}
+		}
+
+		if (dataMode === 'defineBelow') {
+			const valuesToSend =
+				nodeVersion < 2.2
+					? ((this.getNodeParameter('valuesToSend', i, []) as IDataObject).values as IDataObject[])
+					: ((this.getNodeParameter('columns.values', i, []) as IDataObject)
+							.values as IDataObject[]);
+
+			if (nodeVersion < 2.2) {
+				item = prepareItem(valuesToSend);
+				item[columnsToMatchOn[0]] = this.getNodeParameter('valueToMatchOn', i) as string;
+			} else {
+				item = this.getNodeParameter('columns.value', i) as IDataObject;
+			}
+		}
+
+		const matchValues: string[] = [];
+		if (nodeVersion < 2.2) {
+			if (!item[columnsToMatchOn[0]] && dataMode === 'autoMapInputData') {
+				throw new NodeOperationError(
+					this.getNode(),
+					"Column to match on not found in input item. Add a column to match on or set the 'Data Mode' to 'Define Below' to define the value to match on.",
+				);
+			}
+			matchValues.push(valueToMatchOn);
+			matchValues.push(columnsToMatchOn[0]);
+		} else {
+			columnsToMatchOn.forEach((column) => {
+				matchValues.push(column);
+				matchValues.push(item[column] as string);
+			});
+			const rowExists = await doesRowExist(db, schema, table, matchValues);
+			if (!rowExists) {
+				const descriptionValues: string[] = [];
+				matchValues.forEach((_, index) => {
+					if (index % 2 === 0) {
+						descriptionValues.push(`${matchValues[index]}=${matchValues[index + 1]}`);
+					}
+				});
+
+				throw new NodeOperationError(
+					this.getNode(),
+					"The row you are trying to update doesn't exist",
+					{
+						description: `No rows matching the provided values (${descriptionValues.join(
+							', ',
+						)}) were found in the table "${table}".`,
+						itemIndex: i,
+					},
+				);
+			}
+		}
+
+		tableSchema = await updateTableSchema(db, tableSchema, schema, table);
+
+		if (nodeVersion >= 2.4) {
+			convertArraysToPostgresFormat(item, tableSchema, this.getNode(), i);
+		}
+
+		item = checkItemAgainstSchema(this.getNode(), item, tableSchema, i);
+
+		let values: QueryValues = [schema, table];
+
+		let valuesLength = values.length + 1;
+
+		let condition = '';
+		if (nodeVersion < 2.2) {
+			condition = `$${valuesLength}:name = $${valuesLength + 1}`;
+			valuesLength = valuesLength + 2;
+			values.push(columnsToMatchOn[0], valueToMatchOn);
+		} else {
+			const conditions: string[] = [];
+			for (const column of columnsToMatchOn) {
+				conditions.push(`$${valuesLength}:name = $${valuesLength + 1}`);
+				valuesLength = valuesLength + 2;
+				values.push(column, item[column] as string);
+			}
+			condition = conditions.join(' AND ');
+		}
+
+		const updateColumns = Object.keys(item).filter((column) => !columnsToMatchOn.includes(column));
+
+		if (!Object.keys(updateColumns).length) {
+			throw new NodeOperationError(
+				this.getNode(),
+				"Add values to update to the input item or set the 'Data Mode' to 'Define Below' to define the values to update.",
+			);
+		}
+
+		const updates: string[] = [];
+
+		for (const column of updateColumns) {
+			updates.push(`$${valuesLength}:name = $${valuesLength + 1}`);
+			valuesLength = valuesLength + 2;
+			values.push(column, item[column] as string);
+		}
+
+		let query = `UPDATE $1:name.$2:name SET ${updates.join(', ')} WHERE ${condition}`;
+
+		const outputColumns = this.getNodeParameter('options.outputColumns', i, ['*']) as string[];
+
+		[query, values] = addReturning(query, outputColumns, values);
+
+		queries.push({ query, values });
+	}
+
+	const results = await runQueries(queries, items, nodeOptions);
+	return results;
+}
+
+
+// === File: actions/database/upsert.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
+
+import { updateDisplayOptions } from '@utils/utilities';
+
+import type {
+	PgpDatabase,
+	PostgresNodeOptions,
+	QueriesRunner,
+	QueryValues,
+	QueryWithValues,
+} from '../../helpers/interfaces';
+import {
+	addReturning,
+	checkItemAgainstSchema,
+	getTableSchema,
+	prepareItem,
+	replaceEmptyStringsByNulls,
+	configureTableSchemaUpdater,
+	convertArraysToPostgresFormat,
+} from '../../helpers/utils';
+import { optionsCollection } from '../common.descriptions';
+
+const properties: INodeProperties[] = [
+	{
+		displayName: 'Data Mode',
+		name: 'dataMode',
+		type: 'options',
+		options: [
+			{
+				name: 'Auto-Map Input Data to Columns',
+				value: 'autoMapInputData',
+				description: 'Use when node input properties names exactly match the table column names',
+			},
+			{
+				name: 'Map Each Column Manually',
+				value: 'defineBelow',
+				description: 'Set the value for each destination column manually',
+			},
+		],
+		default: 'autoMapInputData',
+		description:
+			'Whether to map node input properties and the table data automatically or manually',
+		displayOptions: {
+			show: {
+				'@version': [2, 2.1],
+			},
+		},
+	},
+	{
+		displayName: `
+		In this mode, make sure incoming data fields are named the same as the columns in your table. If needed, use an 'Edit Fields' node before this node to change the field names.
+		`,
+		name: 'notice',
+		type: 'notice',
+		default: '',
+		displayOptions: {
+			show: {
+				dataMode: ['autoMapInputData'],
+				'@version': [2, 2.1],
+			},
+		},
+	},
+	{
+		// eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options
+		displayName: 'Unique Column',
+		name: 'columnToMatchOn',
+		type: 'options',
+		required: true,
+		// eslint-disable-next-line n8n-nodes-base/node-param-description-wrong-for-dynamic-options
+		description:
+			'The column to compare when finding the rows to update. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/" target="_blank">expression</a>.',
+		typeOptions: {
+			loadOptionsMethod: 'getColumns',
+			loadOptionsDependsOn: ['schema.value', 'table.value'],
+		},
+		default: '',
+		hint: "Used to find the correct row(s) to update. Doesn't get changed. Has to be unique.",
+		displayOptions: {
+			show: {
+				'@version': [2, 2.1],
+			},
+		},
+	},
+	{
+		displayName: 'Value of Unique Column',
+		name: 'valueToMatchOn',
+		type: 'string',
+		default: '',
+		description:
+			'Rows with a value in the specified "Column to Match On" that corresponds to the value in this field will be updated. New rows will be created for non-matching items.',
+		displayOptions: {
+			show: {
+				dataMode: ['defineBelow'],
+				'@version': [2, 2.1],
+			},
+		},
+	},
+	{
+		displayName: 'Values to Send',
+		name: 'valuesToSend',
+		placeholder: 'Add Value',
+		type: 'fixedCollection',
+		typeOptions: {
+			multipleValueButtonText: 'Add Value',
+			multipleValues: true,
+		},
+		displayOptions: {
+			show: {
+				dataMode: ['defineBelow'],
+				'@version': [2, 2.1],
+			},
+		},
+		default: {},
+		options: [
+			{
+				displayName: 'Values',
+				name: 'values',
+				values: [
+					{
+						// eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options
+						displayName: 'Column',
+						name: 'column',
+						type: 'options',
+						// eslint-disable-next-line n8n-nodes-base/node-param-description-wrong-for-dynamic-options
+						description:
+							'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/" target="_blank">expression</a>',
+						typeOptions: {
+							loadOptionsMethod: 'getColumnsWithoutColumnToMatchOn',
+							loadOptionsDependsOn: ['schema.value', 'table.value'],
+						},
+						default: [],
+					},
+					{
+						displayName: 'Value',
+						name: 'value',
+						type: 'string',
+						default: '',
+					},
+				],
+			},
+		],
+	},
+	{
+		displayName: 'Columns',
+		name: 'columns',
+		type: 'resourceMapper',
+		noDataExpression: true,
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		required: true,
+		typeOptions: {
+			loadOptionsDependsOn: ['table.value', 'operation'],
+			resourceMapper: {
+				resourceMapperMethod: 'getMappingColumns',
+				mode: 'upsert',
+				fieldWords: {
+					singular: 'column',
+					plural: 'columns',
+				},
+				addAllFields: true,
+				multiKeyMatch: true,
+			},
+		},
+		displayOptions: {
+			show: {
+				'@version': [{ _cnd: { gte: 2.2 } }],
+			},
+		},
+	},
+	optionsCollection,
+];
+
+const displayOptions = {
+	show: {
+		resource: ['database'],
+		operation: ['upsert'],
+	},
+	hide: {
+		table: [''],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	runQueries: QueriesRunner,
+	items: INodeExecutionData[],
+	nodeOptions: PostgresNodeOptions,
+	db: PgpDatabase,
+): Promise<INodeExecutionData[]> {
+	items = replaceEmptyStringsByNulls(items, nodeOptions.replaceEmptyStrings as boolean);
+	const nodeVersion = nodeOptions.nodeVersion as number;
+
+	let schema = this.getNodeParameter('schema', 0, undefined, {
+		extractValue: true,
+	}) as string;
+
+	let table = this.getNodeParameter('table', 0, undefined, {
+		extractValue: true,
+	}) as string;
+
+	const updateTableSchema = configureTableSchemaUpdater(schema, table);
+
+	let tableSchema = await getTableSchema(db, schema, table);
+
+	const queries: QueryWithValues[] = [];
+
+	for (let i = 0; i < items.length; i++) {
+		schema = this.getNodeParameter('schema', i, undefined, {
+			extractValue: true,
+		}) as string;
+
+		table = this.getNodeParameter('table', i, undefined, {
+			extractValue: true,
+		}) as string;
+
+		const columnsToMatchOn: string[] =
+			nodeVersion < 2.2
+				? [this.getNodeParameter('columnToMatchOn', i) as string]
+				: (this.getNodeParameter('columns.matchingColumns', i) as string[]);
+
+		const dataMode =
+			nodeVersion < 2.2
+				? (this.getNodeParameter('dataMode', i) as string)
+				: (this.getNodeParameter('columns.mappingMode', i) as string);
+
+		let item: IDataObject = {};
+
+		if (dataMode === 'autoMapInputData') {
+			item = items[i].json;
+		}
+
+		if (dataMode === 'defineBelow') {
+			const valuesToSend =
+				nodeVersion < 2.2
+					? ((this.getNodeParameter('valuesToSend', i, []) as IDataObject).values as IDataObject[])
+					: ((this.getNodeParameter('columns.values', i, []) as IDataObject)
+							.values as IDataObject[]);
+
+			if (nodeVersion < 2.2) {
+				item = prepareItem(valuesToSend);
+				item[columnsToMatchOn[0]] = this.getNodeParameter('valueToMatchOn', i) as string;
+			} else {
+				item = this.getNodeParameter('columns.value', i) as IDataObject;
+			}
+		}
+
+		if (!item[columnsToMatchOn[0]]) {
+			throw new NodeOperationError(
+				this.getNode(),
+				"Column to match on not found in input item. Add a column to match on or set the 'Data Mode' to 'Define Below' to define the value to match on.",
+			);
+		}
+
+		if (item[columnsToMatchOn[0]] && Object.keys(item).length === 1) {
+			throw new NodeOperationError(
+				this.getNode(),
+				"Add values to update or insert to the input item or set the 'Data Mode' to 'Define Below' to define the values to insert or update.",
+			);
+		}
+
+		tableSchema = await updateTableSchema(db, tableSchema, schema, table);
+
+		if (nodeVersion >= 2.4) {
+			convertArraysToPostgresFormat(item, tableSchema, this.getNode(), i);
+		}
+
+		item = checkItemAgainstSchema(this.getNode(), item, tableSchema, i);
+
+		let values: QueryValues = [schema, table];
+
+		let valuesLength = values.length + 1;
+		const conflictColumns: string[] = [];
+		columnsToMatchOn.forEach((column) => {
+			conflictColumns.push(`$${valuesLength}:name`);
+			valuesLength = valuesLength + 1;
+			values.push(column);
+		});
+		const onConflict = ` ON CONFLICT (${conflictColumns.join(',')})`;
+
+		const insertQuery = `INSERT INTO $1:name.$2:name($${valuesLength}:name) VALUES($${valuesLength}:csv)${onConflict}`;
+		valuesLength = valuesLength + 1;
+		values.push(item);
+
+		const updateColumns = Object.keys(item).filter((column) => !columnsToMatchOn.includes(column));
+		const updates: string[] = [];
+
+		for (const column of updateColumns) {
+			updates.push(`$${valuesLength}:name = $${valuesLength + 1}`);
+			valuesLength = valuesLength + 2;
+			values.push(column, item[column] as string);
+		}
+
+		const updateQuery =
+			updates?.length > 0 ? ` DO UPDATE  SET ${updates.join(', ')}` : ' DO NOTHING ';
+		let query = `${insertQuery}${updateQuery}`;
+
+		const outputColumns = this.getNodeParameter('options.outputColumns', i, ['*']) as string[];
+
+		[query, values] = addReturning(query, outputColumns, values);
+
+		queries.push({ query, values });
+	}
+
+	return await runQueries(queries, items, nodeOptions);
+}
+
+
+// === File: actions/node.type.ts ===
+import type { AllEntities, Entity } from 'n8n-workflow';
+
+type PostgresMap = {
+	database: 'deleteTable' | 'executeQuery' | 'insert' | 'select' | 'update' | 'upsert';
+};
+
+export type PostgresType = AllEntities<PostgresMap>;
+
+export type PostgresDatabaseType = Entity<PostgresMap, 'database'>;
+
+
+// === File: actions/router.ts ===
+import type { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
+
+import * as database from './database/Database.resource';
+import type { PostgresType } from './node.type';
+import { addExecutionHints } from '../../../../utils/utilities';
+import { configurePostgres } from '../../transport';
+import type { PostgresNodeCredentials, PostgresNodeOptions } from '../helpers/interfaces';
+import { configureQueryRunner } from '../helpers/utils';
+
+export async function router(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+	let returnData: INodeExecutionData[] = [];
+
+	const items = this.getInputData();
+	const resource = this.getNodeParameter<PostgresType>('resource', 0);
+	const operation = this.getNodeParameter('operation', 0);
+
+	const credentials = await this.getCredentials<PostgresNodeCredentials>('postgres');
+	const options = this.getNodeParameter('options', 0, {}) as PostgresNodeOptions;
+	const node = this.getNode();
+	options.nodeVersion = node.typeVersion;
+	options.operation = operation;
+
+	const { db, pgp } = await configurePostgres.call(this, credentials, options);
+
+	const runQueries = configureQueryRunner.call(
+		this,
+		this.getNode(),
+		this.continueOnFail(),
+		pgp,
+		db,
+	);
+
+	const postgresNodeData = {
+		resource,
+		operation,
+	} as PostgresType;
+
+	switch (postgresNodeData.resource) {
+		case 'database':
+			returnData = await database[postgresNodeData.operation].execute.call(
+				this,
+				runQueries,
+				items,
+				options,
+				db,
+				pgp,
+			);
+			break;
+		default:
+			throw new NodeOperationError(
+				this.getNode(),
+				`The operation "${operation}" is not supported!`,
+			);
+	}
+
+	addExecutionHints(this, node, items, operation, node.executeOnce);
+
+	return [returnData];
+}
+
+
+// === File: actions/versionDescription.ts ===
+/* eslint-disable n8n-nodes-base/node-filename-against-convention */
+import { NodeConnectionTypes, type INodeTypeDescription } from 'n8n-workflow';
+
+import * as database from './database/Database.resource';
+
+export const versionDescription: INodeTypeDescription = {
+	displayName: 'Postgres',
+	name: 'postgres',
+	icon: 'file:postgres.svg',
+	group: ['input'],
+	version: [2, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6],
+	subtitle: '={{ $parameter["operation"] }}',
+	description: 'Get, add and update data in Postgres',
+	defaults: {
+		name: 'Postgres',
+	},
+	inputs: [NodeConnectionTypes.Main],
+	outputs: [NodeConnectionTypes.Main],
+	usableAsTool: true,
+	credentials: [
+		{
+			name: 'postgres',
+			required: true,
+			testedBy: 'postgresConnectionTest',
+		},
+	],
+	properties: [
+		{
+			displayName: 'Resource',
+			name: 'resource',
+			type: 'hidden',
+			noDataExpression: true,
+			options: [
+				{
+					name: 'Database',
+					value: 'database',
+				},
+			],
+			default: 'database',
+		},
+		...database.description,
+	],
+};
+
+
+// === File: helpers/interfaces.ts ===
+import type { IDataObject, INodeExecutionData, SSHCredentials } from 'n8n-workflow';
+import type pgPromise from 'pg-promise';
+import { type IFormattingOptions } from 'pg-promise';
+import type pg from 'pg-promise/typescript/pg-subset';
+
+export type QueryMode = 'single' | 'transaction' | 'independently';
+
+export type QueryValue = string | number | IDataObject | string[];
+export type QueryValues = QueryValue[];
+export type QueryWithValues = { query: string; values?: QueryValues; options?: IFormattingOptions };
+
+export type WhereClause = { column: string; condition: string; value: string | number };
+export type SortRule = { column: string; direction: string };
+export type ColumnInfo = {
+	column_name: string;
+	data_type: string;
+	is_nullable: string;
+	udt_name?: string;
+	column_default?: string | null;
+	is_generated?: 'ALWAYS' | 'NEVER';
+	identity_generation?: 'ALWAYS' | 'NEVER';
+};
+export type EnumInfo = {
+	typname: string;
+	enumlabel: string;
+};
+
+export type PgpClient = pgPromise.IMain<{}, pg.IClient>;
+export type PgpDatabase = pgPromise.IDatabase<{}, pg.IClient>;
+export type PgpConnectionParameters = pg.IConnectionParameters<pg.IClient>;
+export type PgpConnection = pgPromise.IConnected<{}, pg.IClient>;
+export type ConnectionsData = { db: PgpDatabase; pgp: PgpClient };
+
+export type QueriesRunner = (
+	queries: QueryWithValues[],
+	items: INodeExecutionData[],
+	options: IDataObject,
+) => Promise<INodeExecutionData[]>;
+
+export type PostgresNodeOptions = {
+	nodeVersion?: number;
+	operation?: string;
+	cascade?: boolean;
+	connectionTimeout?: number;
+	delayClosingIdleConnection?: number;
+	queryBatching?: QueryMode;
+	queryReplacement?: string;
+	outputColumns?: string[];
+	largeNumbersOutput?: 'numbers' | 'text';
+	skipOnConflict?: boolean;
+	replaceEmptyStrings?: boolean;
+	treatQueryParametersInSingleQuotesAsText?: boolean;
+};
+
+export type PostgresNodeCredentials = {
+	host: string;
+	port: number;
+	database: string;
+	user: string;
+	password: string;
+	maxConnections: number;
+	allowUnauthorizedCerts?: boolean;
+	ssl?: 'disable' | 'allow' | 'require' | 'verify' | 'verify-full';
+} & (
+	| { sshTunnel: false }
+	| ({
+			sshTunnel: true;
+	  } & SSHCredentials)
+);
+
+
+// === File: helpers/utils.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INode,
+	INodeExecutionData,
+	INodePropertyOptions,
+	NodeParameterValueType,
+} from 'n8n-workflow';
+import { NodeOperationError, jsonParse } from 'n8n-workflow';
+
+import type {
+	ColumnInfo,
+	EnumInfo,
+	PgpClient,
+	PgpDatabase,
+	QueryMode,
+	QueryValues,
+	QueryWithValues,
+	SortRule,
+	WhereClause,
+} from './interfaces';
+import { generatePairedItemData } from '../../../../utils/utilities';
+
+export function isJSON(str: string) {
+	try {
+		JSON.parse(str.trim());
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+export function evaluateExpression(expression: NodeParameterValueType) {
+	if (expression === undefined) {
+		return '';
+	} else if (expression === null) {
+		return 'null';
+	} else {
+		return typeof expression === 'object' ? JSON.stringify(expression) : expression.toString();
+	}
+}
+
+export function stringToArray(str: NodeParameterValueType | undefined) {
+	if (str === undefined) return [];
+	return String(str)
+		.split(',')
+		.filter((entry) => entry)
+		.map((entry) => entry.trim());
+}
+
+export function wrapData(data: IDataObject | IDataObject[]): INodeExecutionData[] {
+	if (!Array.isArray(data)) {
+		return [{ json: data }];
+	}
+	return data.map((item) => ({
+		json: item,
+	}));
+}
+
+export function prepareErrorItem(
+	items: INodeExecutionData[],
+	error: IDataObject | NodeOperationError | Error,
+	index: number,
+) {
+	return {
+		json: { message: error.message, item: { ...items[index].json }, error: { ...error } },
+		pairedItem: { item: index },
+	} as INodeExecutionData;
+}
+
+export function parsePostgresError(
+	node: INode,
+	error: any,
+	queries: QueryWithValues[],
+	itemIndex?: number,
+) {
+	if (error.message.includes('syntax error at or near') && queries.length) {
+		try {
+			const snippet = error.message.match(/syntax error at or near "(.*)"/)[1] as string;
+			const failedQureryIndex = queries.findIndex((query) => query.query.includes(snippet));
+
+			if (failedQureryIndex !== -1) {
+				if (!itemIndex) {
+					itemIndex = failedQureryIndex;
+				}
+				const failedQuery = queries[failedQureryIndex].query;
+				const lines = failedQuery.split('\n');
+				const lineIndex = lines.findIndex((line) => line.includes(snippet));
+				const errorMessage = `Syntax error at line ${lineIndex + 1} near "${snippet}"`;
+				error.message = errorMessage;
+			}
+		} catch {}
+	}
+
+	let message = error.message;
+	const errorDescription = error.description ? error.description : error.detail || error.hint;
+	let description = errorDescription;
+
+	if (!description && queries[itemIndex || 0]?.query) {
+		description = `Failed query: ${queries[itemIndex || 0].query}`;
+	}
+
+	if (error.message.includes('ECONNREFUSED')) {
+		message = 'Connection refused';
+		try {
+			description = error.message.split('ECONNREFUSED ')[1].trim();
+		} catch (e) {}
+	}
+
+	if (error.message.includes('ENOTFOUND')) {
+		message = 'Host not found';
+		try {
+			description = error.message.split('ENOTFOUND ')[1].trim();
+		} catch (e) {}
+	}
+
+	if (error.message.includes('ETIMEDOUT')) {
+		message = 'Connection timed out';
+		try {
+			description = error.message.split('ETIMEDOUT ')[1].trim();
+		} catch (e) {}
+	}
+
+	return new NodeOperationError(node, error as Error, {
+		message,
+		description,
+		itemIndex,
+	});
+}
+
+export function addWhereClauses(
+	node: INode,
+	itemIndex: number,
+	query: string,
+	clauses: WhereClause[],
+	replacements: QueryValues,
+	combineConditions: string,
+): [string, QueryValues] {
+	if (clauses.length === 0) return [query, replacements];
+
+	let combineWith = 'AND';
+
+	if (combineConditions === 'OR') {
+		combineWith = 'OR';
+	}
+
+	let replacementIndex = replacements.length + 1;
+
+	let whereQuery = ' WHERE';
+	const values: QueryValues = [];
+
+	clauses.forEach((clause, index) => {
+		if (clause.condition === 'equal') {
+			clause.condition = '=';
+		}
+		if (['>', '<', '>=', '<='].includes(clause.condition)) {
+			const value = Number(clause.value);
+
+			if (Number.isNaN(value)) {
+				throw new NodeOperationError(
+					node,
+					`Operator in entry ${index + 1} of 'Select Rows' works with numbers, but value ${
+						clause.value
+					} is not a number`,
+					{
+						itemIndex,
+					},
+				);
+			}
+
+			clause.value = value;
+		}
+		const columnReplacement = `$${replacementIndex}:name`;
+		values.push(clause.column);
+		replacementIndex = replacementIndex + 1;
+
+		let valueReplacement = '';
+		if (clause.condition !== 'IS NULL' && clause.condition !== 'IS NOT NULL') {
+			valueReplacement = ` $${replacementIndex}`;
+			values.push(clause.value);
+			replacementIndex = replacementIndex + 1;
+		}
+
+		const operator = index === clauses.length - 1 ? '' : ` ${combineWith}`;
+
+		whereQuery += ` ${columnReplacement} ${clause.condition}${valueReplacement}${operator}`;
+	});
+
+	return [`${query}${whereQuery}`, replacements.concat(...values)];
+}
+
+export function addSortRules(
+	query: string,
+	rules: SortRule[],
+	replacements: QueryValues,
+): [string, QueryValues] {
+	if (rules.length === 0) return [query, replacements];
+
+	let replacementIndex = replacements.length + 1;
+
+	let orderByQuery = ' ORDER BY';
+	const values: string[] = [];
+
+	rules.forEach((rule, index) => {
+		const columnReplacement = `$${replacementIndex}:name`;
+		values.push(rule.column);
+		replacementIndex = replacementIndex + 1;
+
+		const endWith = index === rules.length - 1 ? '' : ',';
+
+		const sortDirection = rule.direction === 'DESC' ? 'DESC' : 'ASC';
+
+		orderByQuery += ` ${columnReplacement} ${sortDirection}${endWith}`;
+	});
+
+	return [`${query}${orderByQuery}`, replacements.concat(...values)];
+}
+
+export function addReturning(
+	query: string,
+	outputColumns: string[],
+	replacements: QueryValues,
+): [string, QueryValues] {
+	if (outputColumns.includes('*')) return [`${query} RETURNING *`, replacements];
+
+	const replacementIndex = replacements.length + 1;
+
+	return [`${query} RETURNING $${replacementIndex}:name`, [...replacements, outputColumns]];
+}
+
+const isSelectQuery = (query: string) => {
+	return query
+		.replace(/\/\*.*?\*\//g, '') // remove multiline comments
+		.replace(/\n/g, '')
+		.split(';')
+		.filter((statement) => statement && !statement.startsWith('--')) // remove comments and empty statements
+		.every((statement) => statement.trim().toLowerCase().startsWith('select'));
+};
+
+export function configureQueryRunner(
+	this: IExecuteFunctions,
+	node: INode,
+	continueOnFail: boolean,
+	pgp: PgpClient,
+	db: PgpDatabase,
+) {
+	return async (queries: QueryWithValues[], items: INodeExecutionData[], options: IDataObject) => {
+		let returnData: INodeExecutionData[] = [];
+		const emptyReturnData: INodeExecutionData[] =
+			options.operation === 'select' ? [] : [{ json: { success: true } }];
+
+		const queryBatching = (options.queryBatching as QueryMode) || 'single';
+
+		if (queryBatching === 'single') {
+			try {
+				returnData = (await db.multi(pgp.helpers.concat(queries)))
+					.map((result, i) => {
+						return this.helpers.constructExecutionMetaData(wrapData(result as IDataObject[]), {
+							itemData: { item: i },
+						});
+					})
+					.flat();
+
+				if (!returnData.length) {
+					const pairedItem = generatePairedItemData(queries.length);
+
+					if ((options?.nodeVersion as number) < 2.3) {
+						if (emptyReturnData.length) {
+							emptyReturnData[0].pairedItem = pairedItem;
+						}
+						returnData = emptyReturnData;
+					} else {
+						returnData = queries.every((query) => isSelectQuery(query.query))
+							? []
+							: [{ json: { success: true }, pairedItem }];
+					}
+				}
+			} catch (err) {
+				const error = parsePostgresError(node, err, queries);
+				if (!continueOnFail) throw error;
+
+				return [
+					{
+						json: {
+							message: error.message,
+							error: { ...error },
+						},
+					},
+				];
+			}
+		}
+
+		if (queryBatching === 'transaction') {
+			returnData = await db.tx(async (transaction) => {
+				const result: INodeExecutionData[] = [];
+				for (let i = 0; i < queries.length; i++) {
+					try {
+						const query = queries[i].query;
+						const values = queries[i].values;
+
+						let transactionResults;
+						if ((options?.nodeVersion as number) < 2.3) {
+							transactionResults = await transaction.any(query, values);
+						} else {
+							transactionResults = (await transaction.multi(query, values)).flat();
+						}
+
+						if (!transactionResults.length) {
+							if ((options?.nodeVersion as number) < 2.3) {
+								transactionResults = emptyReturnData;
+							} else {
+								transactionResults = isSelectQuery(query) ? [] : [{ success: true }];
+							}
+						}
+
+						const executionData = this.helpers.constructExecutionMetaData(
+							wrapData(transactionResults),
+							{ itemData: { item: i } },
+						);
+
+						result.push(...executionData);
+					} catch (err) {
+						const error = parsePostgresError(node, err, queries, i);
+						if (!continueOnFail) throw error;
+						result.push(prepareErrorItem(items, error, i));
+						return result;
+					}
+				}
+				return result;
+			});
+		}
+
+		if (queryBatching === 'independently') {
+			returnData = await db.task(async (task) => {
+				const result: INodeExecutionData[] = [];
+				for (let i = 0; i < queries.length; i++) {
+					try {
+						const query = queries[i].query;
+						const values = queries[i].values;
+
+						let transactionResults;
+						if ((options?.nodeVersion as number) < 2.3) {
+							transactionResults = await task.any(query, values);
+						} else {
+							transactionResults = (await task.multi(query, values)).flat();
+						}
+
+						if (!transactionResults.length) {
+							if ((options?.nodeVersion as number) < 2.3) {
+								transactionResults = emptyReturnData;
+							} else {
+								transactionResults = isSelectQuery(query) ? [] : [{ success: true }];
+							}
+						}
+
+						const executionData = this.helpers.constructExecutionMetaData(
+							wrapData(transactionResults),
+							{ itemData: { item: i } },
+						);
+
+						result.push(...executionData);
+					} catch (err) {
+						const error = parsePostgresError(node, err, queries, i);
+						if (!continueOnFail) throw error;
+						result.push(prepareErrorItem(items, error, i));
+					}
+				}
+				return result;
+			});
+		}
+
+		return returnData;
+	};
+}
+
+export function replaceEmptyStringsByNulls(
+	items: INodeExecutionData[],
+	replace?: boolean,
+): INodeExecutionData[] {
+	if (!replace) return items;
+
+	const returnData: INodeExecutionData[] = items.map((item) => {
+		const newItem = { ...item };
+		const keys = Object.keys(newItem.json);
+
+		for (const key of keys) {
+			if (newItem.json[key] === '') {
+				newItem.json[key] = null;
+			}
+		}
+
+		return newItem;
+	});
+
+	return returnData;
+}
+
+export function prepareItem(values: IDataObject[]) {
+	const item = values.reduce((acc, { column, value }) => {
+		acc[column as string] = value;
+		return acc;
+	}, {} as IDataObject);
+
+	return item;
+}
+
+export function hasJsonDataTypeInSchema(schema: ColumnInfo[]) {
+	return schema.some(({ data_type }) => data_type === 'json');
+}
+
+export function convertValuesToJsonWithPgp(
+	pgp: PgpClient,
+	schema: ColumnInfo[],
+	values: IDataObject,
+) {
+	schema
+		.filter(
+			({ data_type, column_name }) =>
+				data_type === 'json' && values[column_name] !== null && values[column_name] !== undefined,
+		)
+		.forEach(({ column_name }) => {
+			values[column_name] = pgp.as.json(values[column_name], true);
+		});
+
+	return values;
+}
+
+export async function columnFeatureSupport(
+	db: PgpDatabase,
+): Promise<{ identity_generation: boolean; is_generated: boolean }> {
+	const result = await db.any(
+		`SELECT EXISTS (
+			SELECT 1 FROM information_schema.columns WHERE table_name = 'columns' AND table_schema = 'information_schema' AND column_name = 'is_generated'
+		) as is_generated,
+		EXISTS (
+			SELECT 1 FROM information_schema.columns WHERE table_name = 'columns' AND table_schema = 'information_schema' AND column_name = 'identity_generation'
+		) as identity_generation;`,
+	);
+
+	return result[0];
+}
+
+export async function getTableSchema(
+	db: PgpDatabase,
+	schema: string,
+	table: string,
+	options?: { getColumnsForResourceMapper?: boolean },
+): Promise<ColumnInfo[]> {
+	const select = ['column_name', 'data_type', 'is_nullable', 'udt_name', 'column_default'];
+
+	if (options?.getColumnsForResourceMapper) {
+		// Check if columns exist before querying (identity_generation was added in v10, is_generated in v12)
+		const supported = await columnFeatureSupport(db);
+
+		if (supported.identity_generation) {
+			select.push('identity_generation');
+		}
+
+		if (supported.is_generated) {
+			select.push('is_generated');
+		}
+	}
+
+	const selectString = select.join(', ');
+	const columns = await db.any(
+		`SELECT ${selectString} FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2`,
+		[schema, table],
+	);
+
+	return columns;
+}
+
+export async function uniqueColumns(db: PgpDatabase, table: string, schema = 'public') {
+	// Using the modified query from https://wiki.postgresql.org/wiki/Retrieve_primary_key_columns
+	// `quote_ident` - properly quote and escape an identifier
+	// `::regclass` - cast a string to a regclass (internal type for object names)
+	const unique = await db.any(
+		`
+		SELECT DISTINCT a.attname
+			FROM pg_index i JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+		WHERE i.indrelid = (quote_ident($1) || '.' || quote_ident($2))::regclass
+			AND (i.indisprimary OR i.indisunique);
+		`,
+		[schema, table],
+	);
+	return unique as IDataObject[];
+}
+
+export async function getEnums(db: PgpDatabase): Promise<EnumInfo[]> {
+	const enumsData = await db.any(
+		'SELECT pg_type.typname, pg_enum.enumlabel FROM pg_type JOIN pg_enum ON pg_enum.enumtypid = pg_type.oid;',
+	);
+	return enumsData as EnumInfo[];
+}
+
+export function getEnumValues(enumInfo: EnumInfo[], enumName: string): INodePropertyOptions[] {
+	return enumInfo.reduce((acc, current) => {
+		if (current.typname === enumName) {
+			acc.push({ name: current.enumlabel, value: current.enumlabel });
+		}
+		return acc;
+	}, [] as INodePropertyOptions[]);
+}
+
+export async function doesRowExist(
+	db: PgpDatabase,
+	schema: string,
+	table: string,
+	values: string[],
+): Promise<boolean> {
+	const where = [];
+	for (let i = 3; i < 3 + values.length; i += 2) {
+		where.push(`$${i}:name=$${i + 1}`);
+	}
+	const exists = await db.any(
+		`SELECT EXISTS(SELECT 1 FROM $1:name.$2:name WHERE ${where.join(' AND ')})`,
+		[schema, table, ...values],
+	);
+	return exists[0].exists;
+}
+
+export function checkItemAgainstSchema(
+	node: INode,
+	item: IDataObject,
+	columnsInfo: ColumnInfo[],
+	index: number,
+) {
+	if (columnsInfo.length === 0) return item;
+	const schema = columnsInfo.reduce((acc, { column_name, data_type, is_nullable }) => {
+		acc[column_name] = { type: data_type.toUpperCase(), nullable: is_nullable === 'YES' };
+		return acc;
+	}, {} as IDataObject);
+
+	for (const key of Object.keys(item)) {
+		if (schema[key] === undefined) {
+			throw new NodeOperationError(node, `Column '${key}' does not exist in selected table`, {
+				itemIndex: index,
+			});
+		}
+		if (item[key] === null && !(schema[key] as IDataObject)?.nullable) {
+			throw new NodeOperationError(node, `Column '${key}' is not nullable`, {
+				itemIndex: index,
+			});
+		}
+	}
+
+	return item;
+}
+
+export const configureTableSchemaUpdater = (initialSchema: string, initialTable: string) => {
+	let currentSchema = initialSchema;
+	let currentTable = initialTable;
+	return async (db: PgpDatabase, tableSchema: ColumnInfo[], schema: string, table: string) => {
+		if (currentSchema !== schema || currentTable !== table) {
+			currentSchema = schema;
+			currentTable = table;
+			tableSchema = await getTableSchema(db, schema, table);
+		}
+		return tableSchema;
+	};
+};
+
+/**
+ * If postgress column type is array we need to convert it to fornmat that postgres understands, original object data would be modified
+ * @param data the object with keys representing column names and values
+ * @param schema table schema
+ * @param node INode
+ * @param itemIndex the index of the current item
+ */
+export const convertArraysToPostgresFormat = (
+	data: IDataObject,
+	schema: ColumnInfo[],
+	node: INode,
+	itemIndex = 0,
+) => {
+	for (const columnInfo of schema) {
+		//in case column type is array we need to convert it to fornmat that postgres understands
+		if (columnInfo.data_type.toUpperCase() === 'ARRAY') {
+			let columnValue = data[columnInfo.column_name];
+
+			if (typeof columnValue === 'string') {
+				columnValue = jsonParse(columnValue);
+			}
+
+			if (Array.isArray(columnValue)) {
+				const arrayEntries = columnValue.map((entry) => {
+					if (typeof entry === 'number') {
+						return entry;
+					}
+
+					if (typeof entry === 'boolean') {
+						entry = String(entry);
+					}
+
+					if (typeof entry === 'object') {
+						entry = JSON.stringify(entry);
+					}
+
+					if (typeof entry === 'string') {
+						return `"${entry.replace(/"/g, '\\"')}"`; //escape double quotes
+					}
+
+					return entry;
+				});
+
+				//wrap in {} instead of [] as postgres does and join with ,
+				data[columnInfo.column_name] = `{${arrayEntries.join(',')}}`;
+			} else {
+				if (columnInfo.is_nullable === 'NO') {
+					throw new NodeOperationError(
+						node,
+						`Column '${columnInfo.column_name}' has to be an array`,
+						{
+							itemIndex,
+						},
+					);
+				}
+			}
+		}
+	}
+};
+
+
+// === File: methods/credentialTest.ts ===
+import type {
+	ICredentialsDecrypted,
+	ICredentialTestFunctions,
+	INodeCredentialTestResult,
+} from 'n8n-workflow';
+
+import { configurePostgres } from '../../transport';
+import type { PgpConnection, PostgresNodeCredentials } from '../helpers/interfaces';
+
+export async function postgresConnectionTest(
+	this: ICredentialTestFunctions,
+	credential: ICredentialsDecrypted,
+): Promise<INodeCredentialTestResult> {
+	const credentials = credential.data as PostgresNodeCredentials;
+
+	let connection: PgpConnection | undefined;
+
+	try {
+		const { db } = await configurePostgres.call(this, credentials, {});
+
+		connection = await db.connect();
+	} catch (error) {
+		let message = error.message as string;
+
+		if (error.message.includes('ECONNREFUSED')) {
+			message = 'Connection refused';
+		}
+
+		if (error.message.includes('ENOTFOUND')) {
+			message = 'Host not found, please check your host name';
+		}
+
+		if (error.message.includes('ETIMEDOUT')) {
+			message = 'Connection timed out';
+		}
+
+		return {
+			status: 'Error',
+			message,
+		};
+	} finally {
+		if (connection) {
+			await connection.done();
+		}
+	}
+	return {
+		status: 'OK',
+		message: 'Connection successful!',
+	};
+}
+
+
+// === File: methods/index.ts ===
+export * as credentialTest from './credentialTest';
+export * as listSearch from './listSearch';
+export * as loadOptions from './loadOptions';
+export * as resourceMapping from './resourceMapping';
+
+
+// === File: methods/listSearch.ts ===
+import type { ILoadOptionsFunctions, INodeListSearchResult } from 'n8n-workflow';
+
+import { configurePostgres } from '../../transport';
+import type { PostgresNodeCredentials } from '../helpers/interfaces';
+
+export async function schemaSearch(this: ILoadOptionsFunctions): Promise<INodeListSearchResult> {
+	const credentials = await this.getCredentials<PostgresNodeCredentials>('postgres');
+	const options = { nodeVersion: this.getNode().typeVersion };
+
+	const { db } = await configurePostgres.call(this, credentials, options);
+
+	const response = await db.any('SELECT schema_name FROM information_schema.schemata');
+
+	return {
+		results: response.map((schema) => ({
+			name: schema.schema_name as string,
+			value: schema.schema_name as string,
+		})),
+	};
+}
+export async function tableSearch(this: ILoadOptionsFunctions): Promise<INodeListSearchResult> {
+	const credentials = await this.getCredentials<PostgresNodeCredentials>('postgres');
+	const options = { nodeVersion: this.getNode().typeVersion };
+
+	const { db } = await configurePostgres.call(this, credentials, options);
+
+	const schema = this.getNodeParameter('schema', 0, {
+		extractValue: true,
+	}) as string;
+
+	const response = await db.any(
+		'SELECT table_name FROM information_schema.tables WHERE table_schema=$1',
+		[schema],
+	);
+
+	return {
+		results: response.map((table) => ({
+			name: table.table_name as string,
+			value: table.table_name as string,
+		})),
+	};
+}
+
+
+// === File: methods/loadOptions.ts ===
+import type { ILoadOptionsFunctions, INodePropertyOptions } from 'n8n-workflow';
+
+import { configurePostgres } from '../../transport';
+import type { PostgresNodeCredentials } from '../helpers/interfaces';
+import { getTableSchema } from '../helpers/utils';
+
+export async function getColumns(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+	const credentials = await this.getCredentials<PostgresNodeCredentials>('postgres');
+	const options = { nodeVersion: this.getNode().typeVersion };
+
+	const { db } = await configurePostgres.call(this, credentials, options);
+
+	const schema = this.getNodeParameter('schema', 0, {
+		extractValue: true,
+	}) as string;
+
+	const table = this.getNodeParameter('table', 0, {
+		extractValue: true,
+	}) as string;
+
+	const columns = await getTableSchema(db, schema, table);
+
+	return columns.map((column) => ({
+		name: column.column_name,
+		value: column.column_name,
+		description: `Type: ${column.data_type.toUpperCase()}, Nullable: ${column.is_nullable}`,
+	}));
+}
+
+export async function getColumnsMultiOptions(
+	this: ILoadOptionsFunctions,
+): Promise<INodePropertyOptions[]> {
+	const returnData = await getColumns.call(this);
+	const returnAll = { name: '*', value: '*', description: 'All columns' };
+	return [returnAll, ...returnData];
+}
+
+export async function getColumnsWithoutColumnToMatchOn(
+	this: ILoadOptionsFunctions,
+): Promise<INodePropertyOptions[]> {
+	const columnToMatchOn = this.getNodeParameter('columnToMatchOn') as string;
+	const returnData = await getColumns.call(this);
+	return returnData.filter((column) => column.value !== columnToMatchOn);
+}
+
+
+// === File: methods/resourceMapping.ts ===
+import type { ILoadOptionsFunctions, ResourceMapperFields, FieldType } from 'n8n-workflow';
+
+import { configurePostgres } from '../../transport';
+import type { PostgresNodeCredentials } from '../helpers/interfaces';
+import { getEnumValues, getEnums, getTableSchema, uniqueColumns } from '../helpers/utils';
+
+const fieldTypeMapping: Partial<Record<FieldType, string[]>> = {
+	string: ['text', 'varchar', 'character varying', 'character', 'char'],
+	number: [
+		'integer',
+		'smallint',
+		'bigint',
+		'decimal',
+		'numeric',
+		'real',
+		'double precision',
+		'smallserial',
+		'serial',
+		'bigserial',
+	],
+	boolean: ['boolean'],
+	dateTime: [
+		'timestamp',
+		'date',
+		'timestampz',
+		'timestamp without time zone',
+		'timestamp with time zone',
+	],
+	time: ['time', 'time without time zone', 'time with time zone'],
+	object: ['json', 'jsonb'],
+	options: ['enum', 'USER-DEFINED'],
+	array: ['ARRAY'],
+};
+
+function mapPostgresType(postgresType: string): FieldType {
+	let mappedType: FieldType = 'string';
+
+	for (const t of Object.keys(fieldTypeMapping)) {
+		const postgresTypes = fieldTypeMapping[t as FieldType];
+		if (postgresTypes?.includes(postgresType)) {
+			mappedType = t as FieldType;
+		}
+	}
+	return mappedType;
+}
+
+export async function getMappingColumns(
+	this: ILoadOptionsFunctions,
+): Promise<ResourceMapperFields> {
+	const credentials = await this.getCredentials<PostgresNodeCredentials>('postgres');
+
+	const { db } = await configurePostgres.call(this, credentials);
+
+	const schema = this.getNodeParameter('schema', 0, {
+		extractValue: true,
+	}) as string;
+
+	const table = this.getNodeParameter('table', 0, {
+		extractValue: true,
+	}) as string;
+
+	const operation = this.getNodeParameter('operation', 0, {
+		extractValue: true,
+	}) as string;
+
+	const columns = await getTableSchema(db, schema, table, { getColumnsForResourceMapper: true });
+	const unique = operation === 'upsert' ? await uniqueColumns(db, table, schema) : [];
+	const enumInfo = await getEnums(db);
+	const fields = await Promise.all(
+		columns.map(async (col) => {
+			const canBeUsedToMatch =
+				operation === 'upsert' ? unique.some((u) => u.attname === col.column_name) : true;
+			const type = mapPostgresType(col.data_type);
+			const options =
+				type === 'options' ? getEnumValues(enumInfo, col.udt_name as string) : undefined;
+			const hasDefault = Boolean(col.column_default);
+			const isGenerated =
+				col.is_generated === 'ALWAYS' ||
+				['ALWAYS', 'BY DEFAULT'].includes(col.identity_generation ?? '');
+			const nullable = col.is_nullable === 'YES';
+			return {
+				id: col.column_name,
+				displayName: col.column_name,
+				required: !nullable && !hasDefault && !isGenerated,
+				defaultMatch: (col.column_name === 'id' && canBeUsedToMatch) || false,
+				display: true,
+				type,
+				canBeUsedToMatch,
+				options,
+			};
+		}),
+	);
+	return { fields };
+}

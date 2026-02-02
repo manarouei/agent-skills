@@ -1,0 +1,59 @@
+{
+  "timestamp": "2026-01-06T16:03:25",
+  "workflow": "GitHub Node Complete Test Suite",
+  "test_results": [
+    {
+      "operation": "repository.get",
+      "status": "passed",
+      "data": {
+        "name": "n8n",
+        "full_name": "n8n-io/n8n",
+        "stars": 166814
+      }
+    },
+    {
+      "operation": "user.get",
+      "status": "passed",
+      "data": {
+        "login": "zaris-ai",
+        "id": 251121550,
+        "name": null
+      }
+    },
+    {
+      "operation": "repository.getIssues",
+      "status": "passed",
+      "data": {
+        "count": 5,
+        "issues": [
+          {
+            "number": 23911,
+            "title": "feat(Pipedrive Node): Allow setting custom properties when creating and updating leads"
+          },
+          {
+            "number": 23910,
+            "title": "fix: Form webhook submission with basic auth"
+          },
+          {
+            "number": 23909,
+            "title": "Code node editor: \"Cannot find name '$node'\" in JavaScript mode"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "file.get",
+      "status": "passed",
+      "data": {
+        "name": "README.md",
+        "path": "README.md",
+        "size": 3678
+      }
+    }
+  ],
+  "summary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0
+  }
+}

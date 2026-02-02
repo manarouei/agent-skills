@@ -1,0 +1,4573 @@
+// === File: Discord.node.ts ===
+import type { INodeTypeBaseDescription, IVersionedNodeType } from 'n8n-workflow';
+import { VersionedNodeType } from 'n8n-workflow';
+
+import { DiscordV1 } from './v1/DiscordV1.node';
+import { DiscordV2 } from './v2/DiscordV2.node';
+
+export class Discord extends VersionedNodeType {
+	constructor() {
+		const baseDescription: INodeTypeBaseDescription = {
+			displayName: 'Discord',
+			name: 'discord',
+			icon: 'file:discord.svg',
+			group: ['output'],
+			defaultVersion: 2,
+			description: 'Sends data to Discord',
+		};
+
+		const nodeVersions: IVersionedNodeType['nodeVersions'] = {
+			1: new DiscordV1(baseDescription),
+			2: new DiscordV2(baseDescription),
+		};
+
+		super(nodeVersions, baseDescription);
+	}
+}
+
+
+// === File: test/v2/node/channel/create.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, channel => create', () => {
+	nock('https://discord.com/api/v10')
+		.post('/guilds/1168516062791340136/channels', { name: 'third', type: '0' })
+		.reply(200, {
+			id: '1168528323006181417',
+			type: 0,
+			last_message_id: null,
+			flags: 0,
+			guild_id: '1168516062791340136',
+			name: 'third',
+			parent_id: null,
+			rate_limit_per_user: 0,
+			topic: null,
+			position: 3,
+			permission_overwrites: [],
+			nsfw: false,
+		});
+
+	new NodeTestHarness().setupTests({
+		workflowFiles: ['create.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/node/channel/deleteChannel.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, channel => deleteChannel', () => {
+	nock('https://discord.com/api/v10')
+		.delete('/channels/1168528323006181417')
+		.reply(200, { success: true });
+
+	new NodeTestHarness().setupTests({
+		workflowFiles: ['deleteChannel.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/node/channel/get.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, channel => get', () => {
+	nock('https://discord.com/api/v10')
+		.persist()
+		.get('/users/@me/guilds')
+		.reply(200, [{ id: '1168516062791340136' }])
+		.get('/channels/1168516240332034067')
+		.reply(200, {
+			id: '1168516240332034067',
+			type: 0,
+			last_message_id: null,
+			flags: 0,
+			guild_id: '1168516062791340136',
+			name: 'first',
+			parent_id: '1168516063340789831',
+			rate_limit_per_user: 0,
+			topic: null,
+			position: 1,
+			permission_overwrites: [],
+			nsfw: false,
+		});
+
+	new NodeTestHarness().setupTests({
+		workflowFiles: ['get.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/node/channel/getAll.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, channel => getAll', () => {
+	nock('https://discord.com/api/v10')
+		.get('/guilds/1168516062791340136/channels')
+		.reply(200, [
+			{
+				id: '1168516063340789831',
+				type: 4,
+				flags: 0,
+				guild_id: '1168516062791340136',
+				name: 'Text Channels',
+				parent_id: null,
+				position: 0,
+				permission_overwrites: [],
+			},
+			{
+				id: '1168516063340789832',
+				type: 4,
+				flags: 0,
+				guild_id: '1168516062791340136',
+				name: 'Voice Channels',
+				parent_id: null,
+				position: 0,
+				permission_overwrites: [],
+			},
+			{
+				id: '1168516063340789833',
+				type: 0,
+				last_message_id: '1168518371239792720',
+				flags: 0,
+				guild_id: '1168516062791340136',
+				name: 'general',
+				parent_id: '1168516063340789831',
+				rate_limit_per_user: 0,
+				topic: null,
+				position: 0,
+				permission_overwrites: [],
+				nsfw: false,
+				icon_emoji: {
+					id: null,
+					name: '👋',
+				},
+				theme_color: null,
+			},
+			{
+				id: '1168516063340789834',
+				type: 2,
+				last_message_id: null,
+				flags: 0,
+				guild_id: '1168516062791340136',
+				name: 'General',
+				parent_id: '1168516063340789832',
+				rate_limit_per_user: 0,
+				bitrate: 64000,
+				user_limit: 0,
+				rtc_region: null,
+				position: 0,
+				permission_overwrites: [],
+				nsfw: false,
+				icon_emoji: {
+					id: null,
+					name: '🎙️',
+				},
+				theme_color: null,
+			},
+			{
+				id: '1168516240332034067',
+				type: 0,
+				last_message_id: null,
+				flags: 0,
+				guild_id: '1168516062791340136',
+				name: 'first-channel',
+				parent_id: '1168516063340789831',
+				rate_limit_per_user: 30,
+				topic: 'This is channel topic',
+				position: 3,
+				permission_overwrites: [],
+				nsfw: true,
+			},
+			{
+				id: '1168516269079793766',
+				type: 0,
+				last_message_id: null,
+				flags: 0,
+				guild_id: '1168516062791340136',
+				name: 'second',
+				parent_id: '1168516063340789831',
+				rate_limit_per_user: 0,
+				topic: null,
+				position: 2,
+				permission_overwrites: [],
+				nsfw: false,
+			},
+		]);
+
+	new NodeTestHarness().setupTests({
+		workflowFiles: ['getAll.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/node/channel/update.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, channel => update', () => {
+	nock('https://discord.com/api/v10').patch('/channels/1168516240332034067').reply(200, {
+		id: '1168516240332034067',
+		type: 0,
+		last_message_id: null,
+		flags: 0,
+		guild_id: '1168516062791340136',
+		name: 'first-channel',
+		parent_id: '1168516063340789831',
+		rate_limit_per_user: 30,
+		topic: 'This is channel topic',
+		position: 3,
+		permission_overwrites: [],
+		nsfw: true,
+	});
+
+	new NodeTestHarness().setupTests({
+		workflowFiles: ['update.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/node/member/getAll.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, member => getAll', () => {
+	nock('https://discord.com/api/v10')
+		.get('/guilds/1168516062791340136/members?limit=2')
+		.reply(200, [
+			{
+				user: {
+					id: '470936827994570762',
+					username: 'michael',
+					avatar: null,
+					discriminator: '0',
+					public_flags: 0,
+					premium_type: 0,
+					flags: 0,
+					banner: null,
+					accent_color: null,
+					global_name: 'Michael',
+					avatar_decoration_data: null,
+					banner_color: null,
+				},
+				roles: [],
+			},
+			{
+				user: {
+					id: '1070667629972430879',
+					username: 'n8n-node-overhaul',
+					avatar: null,
+					discriminator: '1037',
+					public_flags: 0,
+					premium_type: 0,
+					flags: 0,
+					bot: true,
+					banner: null,
+					accent_color: null,
+					global_name: null,
+					avatar_decoration_data: null,
+					banner_color: null,
+				},
+				roles: ['1168518368526077992'],
+			},
+		]);
+
+	new NodeTestHarness().setupTests({
+		workflowFiles: ['getAll.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/node/member/roleAdd.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, member => roleAdd', () => {
+	nock('https://discord.com/api/v10')
+		.put('/guilds/1168516062791340136/members/470936827994570762/roles/1168772374540320890')
+		.reply(200, { success: true });
+
+	new NodeTestHarness().setupTests({
+		workflowFiles: ['roleAdd.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/node/member/roleRemove.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, member => roleRemove', () => {
+	nock('https://discord.com/api/v10')
+		.persist()
+		.delete(/\/guilds\/1168516062791340136\/members\/470936827994570762\/roles\/\d+/)
+		.reply(200, { success: true });
+
+	new NodeTestHarness().setupTests({
+		workflowFiles: ['roleRemove.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/node/message/deleteMessage.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, message => deleteMessage', () => {
+	nock('https://discord.com/api/v10')
+		.delete('/channels/1168516240332034067/messages/1168776343194972210')
+		.reply(200, { success: true });
+
+	new NodeTestHarness().setupTests({
+		workflowFiles: ['deleteMessage.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/node/message/get.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, message => get', () => {
+	nock('https://discord.com/api/v10')
+		.get('/channels/1168516240332034067/messages/1168777380144369718')
+		.reply(200, {
+			id: '1168777380144369718',
+			channel_id: '1168516240332034067',
+			author: {
+				id: '1070667629972430879',
+				username: 'n8n-node-overhaul',
+				avatar: null,
+				discriminator: '1037',
+				public_flags: 0,
+				premium_type: 0,
+				flags: 0,
+				bot: true,
+				banner: null,
+				accent_color: null,
+				global_name: null,
+				avatar_decoration_data: null,
+				banner_color: null,
+			},
+			content: 'msg 3',
+			timestamp: '2023-10-31T05:04:02.260000+00:00',
+			type: 0,
+		});
+
+	new NodeTestHarness().setupTests({
+		workflowFiles: ['get.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/node/message/getAll.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, message => getAll', () => {
+	nock('https://discord.com/api/v10')
+		.get('/channels/1168516240332034067/messages?limit=1')
+		.reply(200, [
+			{
+				id: '1168784010269433998',
+				type: 0,
+				content: 'msg 4',
+				channel_id: '1168516240332034067',
+				author: {
+					id: '1070667629972430879',
+					username: 'n8n-node-overhaul',
+					avatar: null,
+					discriminator: '1037',
+					public_flags: 0,
+					premium_type: 0,
+					flags: 0,
+					bot: true,
+					banner: null,
+					accent_color: null,
+					global_name: null,
+					avatar_decoration_data: null,
+					banner_color: null,
+				},
+				attachments: [],
+				embeds: [
+					{
+						type: 'rich',
+						title: 'Some Title',
+						description: 'description',
+						color: 2112935,
+						timestamp: '2023-10-30T22:00:00+00:00',
+						author: {
+							name: 'Me',
+						},
+					},
+				],
+				mentions: [],
+				mention_roles: [],
+				pinned: false,
+				mention_everyone: false,
+				tts: false,
+				timestamp: '2023-10-31T05:30:23.005000+00:00',
+				edited_timestamp: null,
+				flags: 0,
+				components: [],
+			},
+		]);
+
+	new NodeTestHarness().setupTests({
+		workflowFiles: ['getAll.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/node/message/react.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, message => react', () => {
+	nock('https://discord.com/api/v10')
+		.put('/channels/1168516240332034067/messages/1168777380144369718/reactions/%F0%9F%98%80/@me')
+		.reply(200, { success: true });
+
+	new NodeTestHarness().setupTests({
+		workflowFiles: ['react.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/node/message/send.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, message => send', () => {
+	nock('https://discord.com/api/v10')
+		.post('/channels/1168516240332034067/messages', {
+			content: 'msg 4',
+			embeds: [
+				{
+					author: { name: 'Me' },
+					color: 2112935,
+					description: 'description',
+					timestamp: '2023-10-30T22:00:00.000Z',
+					title: 'Some Title',
+				},
+			],
+		})
+		.reply(200, {
+			id: '1168784010269433998',
+			type: 0,
+			content: 'msg 4',
+			channel_id: '1168516240332034067',
+			author: {
+				id: '1070667629972430879',
+				username: 'n8n-node-overhaul',
+				avatar: null,
+				discriminator: '1037',
+				public_flags: 0,
+				premium_type: 0,
+				flags: 0,
+				bot: true,
+				banner: null,
+				accent_color: null,
+				global_name: null,
+				avatar_decoration_data: null,
+				banner_color: null,
+			},
+			attachments: [],
+			embeds: [
+				{
+					type: 'rich',
+					title: 'Some Title',
+					description: 'description',
+					color: 2112935,
+					timestamp: '2023-10-30T22:00:00+00:00',
+					author: {
+						name: 'Me',
+					},
+				},
+			],
+			mentions: [],
+			mention_roles: [],
+			pinned: false,
+			mention_everyone: false,
+			tts: false,
+			timestamp: '2023-10-31T05:30:23.005000+00:00',
+			edited_timestamp: null,
+			flags: 0,
+			components: [],
+			referenced_message: null,
+		});
+
+	new NodeTestHarness().setupTests({
+		workflowFiles: ['send.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/node/message/sendAndWait.test.ts ===
+import type { MockProxy } from 'jest-mock-extended';
+import { mock } from 'jest-mock-extended';
+import { SEND_AND_WAIT_OPERATION, type IExecuteFunctions } from 'n8n-workflow';
+
+import { versionDescription } from '../../../../v2/actions/versionDescription';
+import { DiscordV2 } from '../../../../v2/DiscordV2.node';
+import * as transport from '../../../../v2/transport/discord.api';
+
+jest.mock('../../../../v2/transport/discord.api', () => {
+	const originalModule = jest.requireActual('../../../../v2/transport/discord.api');
+	return {
+		...originalModule,
+		discordApiRequest: jest.fn(async function (method: string) {
+			if (method === 'POST') {
+				return {};
+			}
+		}),
+	};
+});
+
+describe('Test DiscordV2, message => sendAndWait', () => {
+	let discord: DiscordV2;
+	let mockExecuteFunctions: MockProxy<IExecuteFunctions>;
+
+	beforeEach(() => {
+		discord = new DiscordV2(versionDescription);
+		mockExecuteFunctions = mock<IExecuteFunctions>();
+		mockExecuteFunctions.helpers = {
+			constructExecutionMetaData: jest.fn(() => []),
+			returnJsonArray: jest.fn(() => []),
+		} as any;
+	});
+
+	afterEach(() => {
+		jest.clearAllMocks();
+	});
+
+	it('should send message and put execution to wait', async () => {
+		const items = [{ json: { data: 'test' } }];
+		mockExecuteFunctions.getNodeParameter.mockImplementation((key: string) => {
+			if (key === 'operation') return SEND_AND_WAIT_OPERATION;
+			if (key === 'resource') return 'message';
+			if (key === 'authentication') return 'botToken';
+			if (key === 'message') return 'my message';
+			if (key === 'subject') return '';
+			if (key === 'approvalOptions.values') return {};
+			if (key === 'responseType') return 'approval';
+			if (key === 'sendTo') return 'channel';
+			if (key === 'channelId') return 'channelID';
+			if (key === 'options.limitWaitTime.values') return {};
+		});
+
+		mockExecuteFunctions.putExecutionToWait.mockImplementation();
+		mockExecuteFunctions.getInputData.mockReturnValue(items);
+		mockExecuteFunctions.getInstanceId.mockReturnValue('instanceId');
+
+		mockExecuteFunctions.evaluateExpression.mockReturnValueOnce('http://localhost/waiting-webhook');
+		mockExecuteFunctions.evaluateExpression.mockReturnValueOnce('nodeID');
+
+		mockExecuteFunctions.getSignedResumeUrl.mockReturnValue(
+			'http://localhost/waiting-webhook/nodeID?approved=true&token=abc',
+		);
+
+		const result = await discord.execute.call(mockExecuteFunctions);
+
+		expect(result).toEqual([items]);
+		expect(transport.discordApiRequest).toHaveBeenCalledTimes(1);
+		expect(mockExecuteFunctions.putExecutionToWait).toHaveBeenCalledTimes(1);
+
+		expect(transport.discordApiRequest).toHaveBeenCalledWith(
+			'POST',
+			'/channels/channelID/messages',
+			{
+				components: [
+					{
+						components: [
+							{
+								label: 'Approve',
+								style: 5,
+								type: 2,
+								url: 'http://localhost/waiting-webhook/nodeID?approved=true&token=abc',
+							},
+						],
+						type: 1,
+					},
+				],
+				embeds: [
+					{
+						color: 5814783,
+						description:
+							'my message\n\n_This message was sent automatically with _[n8n](https://n8n.io/?utm_source=n8n-internal&utm_medium=powered_by&utm_campaign=n8n-nodes-base.discord_instanceId)',
+					},
+				],
+			},
+		);
+	});
+});
+
+
+// === File: test/v2/node/webhook/sendLegacy.test.ts ===
+import { NodeTestHarness } from '@nodes-testing/node-test-harness';
+import nock from 'nock';
+
+describe('Test DiscordV2, webhook => sendLegacy', () => {
+	const credentials = {
+		discordWebhookApi: {
+			webhookUri: 'https://discord.com/webhook',
+		},
+	};
+
+	nock(credentials.discordWebhookApi.webhookUri)
+		.post('?wait=true')
+		.reply(200, {
+			id: '1168768986385747999',
+			type: 0,
+			content: 'TEST Message',
+			channel_id: '1074646335082479626',
+			author: {
+				id: '1153265494955135077',
+				username: 'TEST_USER',
+				avatar: null,
+				discriminator: '0000',
+				public_flags: 0,
+				flags: 0,
+				bot: true,
+				global_name: null,
+			},
+			attachments: [],
+			embeds: [
+				{
+					type: 'rich',
+					description: 'some description',
+					color: 10930459,
+					timestamp: '2023-10-17T21:00:00+00:00',
+					author: {
+						name: 'Michael',
+					},
+				},
+			],
+			mentions: [],
+			mention_roles: [],
+			pinned: false,
+			mention_everyone: false,
+			tts: true,
+			timestamp: '2023-10-31T04:30:41.032000+00:00',
+			edited_timestamp: null,
+			flags: 4096,
+			components: [],
+			webhook_id: '1153265494955135077',
+		});
+
+	new NodeTestHarness().setupTests({
+		credentials,
+		workflowFiles: ['sendLegacy.workflow.json'],
+	});
+});
+
+
+// === File: test/v2/utils.test.ts ===
+import type { IExecuteFunctions, INode } from 'n8n-workflow';
+
+import * as transport from '../../v2//transport/discord.api';
+import {
+	createSimplifyFunction,
+	prepareOptions,
+	prepareEmbeds,
+	checkAccessToGuild,
+	setupChannelGetter,
+} from '../../v2/helpers/utils';
+
+const node: INode = {
+	id: '1',
+	name: 'Discord node',
+	typeVersion: 2,
+	type: 'n8n-nodes-base.discord',
+	position: [60, 760],
+	parameters: {
+		resource: 'channel',
+		operation: 'get',
+	},
+};
+
+describe('Test Discord > createSimplifyFunction', () => {
+	it('should create function', () => {
+		const result = createSimplifyFunction(['message_reference']);
+		expect(result).toBeDefined();
+		expect(typeof result).toBe('function');
+	});
+
+	it('should return object containing only specified fields', () => {
+		const simplify = createSimplifyFunction(['id', 'name']);
+		const data = {
+			id: '123',
+			name: 'test',
+			type: 'test',
+			randomField: 'test',
+		};
+		const result = simplify(data);
+		expect(result).toEqual({
+			id: '123',
+			name: 'test',
+		});
+	});
+});
+
+describe('Test Discord > prepareOptions', () => {
+	it('should return correct flag value', () => {
+		const result = prepareOptions({
+			flags: ['SUPPRESS_EMBEDS', 'SUPPRESS_NOTIFICATIONS'],
+		});
+		expect(result.flags).toBe((1 << 2) + (1 << 12));
+	});
+
+	it('should convert message_reference', () => {
+		const result = prepareOptions(
+			{
+				message_reference: '123456',
+			},
+			'789000',
+		);
+		expect(result.message_reference).toEqual({
+			message_id: '123456',
+			guild_id: '789000',
+		});
+	});
+});
+
+describe('Test Discord > prepareEmbeds', () => {
+	it('should return return empty object removing empty strings', () => {
+		const embeds = [
+			{
+				test1: 'test',
+				test2: 'test',
+				description: 'test',
+			},
+		];
+
+		const executeFunction = {};
+
+		const result = prepareEmbeds.call(executeFunction as unknown as IExecuteFunctions, embeds);
+
+		expect(result).toEqual(embeds);
+	});
+});
+
+describe('Test Discord > checkAccessToGuild', () => {
+	it('should throw error', () => {
+		const guildId = '123456';
+		const guilds = [
+			{
+				id: '789000',
+			},
+		];
+
+		expect(() => {
+			checkAccessToGuild(node, guildId, guilds);
+		}).toThrow('You do not have access to the guild with the id 123456');
+	});
+
+	it('should pass', () => {
+		const guildId = '123456';
+		const guilds = [
+			{
+				id: '123456',
+			},
+			{
+				id: '789000',
+			},
+		];
+
+		expect(() => {
+			checkAccessToGuild(node, guildId, guilds);
+		}).not.toThrow();
+	});
+});
+
+describe('Test Discord > setupChannelGetter & checkAccessToChannel', () => {
+	const discordApiRequestSpy = jest.spyOn(transport, 'discordApiRequest');
+	discordApiRequestSpy.mockImplementation(async (method: string) => {
+		if (method === 'GET') {
+			return {
+				guild_id: '123456',
+			};
+		}
+	});
+
+	it('should setup channel getter and get channel id', async () => {
+		const fakeExecuteFunction = (auth: string) => {
+			return {
+				getNodeParameter: (parameter: string) => {
+					if (parameter === 'authentication') return auth;
+					if (parameter === 'channelId') return '42';
+				},
+				getNode: () => node,
+			} as unknown as IExecuteFunctions;
+		};
+
+		const userGuilds = [
+			{
+				id: '789000',
+			},
+		];
+
+		try {
+			const getChannel = await setupChannelGetter.call(fakeExecuteFunction('oAuth2'), userGuilds);
+			await getChannel(0);
+		} catch (error) {
+			expect(error.message).toBe('You do not have access to the guild with the id 123456');
+		}
+
+		const getChannel = await setupChannelGetter.call(fakeExecuteFunction('botToken'), userGuilds);
+		const channelId = await getChannel(0);
+		expect(channelId).toBe('42');
+	});
+});
+
+
+// === File: v1/DiscordV1.node.ts ===
+import type {
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeType,
+	INodeTypeBaseDescription,
+	INodeTypeDescription,
+	IRequestOptions,
+} from 'n8n-workflow';
+import {
+	jsonParse,
+	NodeApiError,
+	NodeConnectionTypes,
+	NodeOperationError,
+	sleep,
+} from 'n8n-workflow';
+
+import type { DiscordAttachment, DiscordWebhook } from './Interfaces';
+import { oldVersionNotice } from '../../../utils/descriptions';
+
+const versionDescription: INodeTypeDescription = {
+	displayName: 'Discord',
+	name: 'discord',
+	icon: 'file:discord.svg',
+	group: ['output'],
+	version: 1,
+	description: 'Sends data to Discord',
+	defaults: {
+		name: 'Discord',
+	},
+	inputs: [NodeConnectionTypes.Main],
+	outputs: [NodeConnectionTypes.Main],
+	properties: [
+		oldVersionNotice,
+		{
+			displayName: 'Webhook URL',
+			name: 'webhookUri',
+			type: 'string',
+			required: true,
+			default: '',
+			placeholder: 'https://discord.com/api/webhooks/ID/TOKEN',
+		},
+		{
+			displayName: 'Content',
+			name: 'text',
+			type: 'string',
+			typeOptions: {
+				maxValue: 2000,
+			},
+			default: '',
+			placeholder: 'Hello World!',
+		},
+		{
+			displayName: 'Additional Fields',
+			name: 'options',
+			type: 'collection',
+			placeholder: 'Add option',
+			default: {},
+			options: [
+				{
+					displayName: 'Allowed Mentions',
+					name: 'allowedMentions',
+					type: 'json',
+					typeOptions: { alwaysOpenEditWindow: true },
+					default: '',
+				},
+				{
+					displayName: 'Attachments',
+					name: 'attachments',
+					type: 'json',
+					typeOptions: { alwaysOpenEditWindow: true },
+					default: '',
+				},
+				{
+					displayName: 'Avatar URL',
+					name: 'avatarUrl',
+					type: 'string',
+					default: '',
+				},
+				{
+					displayName: 'Components',
+					name: 'components',
+					type: 'json',
+					typeOptions: { alwaysOpenEditWindow: true },
+					default: '',
+				},
+				{
+					displayName: 'Embeds',
+					name: 'embeds',
+					type: 'json',
+					typeOptions: { alwaysOpenEditWindow: true },
+					default: '',
+				},
+				{
+					displayName: 'Flags',
+					name: 'flags',
+					type: 'number',
+					default: '',
+				},
+				{
+					displayName: 'JSON Payload',
+					name: 'payloadJson',
+					type: 'json',
+					typeOptions: { alwaysOpenEditWindow: true },
+					default: '',
+				},
+				{
+					displayName: 'Username',
+					name: 'username',
+					type: 'string',
+					default: '',
+					placeholder: 'User',
+				},
+				{
+					displayName: 'TTS',
+					name: 'tts',
+					type: 'boolean',
+					default: false,
+					description: 'Whether this message be sent as a Text To Speech message',
+				},
+			],
+		},
+	],
+};
+
+export class DiscordV1 implements INodeType {
+	description: INodeTypeDescription;
+
+	constructor(baseDescription: INodeTypeBaseDescription) {
+		this.description = {
+			...baseDescription,
+			...versionDescription,
+		};
+	}
+
+	async execute(this: IExecuteFunctions) {
+		const returnData: INodeExecutionData[] = [];
+
+		const webhookUri = this.getNodeParameter('webhookUri', 0, '') as string;
+
+		if (!webhookUri) throw new NodeOperationError(this.getNode(), 'Webhook uri is required.');
+
+		const items = this.getInputData();
+		const length = items.length;
+		for (let i = 0; i < length; i++) {
+			const body: DiscordWebhook = {};
+
+			const iterationWebhookUri = this.getNodeParameter('webhookUri', i) as string;
+			body.content = this.getNodeParameter('text', i) as string;
+			const options = this.getNodeParameter('options', i);
+
+			if (!body.content && !options.embeds) {
+				throw new NodeOperationError(this.getNode(), 'Either content or embeds must be set.', {
+					itemIndex: i,
+				});
+			}
+			if (options.embeds) {
+				try {
+					//@ts-expect-error
+					body.embeds = JSON.parse(options.embeds);
+					if (!Array.isArray(body.embeds)) {
+						throw new NodeOperationError(this.getNode(), 'Embeds must be an array of embeds.', {
+							itemIndex: i,
+						});
+					}
+				} catch (e) {
+					throw new NodeOperationError(this.getNode(), 'Embeds must be valid JSON.', {
+						itemIndex: i,
+					});
+				}
+			}
+			if (options.username) {
+				body.username = options.username as string;
+			}
+
+			if (options.components) {
+				try {
+					//@ts-expect-error
+					body.components = JSON.parse(options.components);
+				} catch (e) {
+					throw new NodeOperationError(this.getNode(), 'Components must be valid JSON.', {
+						itemIndex: i,
+					});
+				}
+			}
+
+			if (options.allowed_mentions) {
+				//@ts-expect-error
+				body.allowed_mentions = jsonParse(options.allowed_mentions);
+			}
+
+			if (options.avatarUrl) {
+				body.avatar_url = options.avatarUrl as string;
+			}
+
+			if (options.flags) {
+				body.flags = options.flags as number;
+			}
+
+			if (options.tts) {
+				body.tts = options.tts as boolean;
+			}
+
+			if (options.payloadJson) {
+				//@ts-expect-error
+				body.payload_json = jsonParse(options.payloadJson);
+			}
+
+			if (options.attachments) {
+				//@ts-expect-error
+				body.attachments = jsonParse(options.attachments as DiscordAttachment[]);
+			}
+
+			//* Not used props, delete them from the payload as Discord won't need them :^
+			if (!body.content) delete body.content;
+			if (!body.username) delete body.username;
+			if (!body.avatar_url) delete body.avatar_url;
+			if (!body.embeds) delete body.embeds;
+			if (!body.allowed_mentions) delete body.allowed_mentions;
+			if (!body.flags) delete body.flags;
+			if (!body.components) delete body.components;
+			if (!body.payload_json) delete body.payload_json;
+			if (!body.attachments) delete body.attachments;
+
+			let requestOptions: IRequestOptions;
+
+			if (!body.payload_json) {
+				requestOptions = {
+					resolveWithFullResponse: true,
+					method: 'POST',
+					body,
+					uri: iterationWebhookUri,
+					headers: {
+						'content-type': 'application/json; charset=utf-8',
+					},
+					json: true,
+				};
+			} else {
+				requestOptions = {
+					resolveWithFullResponse: true,
+					method: 'POST',
+					body,
+					uri: iterationWebhookUri,
+					headers: {
+						'content-type': 'multipart/form-data; charset=utf-8',
+					},
+				};
+			}
+			let maxTries = 5;
+			let response;
+
+			do {
+				try {
+					response = await this.helpers.request(requestOptions);
+					const resetAfter = response.headers['x-ratelimit-reset-after'] * 1000;
+					const remainingRatelimit = response.headers['x-ratelimit-remaining'];
+
+					// remaining requests 0
+					// https://discord.com/developers/docs/topics/rate-limits
+					if (!+remainingRatelimit) {
+						await sleep(resetAfter ?? 1000);
+					}
+
+					break;
+				} catch (error) {
+					// HTTP/1.1 429 TOO MANY REQUESTS
+					// Await when the current rate limit will reset
+					// https://discord.com/developers/docs/topics/rate-limits
+					if (error.statusCode === 429) {
+						const retryAfter = error.response?.headers['retry-after'] || 1000;
+
+						await sleep(+retryAfter);
+
+						continue;
+					}
+
+					throw error;
+				}
+			} while (--maxTries);
+
+			if (maxTries <= 0) {
+				throw new NodeApiError(this.getNode(), {
+					error: 'Could not send Webhook message. Max amount of rate-limit retries reached.',
+				});
+			}
+
+			const executionData = this.helpers.constructExecutionMetaData(
+				this.helpers.returnJsonArray({ success: true }),
+				{ itemData: { item: i } },
+			);
+			returnData.push(...executionData);
+		}
+
+		return [returnData];
+	}
+}
+
+
+// === File: v1/Interfaces.ts ===
+export interface DiscordWebhook {
+	content?: string;
+	username?: string;
+	avatar_url?: string;
+	tts?: boolean;
+	file?: Buffer;
+	embeds?: any[];
+	allowed_mentions?: {
+		parse: Array<'roles' | 'users' | 'everyone'>;
+		roles: string[];
+		users: string[];
+		replied_user: boolean;
+	};
+	flags?: number;
+	attachments?: DiscordAttachment[];
+	components?: any[];
+	payload_json?: any;
+}
+
+export interface DiscordAttachment {
+	id?: string;
+	filename?: string;
+	size?: number;
+	description?: string;
+	content_type?: string;
+	url?: string;
+	proxy_url?: string;
+	height?: number;
+	width?: number;
+	ephemeral?: boolean;
+}
+
+
+// === File: v2/DiscordV2.node.ts ===
+import type {
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeType,
+	INodeTypeBaseDescription,
+	INodeTypeDescription,
+} from 'n8n-workflow';
+
+import { router } from './actions/router';
+import { versionDescription } from './actions/versionDescription';
+import { listSearch, loadOptions } from './methods';
+import { sendAndWaitWebhook } from '../../../utils/sendAndWait/utils';
+
+export class DiscordV2 implements INodeType {
+	description: INodeTypeDescription;
+
+	constructor(baseDescription: INodeTypeBaseDescription) {
+		this.description = {
+			...baseDescription,
+			...versionDescription,
+			usableAsTool: true,
+		};
+	}
+
+	methods = {
+		listSearch,
+		loadOptions,
+	};
+
+	webhook = sendAndWaitWebhook;
+
+	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+		return await router.call(this);
+	}
+}
+
+
+// === File: v2/actions/channel/create.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import { parseDiscordError, prepareErrorData } from '../../helpers/utils';
+import { discordApiRequest } from '../../transport';
+import { categoryRLC } from '../common.description';
+
+const properties: INodeProperties[] = [
+	{
+		displayName: 'Name',
+		name: 'name',
+		type: 'string',
+		default: '',
+		required: true,
+		description: 'The name of the channel',
+		placeholder: 'e.g. new-channel',
+	},
+	{
+		displayName: 'Type',
+		name: 'type',
+		type: 'options',
+		default: '0',
+		required: true,
+		description: 'The type of channel to create',
+		options: [
+			{
+				name: 'Guild Text',
+				value: '0',
+			},
+			{
+				name: 'Guild Voice',
+				value: '2',
+			},
+			{
+				name: 'Guild Category',
+				value: '4',
+			},
+		],
+	},
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add option',
+		default: {},
+		options: [
+			{
+				displayName: 'Age-Restricted (NSFW)',
+				name: 'nsfw',
+				type: 'boolean',
+				default: false,
+				description: 'Whether the content of the channel might be nsfw (not safe for work)',
+				displayOptions: {
+					hide: {
+						'/type': ['4'],
+					},
+				},
+			},
+			{
+				displayName: 'Bitrate',
+				name: 'bitrate',
+				type: 'number',
+				default: 8000,
+				placeholder: 'e.g. 8000',
+				typeOptions: {
+					minValue: 8000,
+					maxValue: 96000,
+				},
+				description: 'The bitrate (in bits) of the voice channel',
+				displayOptions: {
+					show: {
+						'/type': ['2'],
+					},
+				},
+			},
+			{
+				...categoryRLC,
+				displayOptions: {
+					hide: {
+						'/type': ['4'],
+					},
+				},
+			},
+			{
+				displayName: 'Position',
+				name: 'position',
+				type: 'number',
+				default: 1,
+			},
+			{
+				displayName: 'Rate Limit Per User',
+				name: 'rate_limit_per_user',
+				type: 'number',
+				default: 0,
+				description: 'Amount of seconds a user has to wait before sending another message',
+				displayOptions: {
+					hide: {
+						'/type': ['4'],
+					},
+				},
+			},
+			{
+				displayName: 'Topic',
+				name: 'topic',
+				type: 'string',
+				default: '',
+				typeOptions: {
+					rows: 2,
+				},
+				description: 'The channel topic description (0-1024 characters)',
+				placeholder: 'e.g. This channel is about…',
+				displayOptions: {
+					hide: {
+						'/type': ['4'],
+					},
+				},
+			},
+			{
+				displayName: 'User Limit',
+				name: 'user_limit',
+				type: 'number',
+				default: 0,
+				typeOptions: {
+					minValue: 0,
+					maxValue: 99,
+				},
+				placeholder: 'e.g. 20',
+				description:
+					'The limit for the number of members that can be in the channel (0 refers to no limit)',
+				displayOptions: {
+					show: {
+						'/type': ['2'],
+					},
+				},
+			},
+		],
+	},
+];
+
+const displayOptions = {
+	show: {
+		resource: ['channel'],
+		operation: ['create'],
+	},
+	hide: {
+		authentication: ['webhook'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	guildId: string,
+): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+	const items = this.getInputData();
+
+	for (let i = 0; i < items.length; i++) {
+		try {
+			const name = this.getNodeParameter('name', i) as string;
+			const type = this.getNodeParameter('type', i) as string;
+			const options = this.getNodeParameter('options', i);
+
+			if (options.categoryId) {
+				options.parent_id = (options.categoryId as IDataObject).value;
+				delete options.categoryId;
+			}
+
+			const body: IDataObject = {
+				name,
+				type,
+				...options,
+			};
+
+			const response = await discordApiRequest.call(
+				this,
+				'POST',
+				`/guilds/${guildId}/channels`,
+				body,
+			);
+
+			const executionData = this.helpers.constructExecutionMetaData(
+				this.helpers.returnJsonArray(response),
+				{ itemData: { item: i } },
+			);
+
+			returnData.push(...executionData);
+		} catch (error) {
+			const err = parseDiscordError.call(this, error, i);
+
+			if (this.continueOnFail()) {
+				returnData.push(...prepareErrorData.call(this, err, i));
+				continue;
+			}
+
+			throw err;
+		}
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/actions/channel/deleteChannel.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import { parseDiscordError, prepareErrorData, setupChannelGetter } from '../../helpers/utils';
+import { discordApiRequest } from '../../transport';
+import { channelRLC } from '../common.description';
+
+const properties: INodeProperties[] = [channelRLC];
+
+const displayOptions = {
+	show: {
+		resource: ['channel'],
+		operation: ['deleteChannel'],
+	},
+	hide: {
+		authentication: ['webhook'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	_guildId: string,
+	userGuilds: IDataObject[],
+): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+	const items = this.getInputData();
+
+	const getChannelId = await setupChannelGetter.call(this, userGuilds);
+
+	for (let i = 0; i < items.length; i++) {
+		try {
+			const channelId = await getChannelId(i);
+
+			const response = await discordApiRequest.call(this, 'DELETE', `/channels/${channelId}`);
+
+			const executionData = this.helpers.constructExecutionMetaData(
+				this.helpers.returnJsonArray(response),
+				{ itemData: { item: i } },
+			);
+
+			returnData.push(...executionData);
+		} catch (error) {
+			const err = parseDiscordError.call(this, error, i);
+
+			if (this.continueOnFail()) {
+				returnData.push(...prepareErrorData.call(this, err, i));
+				continue;
+			}
+
+			throw err;
+		}
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/actions/channel/get.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import { parseDiscordError, prepareErrorData, setupChannelGetter } from '../../helpers/utils';
+import { discordApiRequest } from '../../transport';
+import { channelRLC } from '../common.description';
+
+const properties: INodeProperties[] = [channelRLC];
+
+const displayOptions = {
+	show: {
+		resource: ['channel'],
+		operation: ['get'],
+	},
+	hide: {
+		authentication: ['webhook'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	_guildId: string,
+	userGuilds: IDataObject[],
+): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+	const items = this.getInputData();
+
+	const getChannelId = await setupChannelGetter.call(this, userGuilds);
+
+	for (let i = 0; i < items.length; i++) {
+		try {
+			const channelId = await getChannelId(i);
+
+			const response = await discordApiRequest.call(this, 'GET', `/channels/${channelId}`);
+
+			const executionData = this.helpers.constructExecutionMetaData(
+				this.helpers.returnJsonArray(response),
+				{ itemData: { item: i } },
+			);
+
+			returnData.push(...executionData);
+		} catch (error) {
+			const err = parseDiscordError.call(this, error, i);
+
+			if (this.continueOnFail()) {
+				returnData.push(...prepareErrorData.call(this, err, i));
+				continue;
+			}
+
+			throw err;
+		}
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/actions/channel/getAll.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { returnAllOrLimit } from '../../../../../utils/descriptions';
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import { parseDiscordError, prepareErrorData } from '../../helpers/utils';
+import { discordApiRequest } from '../../transport';
+
+const properties: INodeProperties[] = [
+	...returnAllOrLimit,
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add option',
+		default: {},
+		options: [
+			{
+				displayName: 'Filter by Type',
+				name: 'filter',
+				type: 'multiOptions',
+				default: [],
+				options: [
+					{
+						name: 'Guild Text',
+						value: 0,
+					},
+					{
+						name: 'Guild Voice',
+						value: 2,
+					},
+					{
+						name: 'Guild Category',
+						value: 4,
+					},
+				],
+			},
+		],
+	},
+];
+
+const displayOptions = {
+	show: {
+		resource: ['channel'],
+		operation: ['getAll'],
+	},
+	hide: {
+		authentication: ['webhook'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	guildId: string,
+): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+
+	try {
+		const returnAll = this.getNodeParameter('returnAll', 0, false);
+		let response = await discordApiRequest.call(this, 'GET', `/guilds/${guildId}/channels`);
+
+		if (!returnAll) {
+			const limit = this.getNodeParameter('limit', 0);
+			response = (response as IDataObject[]).slice(0, limit);
+		}
+
+		const options = this.getNodeParameter('options', 0, {});
+
+		if (options.filter) {
+			const filter = options.filter as number[];
+			response = (response as IDataObject[]).filter((item) => filter.includes(item.type as number));
+		}
+
+		const executionData = this.helpers.constructExecutionMetaData(
+			this.helpers.returnJsonArray(response),
+			{ itemData: { item: 0 } },
+		);
+
+		returnData.push(...executionData);
+	} catch (error) {
+		const err = parseDiscordError.call(this, error);
+
+		if (this.continueOnFail()) {
+			returnData.push(...prepareErrorData.call(this, err, 0));
+		}
+
+		throw err;
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/actions/channel/index.ts ===
+import type { INodeProperties } from 'n8n-workflow';
+
+import * as create from './create.operation';
+import * as deleteChannel from './deleteChannel.operation';
+import * as get from './get.operation';
+import * as getAll from './getAll.operation';
+import * as update from './update.operation';
+import { guildRLC } from '../common.description';
+
+export { create, get, getAll, update, deleteChannel };
+
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['channel'],
+				authentication: ['botToken', 'oAuth2'],
+			},
+		},
+		options: [
+			{
+				name: 'Create',
+				value: 'create',
+				description: 'Create a new channel',
+				action: 'Create a channel',
+			},
+			{
+				name: 'Delete',
+				value: 'deleteChannel',
+				description: 'Delete a channel',
+				action: 'Delete a channel',
+			},
+			{
+				name: 'Get',
+				value: 'get',
+				description: 'Get a channel',
+				action: 'Get a channel',
+			},
+			{
+				name: 'Get Many',
+				value: 'getAll',
+				description: 'Retrieve the channels of a server',
+				action: 'Get many channels',
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				description: 'Update a channel',
+				action: 'Update a channel',
+			},
+		],
+		default: 'create',
+	},
+	{
+		...guildRLC,
+		displayOptions: {
+			show: {
+				resource: ['channel'],
+				authentication: ['botToken', 'oAuth2'],
+			},
+		},
+	},
+	...create.description,
+	...deleteChannel.description,
+	...get.description,
+	...getAll.description,
+	...update.description,
+];
+
+
+// === File: v2/actions/channel/update.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import { parseDiscordError, prepareErrorData, setupChannelGetter } from '../../helpers/utils';
+import { discordApiRequest } from '../../transport';
+import { categoryRLC, channelRLC } from '../common.description';
+
+const properties: INodeProperties[] = [
+	channelRLC,
+	{
+		displayName: 'Name',
+		name: 'name',
+		type: 'string',
+		default: '',
+		description:
+			"The new name of the channel. Fill this field only if you want to change the channel's name.",
+		placeholder: 'e.g. new-channel-name',
+	},
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add option',
+		default: {},
+		options: [
+			{
+				displayName: 'Age-Restricted (NSFW)',
+				name: 'nsfw',
+				type: 'boolean',
+				default: false,
+				description: 'Whether the content of the channel might be nsfw (not safe for work)',
+			},
+			{
+				displayName: 'Bitrate',
+				name: 'bitrate',
+				type: 'number',
+				default: 8000,
+				typeOptions: {
+					minValue: 8000,
+					maxValue: 96000,
+				},
+				description: 'The bitrate (in bits) of the voice channel',
+				hint: 'Only applicable to voice channels',
+			},
+			categoryRLC,
+			{
+				displayName: 'Position',
+				name: 'position',
+				type: 'number',
+				default: 1,
+			},
+
+			{
+				displayName: 'Rate Limit Per User',
+				name: 'rate_limit_per_user',
+				type: 'number',
+				default: 0,
+				description: 'Amount of seconds a user has to wait before sending another message',
+			},
+			{
+				displayName: 'Topic',
+				name: 'topic',
+				type: 'string',
+				default: '',
+				typeOptions: {
+					rows: 2,
+				},
+				description: 'The channel topic description (0-1024 characters)',
+				placeholder: 'e.g. This channel is about…',
+			},
+			{
+				displayName: 'User Limit',
+				name: 'user_limit',
+				type: 'number',
+				default: 0,
+				typeOptions: {
+					minValue: 0,
+					maxValue: 99,
+				},
+				placeholder: 'e.g. 20',
+				hint: 'Only applicable to voice channels',
+				description:
+					'The limit for the number of members that can be in the channel (0 refers to no limit)',
+			},
+		],
+	},
+];
+
+const displayOptions = {
+	show: {
+		resource: ['channel'],
+		operation: ['update'],
+	},
+	hide: {
+		authentication: ['webhook'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	_guildId: string,
+	userGuilds: IDataObject[],
+): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+	const items = this.getInputData();
+
+	const getChannelId = await setupChannelGetter.call(this, userGuilds);
+
+	for (let i = 0; i < items.length; i++) {
+		try {
+			const channelId = await getChannelId(i);
+
+			const name = this.getNodeParameter('name', i) as string;
+			const options = this.getNodeParameter('options', i);
+
+			if (options.categoryId) {
+				options.parent_id = (options.categoryId as IDataObject).value;
+				delete options.categoryId;
+			}
+
+			const body: IDataObject = {
+				name,
+				...options,
+			};
+
+			const response = await discordApiRequest.call(this, 'PATCH', `/channels/${channelId}`, body);
+
+			const executionData = this.helpers.constructExecutionMetaData(
+				this.helpers.returnJsonArray(response),
+				{ itemData: { item: i } },
+			);
+
+			returnData.push(...executionData);
+		} catch (error) {
+			const err = parseDiscordError.call(this, error, i);
+
+			if (this.continueOnFail()) {
+				returnData.push(...prepareErrorData.call(this, err, i));
+				continue;
+			}
+
+			throw err;
+		}
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/actions/common.description.ts ===
+import type { INodeProperties } from 'n8n-workflow';
+
+import { updateDisplayOptions } from '../../../../utils/utilities';
+
+export const guildRLC: INodeProperties = {
+	displayName: 'Server',
+	name: 'guildId',
+	type: 'resourceLocator',
+	default: { mode: 'list', value: '' },
+	required: true,
+	description: 'Select the server (guild) that your bot is connected to',
+	modes: [
+		{
+			displayName: 'By Name',
+			name: 'list',
+			type: 'list',
+			placeholder: 'e.g. my-server',
+			typeOptions: {
+				searchListMethod: 'guildSearch',
+			},
+		},
+		{
+			displayName: 'By URL',
+			name: 'url',
+			type: 'string',
+			placeholder: 'e.g. https://discord.com/channels/[guild-id]',
+			extractValue: {
+				type: 'regex',
+				regex: 'https:\\/\\/discord.com\\/channels\\/([0-9]+)',
+			},
+			validation: [
+				{
+					type: 'regex',
+					properties: {
+						regex: 'https:\\/\\/discord.com\\/channels\\/([0-9]+)',
+						errorMessage: 'Not a valid Discord Server URL',
+					},
+				},
+			],
+		},
+		{
+			displayName: 'By ID',
+			name: 'id',
+			type: 'string',
+			placeholder: 'e.g. 896347036838936576',
+			validation: [
+				{
+					type: 'regex',
+					properties: {
+						regex: '[0-9]+',
+						errorMessage: 'Not a valid Discord Server ID',
+					},
+				},
+			],
+		},
+	],
+};
+
+export const channelRLC: INodeProperties = {
+	displayName: 'Channel',
+	name: 'channelId',
+	type: 'resourceLocator',
+	default: { mode: 'list', value: '' },
+	required: true,
+	description: 'Select the channel by name, URL, or ID',
+	modes: [
+		{
+			displayName: 'By Name',
+			name: 'list',
+			type: 'list',
+			placeholder: 'e.g. my-channel',
+			typeOptions: {
+				searchListMethod: 'channelSearch',
+			},
+		},
+		{
+			displayName: 'By URL',
+			name: 'url',
+			type: 'string',
+			placeholder: 'e.g. https://discord.com/channels/[guild-id]/[channel-id]',
+			extractValue: {
+				type: 'regex',
+				regex: 'https:\\/\\/discord.com\\/channels\\/[0-9]+\\/([0-9]+)',
+			},
+			validation: [
+				{
+					type: 'regex',
+					properties: {
+						regex: 'https:\\/\\/discord.com\\/channels\\/[0-9]+\\/([0-9]+)',
+						errorMessage: 'Not a valid Discord Channel URL',
+					},
+				},
+			],
+		},
+		{
+			displayName: 'By ID',
+			name: 'id',
+			type: 'string',
+			placeholder: 'e.g. 896347036838936576',
+			validation: [
+				{
+					type: 'regex',
+					properties: {
+						regex: '[0-9]+',
+						errorMessage: 'Not a valid Discord Channel ID',
+					},
+				},
+			],
+		},
+	],
+};
+
+export const textChannelRLC: INodeProperties = {
+	displayName: 'Channel',
+	name: 'channelId',
+	type: 'resourceLocator',
+	default: { mode: 'list', value: '' },
+	required: true,
+	description: 'Select the channel by name, URL, or ID',
+	modes: [
+		{
+			displayName: 'By Name',
+			name: 'list',
+			type: 'list',
+			placeholder: 'e.g. my-channel',
+			typeOptions: {
+				searchListMethod: 'textChannelSearch',
+			},
+		},
+		{
+			displayName: 'By URL',
+			name: 'url',
+			type: 'string',
+			placeholder: 'e.g. https://discord.com/channels/[guild-id]/[channel-id]',
+			extractValue: {
+				type: 'regex',
+				regex: 'https:\\/\\/discord.com\\/channels\\/[0-9]+\\/([0-9]+)',
+			},
+			validation: [
+				{
+					type: 'regex',
+					properties: {
+						regex: 'https:\\/\\/discord.com\\/channels\\/[0-9]+\\/([0-9]+)',
+						errorMessage: 'Not a valid Discord Channel URL',
+					},
+				},
+			],
+		},
+		{
+			displayName: 'By ID',
+			name: 'id',
+			type: 'string',
+			placeholder: 'e.g. 896347036838936576',
+			validation: [
+				{
+					type: 'regex',
+					properties: {
+						regex: '[0-9]+',
+						errorMessage: 'Not a valid Discord Channel ID',
+					},
+				},
+			],
+		},
+	],
+};
+
+export const categoryRLC: INodeProperties = {
+	displayName: 'Parent Category',
+	name: 'categoryId',
+	type: 'resourceLocator',
+	default: { mode: 'list', value: '' },
+	description: 'The parent category where you want the channel to appear',
+	modes: [
+		{
+			displayName: 'By Name',
+			name: 'list',
+			type: 'list',
+			placeholder: 'e.g. my-channel',
+			typeOptions: {
+				searchListMethod: 'categorySearch',
+			},
+		},
+		{
+			displayName: 'By URL',
+			name: 'url',
+			type: 'string',
+			placeholder: 'e.g. https://discord.com/channels/[guild-id]/[channel-id]',
+			extractValue: {
+				type: 'regex',
+				regex: 'https:\\/\\/discord.com\\/channels\\/[0-9]+\\/([0-9]+)',
+			},
+			validation: [
+				{
+					type: 'regex',
+					properties: {
+						regex: 'https:\\/\\/discord.com\\/channels\\/[0-9]+\\/([0-9]+)',
+						errorMessage: 'Not a valid Discord Category URL',
+					},
+				},
+			],
+		},
+		{
+			displayName: 'By ID',
+			name: 'id',
+			type: 'string',
+			placeholder: 'e.g. 896347036838936576',
+			validation: [
+				{
+					type: 'regex',
+					properties: {
+						regex: '[0-9]+',
+						errorMessage: 'Not a valid Discord Category ID',
+					},
+				},
+			],
+		},
+	],
+};
+
+export const userRLC: INodeProperties = {
+	displayName: 'User',
+	name: 'userId',
+	type: 'resourceLocator',
+	default: { mode: 'list', value: '' },
+	description: 'Select the user you want to assign a role to',
+	modes: [
+		{
+			displayName: 'By Name',
+			name: 'list',
+			type: 'list',
+			placeholder: 'e.g. DiscordUser',
+			typeOptions: {
+				searchListMethod: 'userSearch',
+			},
+		},
+		{
+			displayName: 'By ID',
+			name: 'id',
+			type: 'string',
+			placeholder: 'e.g. 786953432728469534',
+			validation: [
+				{
+					type: 'regex',
+					properties: {
+						regex: '[0-9]+',
+						errorMessage: 'Not a valid User ID',
+					},
+				},
+			],
+		},
+	],
+};
+
+export const roleMultiOptions: INodeProperties = {
+	// eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-multi-options
+	displayName: 'Role',
+	name: 'role',
+	type: 'multiOptions',
+	typeOptions: {
+		loadOptionsMethod: 'getRoles',
+		loadOptionsDependsOn: ['userId.value', 'guildId.value', 'operation'],
+	},
+	required: true,
+	// eslint-disable-next-line n8n-nodes-base/node-param-description-wrong-for-dynamic-multi-options
+	description: 'Select the roles you want to add to the user',
+	default: [],
+};
+
+export const maxResultsNumber: INodeProperties = {
+	displayName: 'Max Results',
+	name: 'maxResults',
+	type: 'number',
+	typeOptions: {
+		minValue: 1,
+	},
+	default: 50,
+	description: 'Maximum number of results. Too many results may slow down the query.',
+};
+
+export const messageIdString: INodeProperties = {
+	displayName: 'Message ID',
+	name: 'messageId',
+	type: 'string',
+	default: '',
+	required: true,
+	description: 'The ID of the message',
+	placeholder: 'e.g. 1057576506244726804',
+};
+
+export const simplifyBoolean: INodeProperties = {
+	displayName: 'Simplify',
+	name: 'simplify',
+	type: 'boolean',
+	default: true,
+	description: 'Whether to return a simplified version of the response instead of the raw data',
+};
+
+// embeds -----------------------------------------------------------------------------------------
+const embedFields: INodeProperties[] = [
+	{
+		displayName: 'Description',
+		name: 'description',
+		type: 'string',
+		default: '',
+		description: 'The description of embed',
+		placeholder: 'e.g. My description',
+		typeOptions: {
+			rows: 2,
+		},
+	},
+	{
+		displayName: 'Author',
+		name: 'author',
+		type: 'string',
+		default: '',
+		description: 'The name of the author',
+		placeholder: 'e.g. John Doe',
+	},
+	{
+		displayName: 'Color',
+		name: 'color',
+
+		type: 'color',
+		default: '',
+		description: 'Color code of the embed',
+		placeholder: 'e.g. 12123432',
+	},
+	{
+		displayName: 'Timestamp',
+		name: 'timestamp',
+		type: 'dateTime',
+		default: '',
+		description: 'The time displayed at the bottom of the embed. Provide in ISO8601 format.',
+		placeholder: 'e.g. 2023-02-08 09:30:26',
+	},
+	{
+		displayName: 'Title',
+		name: 'title',
+		type: 'string',
+		default: '',
+		description: 'The title of embed',
+		placeholder: "e.g. Embed's title",
+	},
+	{
+		displayName: 'URL',
+		name: 'url',
+		type: 'string',
+		default: '',
+		description: 'The URL where you want to link the embed to',
+		placeholder: 'e.g. https://discord.com/',
+	},
+	{
+		displayName: 'URL Image',
+		name: 'image',
+		type: 'string',
+		default: '',
+		description: 'Source URL of image (only supports http(s) and attachments)',
+		placeholder: 'e.g. https://example.com/image.png',
+	},
+	{
+		displayName: 'URL Thumbnail',
+		name: 'thumbnail',
+		type: 'string',
+		default: '',
+		description: 'Source URL of thumbnail (only supports http(s) and attachments)',
+		placeholder: 'e.g. https://example.com/image.png',
+	},
+	{
+		displayName: 'URL Video',
+		name: 'video',
+		type: 'string',
+		default: '',
+		description: 'Source URL of video',
+		placeholder: 'e.g. https://example.com/video.mp4',
+	},
+];
+
+const embedFieldsDescription = updateDisplayOptions(
+	{
+		show: {
+			inputMethod: ['fields'],
+		},
+	},
+	embedFields,
+);
+
+export const embedsFixedCollection: INodeProperties = {
+	displayName: 'Embeds',
+	name: 'embeds',
+	type: 'fixedCollection',
+	placeholder: 'Add Embeds',
+	typeOptions: {
+		multipleValues: true,
+	},
+	default: [],
+	options: [
+		{
+			displayName: 'Values',
+			name: 'values',
+			values: [
+				{
+					displayName: 'Input Method',
+					name: 'inputMethod',
+					type: 'options',
+					options: [
+						{
+							name: 'Enter Fields',
+							value: 'fields',
+						},
+						{
+							name: 'Raw JSON',
+							value: 'json',
+						},
+					],
+					default: 'fields',
+				},
+				{
+					displayName: 'Value',
+					name: 'json',
+					type: 'json',
+					default: '={}',
+					typeOptions: {
+						rows: 2,
+					},
+					displayOptions: {
+						show: {
+							inputMethod: ['json'],
+						},
+					},
+				},
+				...embedFieldsDescription,
+			],
+		},
+	],
+};
+
+// -------------------------------------------------------------------------------------------
+
+export const filesFixedCollection: INodeProperties = {
+	displayName: 'Files',
+	name: 'files',
+	type: 'fixedCollection',
+	placeholder: 'Add Files',
+	typeOptions: {
+		multipleValues: true,
+	},
+	default: [],
+	options: [
+		{
+			displayName: 'Values',
+			name: 'values',
+			values: [
+				{
+					displayName: 'Input Data Field Name',
+					name: 'inputFieldName',
+					type: 'string',
+					default: 'data',
+					description: 'The contents of the file being sent with the message',
+					placeholder: 'e.g. data',
+					hint: 'The name of the input field containing the binary file data to be sent',
+				},
+			],
+		},
+	],
+};
+
+export const sendToProperties: INodeProperties[] = [
+	{
+		displayName: 'Send To',
+		name: 'sendTo',
+		type: 'options',
+		options: [
+			{
+				name: 'User',
+				value: 'user',
+			},
+			{
+				name: 'Channel',
+				value: 'channel',
+			},
+		],
+		default: 'channel',
+		description: 'Send message to a channel or DM to a user',
+	},
+
+	{
+		...userRLC,
+		displayOptions: {
+			show: {
+				sendTo: ['user'],
+			},
+		},
+	},
+	{
+		...textChannelRLC,
+		displayOptions: {
+			show: {
+				sendTo: ['channel'],
+			},
+		},
+	},
+];
+
+
+// === File: v2/actions/member/getAll.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { returnAllOrLimit } from '../../../../../utils/descriptions';
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import { createSimplifyFunction, parseDiscordError, prepareErrorData } from '../../helpers/utils';
+import { discordApiRequest } from '../../transport';
+import { simplifyBoolean } from '../common.description';
+
+const properties: INodeProperties[] = [
+	...returnAllOrLimit,
+	{
+		displayName: 'After',
+		name: 'after',
+		type: 'string',
+		default: '',
+		placeholder: 'e.g. 786953432728469534',
+		description: 'The ID of the user after which to return the members',
+	},
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add option',
+		default: {},
+		options: [simplifyBoolean],
+	},
+];
+
+const displayOptions = {
+	show: {
+		resource: ['member'],
+		operation: ['getAll'],
+	},
+	hide: {
+		authentication: ['webhook'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	guildId: string,
+): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+
+	const returnAll = this.getNodeParameter('returnAll', 0, false);
+	const after = this.getNodeParameter('after', 0);
+
+	const qs: IDataObject = {};
+
+	if (!returnAll) {
+		const limit = this.getNodeParameter('limit', 0);
+		qs.limit = limit;
+	}
+
+	if (after) {
+		qs.after = after;
+	}
+
+	let response: IDataObject[] = [];
+
+	try {
+		if (!returnAll) {
+			const limit = this.getNodeParameter('limit', 0);
+			qs.limit = limit;
+			response = await discordApiRequest.call(
+				this,
+				'GET',
+				`/guilds/${guildId}/members`,
+				undefined,
+				qs,
+			);
+		} else {
+			let responseData;
+			qs.limit = 100;
+
+			do {
+				responseData = await discordApiRequest.call(
+					this,
+					'GET',
+					`/guilds/${guildId}/members`,
+					undefined,
+					qs,
+				);
+				if (!responseData?.length) break;
+				qs.after = responseData[responseData.length - 1].user.id;
+				response.push(...responseData);
+			} while (responseData.length);
+		}
+
+		const simplify = this.getNodeParameter('options.simplify', 0, false) as boolean;
+
+		if (simplify) {
+			const simplifyResponse = createSimplifyFunction(['user', 'roles', 'permissions']);
+
+			response = response.map(simplifyResponse);
+		}
+
+		const executionData = this.helpers.constructExecutionMetaData(
+			this.helpers.returnJsonArray(response),
+			{ itemData: { item: 0 } },
+		);
+
+		returnData.push(...executionData);
+	} catch (error) {
+		const err = parseDiscordError.call(this, error);
+
+		if (this.continueOnFail()) {
+			returnData.push(...prepareErrorData.call(this, err, 0));
+		}
+
+		throw err;
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/actions/member/index.ts ===
+import type { INodeProperties } from 'n8n-workflow';
+
+import * as getAll from './getAll.operation';
+import * as roleAdd from './roleAdd.operation';
+import * as roleRemove from './roleRemove.operation';
+import { guildRLC } from '../common.description';
+
+export { getAll, roleAdd, roleRemove };
+
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['member'],
+				authentication: ['botToken', 'oAuth2'],
+			},
+		},
+		options: [
+			{
+				name: 'Get Many',
+				value: 'getAll',
+				description: 'Retrieve the members of a server',
+				action: 'Get many members',
+			},
+			{
+				name: 'Role Add',
+				value: 'roleAdd',
+				description: 'Add a role to a member',
+				action: 'Add a role to a member',
+			},
+			{
+				name: 'Role Remove',
+				value: 'roleRemove',
+				description: 'Remove a role from a member',
+				action: 'Remove a role from a member',
+			},
+		],
+		default: 'getAll',
+	},
+	{
+		...guildRLC,
+		displayOptions: {
+			show: {
+				resource: ['member'],
+				authentication: ['botToken', 'oAuth2'],
+			},
+		},
+	},
+	...getAll.description,
+	...roleAdd.description,
+	...roleRemove.description,
+];
+
+
+// === File: v2/actions/member/roleAdd.operation.ts ===
+import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import { parseDiscordError, prepareErrorData } from '../../helpers/utils';
+import { discordApiRequest } from '../../transport';
+import { roleMultiOptions, userRLC } from '../common.description';
+
+const properties: INodeProperties[] = [userRLC, roleMultiOptions];
+
+const displayOptions = {
+	show: {
+		resource: ['member'],
+		operation: ['roleAdd'],
+	},
+	hide: {
+		authentication: ['webhook'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	guildId: string,
+): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+	const items = this.getInputData();
+
+	for (let i = 0; i < items.length; i++) {
+		try {
+			const userId = this.getNodeParameter('userId', i, undefined, {
+				extractValue: true,
+			}) as string;
+
+			const roles = this.getNodeParameter('role', i, []) as string[];
+
+			for (const roleId of roles) {
+				await discordApiRequest.call(
+					this,
+					'PUT',
+					`/guilds/${guildId}/members/${userId}/roles/${roleId}`,
+				);
+			}
+
+			const executionData = this.helpers.constructExecutionMetaData(
+				this.helpers.returnJsonArray({ success: true }),
+				{ itemData: { item: i } },
+			);
+
+			returnData.push(...executionData);
+		} catch (error) {
+			const err = parseDiscordError.call(this, error, i);
+
+			if (this.continueOnFail()) {
+				returnData.push(...prepareErrorData.call(this, err, i));
+				continue;
+			}
+
+			throw err;
+		}
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/actions/member/roleRemove.operation.ts ===
+import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import { parseDiscordError, prepareErrorData } from '../../helpers/utils';
+import { discordApiRequest } from '../../transport';
+import { roleMultiOptions, userRLC } from '../common.description';
+
+const properties: INodeProperties[] = [userRLC, roleMultiOptions];
+
+const displayOptions = {
+	show: {
+		resource: ['member'],
+		operation: ['roleRemove'],
+	},
+	hide: {
+		authentication: ['webhook'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	guildId: string,
+): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+	const items = this.getInputData();
+
+	for (let i = 0; i < items.length; i++) {
+		try {
+			const userId = this.getNodeParameter('userId', i, undefined, {
+				extractValue: true,
+			}) as string;
+
+			const roles = this.getNodeParameter('role', i, []) as string[];
+
+			for (const roleId of roles) {
+				await discordApiRequest.call(
+					this,
+					'DELETE',
+					`/guilds/${guildId}/members/${userId}/roles/${roleId}`,
+				);
+			}
+
+			const executionData = this.helpers.constructExecutionMetaData(
+				this.helpers.returnJsonArray({ success: true }),
+				{ itemData: { item: i } },
+			);
+
+			returnData.push(...executionData);
+		} catch (error) {
+			const err = parseDiscordError.call(this, error, i);
+
+			if (this.continueOnFail()) {
+				returnData.push(...prepareErrorData.call(this, err, i));
+				continue;
+			}
+
+			throw err;
+		}
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/actions/message/deleteMessage.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import { parseDiscordError, prepareErrorData, setupChannelGetter } from '../../helpers/utils';
+import { discordApiRequest } from '../../transport';
+import { channelRLC, messageIdString } from '../common.description';
+
+const properties: INodeProperties[] = [channelRLC, messageIdString];
+
+const displayOptions = {
+	show: {
+		resource: ['message'],
+		operation: ['deleteMessage'],
+	},
+	hide: {
+		authentication: ['webhook'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	_guildId: string,
+	userGuilds: IDataObject[],
+): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+	const items = this.getInputData();
+
+	const getChannelId = await setupChannelGetter.call(this, userGuilds);
+
+	for (let i = 0; i < items.length; i++) {
+		try {
+			const channelId = await getChannelId(i);
+
+			const messageId = this.getNodeParameter('messageId', i) as string;
+
+			await discordApiRequest.call(this, 'DELETE', `/channels/${channelId}/messages/${messageId}`);
+
+			const executionData = this.helpers.constructExecutionMetaData(
+				this.helpers.returnJsonArray({ success: true }),
+				{ itemData: { item: i } },
+			);
+
+			returnData.push(...executionData);
+		} catch (error) {
+			const err = parseDiscordError.call(this, error, i);
+
+			if (this.continueOnFail()) {
+				returnData.push(...prepareErrorData.call(this, err, i));
+				continue;
+			}
+
+			throw err;
+		}
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/actions/message/get.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import {
+	createSimplifyFunction,
+	parseDiscordError,
+	prepareErrorData,
+	setupChannelGetter,
+} from '../../helpers/utils';
+import { discordApiRequest } from '../../transport';
+import { channelRLC, messageIdString, simplifyBoolean } from '../common.description';
+
+const properties: INodeProperties[] = [
+	channelRLC,
+	messageIdString,
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add option',
+		default: {},
+		options: [simplifyBoolean],
+	},
+];
+
+const displayOptions = {
+	show: {
+		resource: ['message'],
+		operation: ['get'],
+	},
+	hide: {
+		authentication: ['webhook'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	_guildId: string,
+	userGuilds: IDataObject[],
+): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+	const items = this.getInputData();
+	const simplifyResponse = createSimplifyFunction([
+		'id',
+		'channel_id',
+		'author',
+		'content',
+		'timestamp',
+		'type',
+	]);
+
+	const getChannelId = await setupChannelGetter.call(this, userGuilds);
+
+	for (let i = 0; i < items.length; i++) {
+		try {
+			const channelId = await getChannelId(i);
+
+			const messageId = this.getNodeParameter('messageId', i) as string;
+
+			let response = await discordApiRequest.call(
+				this,
+				'GET',
+				`/channels/${channelId}/messages/${messageId}`,
+			);
+
+			const simplify = this.getNodeParameter('options.simplify', i, false) as boolean;
+
+			if (simplify) {
+				response = simplifyResponse(response);
+			}
+
+			const executionData = this.helpers.constructExecutionMetaData(
+				this.helpers.returnJsonArray(response),
+				{ itemData: { item: i } },
+			);
+
+			returnData.push(...executionData);
+		} catch (error) {
+			const err = parseDiscordError.call(this, error, i);
+
+			if (this.continueOnFail()) {
+				returnData.push(...prepareErrorData.call(this, err, i));
+				continue;
+			}
+
+			throw err;
+		}
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/actions/message/getAll.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { returnAllOrLimit } from '../../../../../utils/descriptions';
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import {
+	createSimplifyFunction,
+	parseDiscordError,
+	prepareErrorData,
+	setupChannelGetter,
+} from '../../helpers/utils';
+import { discordApiRequest } from '../../transport';
+import { channelRLC, simplifyBoolean } from '../common.description';
+
+const properties: INodeProperties[] = [
+	channelRLC,
+	...returnAllOrLimit,
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add option',
+		default: {},
+		options: [simplifyBoolean],
+	},
+];
+
+const displayOptions = {
+	show: {
+		resource: ['message'],
+		operation: ['getAll'],
+	},
+	hide: {
+		authentication: ['webhook'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	_guildId: string,
+	userGuilds: IDataObject[],
+): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+	const items = this.getInputData();
+	const simplifyResponse = createSimplifyFunction([
+		'id',
+		'channel_id',
+		'author',
+		'content',
+		'timestamp',
+		'type',
+	]);
+
+	const getChannelId = await setupChannelGetter.call(this, userGuilds);
+
+	for (let i = 0; i < items.length; i++) {
+		try {
+			const channelId = await getChannelId(i);
+
+			const returnAll = this.getNodeParameter('returnAll', i, false);
+
+			const qs: IDataObject = {};
+
+			let response: IDataObject[] = [];
+
+			if (!returnAll) {
+				const limit = this.getNodeParameter('limit', 0);
+				qs.limit = limit;
+				response = await discordApiRequest.call(
+					this,
+					'GET',
+					`/channels/${channelId}/messages`,
+					undefined,
+					qs,
+				);
+			} else {
+				let responseData;
+				qs.limit = 100;
+
+				do {
+					responseData = await discordApiRequest.call(
+						this,
+						'GET',
+						`/channels/${channelId}/messages`,
+						undefined,
+						qs,
+					);
+					if (!responseData?.length) break;
+					qs.before = responseData[responseData.length - 1].id;
+					response.push(...responseData);
+				} while (responseData.length);
+			}
+
+			const simplify = this.getNodeParameter('options.simplify', i, false) as boolean;
+
+			if (simplify) {
+				response = response.map(simplifyResponse);
+			}
+
+			const executionData = this.helpers.constructExecutionMetaData(
+				this.helpers.returnJsonArray(response),
+				{ itemData: { item: i } },
+			);
+
+			returnData.push(...executionData);
+		} catch (error) {
+			const err = parseDiscordError.call(this, error, i);
+
+			if (this.continueOnFail()) {
+				returnData.push(...prepareErrorData.call(this, err, i));
+				continue;
+			}
+
+			throw err;
+		}
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/actions/message/index.ts ===
+import { SEND_AND_WAIT_OPERATION, type INodeProperties } from 'n8n-workflow';
+
+import * as deleteMessage from './deleteMessage.operation';
+import * as get from './get.operation';
+import * as getAll from './getAll.operation';
+import * as react from './react.operation';
+import * as send from './send.operation';
+import * as sendAndWait from './sendAndWait.operation';
+import { guildRLC } from '../common.description';
+
+export { getAll, react, send, deleteMessage, get, sendAndWait };
+
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['message'],
+				authentication: ['botToken', 'oAuth2'],
+			},
+		},
+		options: [
+			{
+				name: 'Delete',
+				value: 'deleteMessage',
+				description: 'Delete a message in a channel',
+				action: 'Delete a message',
+			},
+			{
+				name: 'Get',
+				value: 'get',
+				description: 'Get a message in a channel',
+				action: 'Get a message',
+			},
+			{
+				name: 'Get Many',
+				value: 'getAll',
+				description: 'Retrieve the latest messages in a channel',
+				action: 'Get many messages',
+			},
+			{
+				name: 'React with Emoji',
+				value: 'react',
+				description: 'React to a message with an emoji',
+				action: 'React with an emoji to a message',
+			},
+			{
+				name: 'Send',
+				value: 'send',
+				description: 'Send a message to a channel, thread, or member',
+				action: 'Send a message',
+			},
+			{
+				name: 'Send and Wait for Response',
+				value: SEND_AND_WAIT_OPERATION,
+				description: 'Send a message and wait for response',
+				action: 'Send message and wait for response',
+			},
+		],
+		default: 'send',
+	},
+	{
+		...guildRLC,
+		displayOptions: {
+			show: {
+				resource: ['message'],
+				authentication: ['botToken', 'oAuth2'],
+			},
+		},
+	},
+	...getAll.description,
+	...react.description,
+	...send.description,
+	...deleteMessage.description,
+	...get.description,
+	...sendAndWait.description,
+];
+
+
+// === File: v2/actions/message/react.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import { parseDiscordError, prepareErrorData, setupChannelGetter } from '../../helpers/utils';
+import { discordApiRequest } from '../../transport';
+import { channelRLC, messageIdString } from '../common.description';
+
+const properties: INodeProperties[] = [
+	channelRLC,
+	messageIdString,
+	{
+		displayName: 'Emoji',
+		name: 'emoji',
+		type: 'string',
+		default: '',
+		required: true,
+		description: 'The emoji you want to react with',
+	},
+];
+
+const displayOptions = {
+	show: {
+		resource: ['message'],
+		operation: ['react'],
+	},
+	hide: {
+		authentication: ['webhook'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	_guildId: string,
+	userGuilds: IDataObject[],
+): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+	const items = this.getInputData();
+
+	const getChannelId = await setupChannelGetter.call(this, userGuilds);
+
+	for (let i = 0; i < items.length; i++) {
+		try {
+			const channelId = await getChannelId(i);
+
+			const messageId = this.getNodeParameter('messageId', i) as string;
+			const emoji = this.getNodeParameter('emoji', i) as string;
+
+			await discordApiRequest.call(
+				this,
+				'PUT',
+				`/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}/@me`,
+			);
+
+			const executionData = this.helpers.constructExecutionMetaData(
+				this.helpers.returnJsonArray({ success: true }),
+				{ itemData: { item: i } },
+			);
+
+			returnData.push(...executionData);
+		} catch (error) {
+			const err = parseDiscordError.call(this, error, i);
+
+			if (this.continueOnFail()) {
+				returnData.push(...prepareErrorData.call(this, err, i));
+				continue;
+			}
+
+			throw err;
+		}
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/actions/message/send.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import {
+	parseDiscordError,
+	prepareEmbeds,
+	prepareErrorData,
+	prepareOptions,
+	sendDiscordMessage,
+} from '../../helpers/utils';
+import {
+	embedsFixedCollection,
+	filesFixedCollection,
+	sendToProperties,
+} from '../common.description';
+
+const properties: INodeProperties[] = [
+	...sendToProperties,
+	{
+		displayName: 'Message',
+		name: 'content',
+		type: 'string',
+		default: '',
+		description: 'The content of the message (up to 2000 characters)',
+		placeholder: 'e.g. My message',
+		typeOptions: {
+			rows: 2,
+		},
+	},
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add option',
+		default: {},
+		options: [
+			{
+				displayName: 'Flags',
+				name: 'flags',
+				type: 'multiOptions',
+				default: [],
+				description:
+					'Message flags. <a href="https://discord.com/developers/docs/resources/channel#message-object-message-flags" target="_blank">More info</a>.”.',
+				options: [
+					{
+						name: 'Suppress Embeds',
+						value: 'SUPPRESS_EMBEDS',
+					},
+					{
+						name: 'Suppress Notifications',
+						value: 'SUPPRESS_NOTIFICATIONS',
+					},
+				],
+			},
+			{
+				// eslint-disable-next-line n8n-nodes-base/node-param-display-name-miscased
+				displayName: 'Message to Reply to',
+				name: 'message_reference',
+				type: 'string',
+				default: '',
+				description: 'Fill this to make your message a reply. Add the message ID.',
+				placeholder: 'e.g. 1059467601836773386',
+			},
+			{
+				displayName: 'Text-to-Speech (TTS)',
+				name: 'tts',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to have a bot reading the message directly in the channel',
+			},
+		],
+	},
+	embedsFixedCollection,
+	filesFixedCollection,
+];
+
+const displayOptions = {
+	show: {
+		resource: ['message'],
+		operation: ['send'],
+	},
+	hide: {
+		authentication: ['webhook'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(
+	this: IExecuteFunctions,
+	guildId: string,
+	userGuilds: IDataObject[],
+): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+	const items = this.getInputData();
+
+	const isOAuth2 = this.getNodeParameter('authentication', 0) === 'oAuth2';
+
+	for (let i = 0; i < items.length; i++) {
+		const content = this.getNodeParameter('content', i) as string;
+		const options = prepareOptions(this.getNodeParameter('options', i, {}), guildId);
+
+		const embeds = (this.getNodeParameter('embeds', i, undefined) as IDataObject)
+			?.values as IDataObject[];
+		const files = (this.getNodeParameter('files', i, undefined) as IDataObject)
+			?.values as IDataObject[];
+
+		const body: IDataObject = {
+			content,
+			...options,
+		};
+
+		if (embeds) {
+			body.embeds = prepareEmbeds.call(this, embeds);
+		}
+
+		try {
+			returnData.push(
+				...(await sendDiscordMessage.call(this, {
+					guildId,
+					userGuilds,
+					isOAuth2,
+					body,
+					items,
+					files,
+					itemIndex: i,
+				})),
+			);
+		} catch (error) {
+			const err = parseDiscordError.call(this, error, i);
+
+			if (this.continueOnFail()) {
+				returnData.push(...prepareErrorData.call(this, err, i));
+				continue;
+			}
+
+			throw err;
+		}
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/actions/message/sendAndWait.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { getSendAndWaitProperties } from '../../../../../utils/sendAndWait/utils';
+import {
+	createSendAndWaitMessageBody,
+	parseDiscordError,
+	prepareErrorData,
+	sendDiscordMessage,
+} from '../../helpers/utils';
+import { sendToProperties } from '../common.description';
+
+export const description: INodeProperties[] = getSendAndWaitProperties(
+	sendToProperties,
+	'message',
+	undefined,
+	{
+		noButtonStyle: true,
+		defaultApproveLabel: '✓ Approve',
+		defaultDisapproveLabel: '✗ Decline',
+	},
+).filter((p) => p.name !== 'subject');
+
+export async function execute(
+	this: IExecuteFunctions,
+	guildId: string,
+	userGuilds: IDataObject[],
+): Promise<INodeExecutionData[]> {
+	const items = this.getInputData();
+
+	const isOAuth2 = this.getNodeParameter('authentication', 0) === 'oAuth2';
+
+	try {
+		await sendDiscordMessage.call(this, {
+			guildId,
+			userGuilds,
+			isOAuth2,
+			body: createSendAndWaitMessageBody(this),
+			items,
+		});
+	} catch (error) {
+		const err = parseDiscordError.call(this, error, 0);
+
+		if (this.continueOnFail()) {
+			return prepareErrorData.call(this, err, 0);
+		}
+
+		throw err;
+	}
+
+	return items;
+}
+
+
+// === File: v2/actions/node.type.ts ===
+import type { AllEntities } from 'n8n-workflow';
+
+type NodeMap = {
+	channel: 'get' | 'getAll' | 'create' | 'update' | 'deleteChannel';
+	message: 'deleteMessage' | 'getAll' | 'get' | 'react' | 'send' | 'sendAndWait';
+	member: 'getAll' | 'roleAdd' | 'roleRemove';
+	webhook: 'sendLegacy';
+};
+
+export type Discord = AllEntities<NodeMap>;
+
+
+// === File: v2/actions/router.ts ===
+import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError, SEND_AND_WAIT_OPERATION } from 'n8n-workflow';
+
+import * as channel from './channel';
+import * as member from './member';
+import * as message from './message';
+import type { Discord } from './node.type';
+import * as webhook from './webhook';
+import { configureWaitTillDate } from '../../../../utils/sendAndWait/configureWaitTillDate.util';
+import { checkAccessToGuild } from '../helpers/utils';
+import { discordApiRequest } from '../transport';
+
+export async function router(this: IExecuteFunctions) {
+	let returnData: INodeExecutionData[] = [];
+
+	let resource = 'webhook';
+	//resource parameter is hidden when authentication is set to webhook
+	//prevent error when getting resource parameter
+	try {
+		resource = this.getNodeParameter<Discord>('resource', 0);
+	} catch (error) {}
+	const operation = this.getNodeParameter('operation', 0);
+
+	let guildId = '';
+	let userGuilds: IDataObject[] = [];
+
+	if (resource !== 'webhook') {
+		guildId = this.getNodeParameter('guildId', 0, '', {
+			extractValue: true,
+		}) as string;
+
+		const isOAuth2 = this.getNodeParameter('authentication', 0, '') === 'oAuth2';
+
+		if (isOAuth2) {
+			userGuilds = (await discordApiRequest.call(
+				this,
+				'GET',
+				'/users/@me/guilds',
+			)) as IDataObject[];
+
+			checkAccessToGuild(this.getNode(), guildId, userGuilds);
+		}
+	}
+
+	const discord = {
+		resource,
+		operation,
+	} as Discord;
+
+	if (discord.resource === 'message' && discord.operation === SEND_AND_WAIT_OPERATION) {
+		returnData = await message[discord.operation].execute.call(this, guildId, userGuilds);
+
+		const waitTill = configureWaitTillDate(this);
+
+		await this.putExecutionToWait(waitTill);
+		return [returnData];
+	}
+
+	switch (discord.resource) {
+		case 'channel':
+			returnData = await channel[discord.operation].execute.call(this, guildId, userGuilds);
+			break;
+		case 'message':
+			returnData = await message[discord.operation].execute.call(this, guildId, userGuilds);
+			break;
+		case 'member':
+			returnData = await member[discord.operation].execute.call(this, guildId);
+			break;
+		case 'webhook':
+			returnData = await webhook[discord.operation].execute.call(this);
+			break;
+		default:
+			throw new NodeOperationError(this.getNode(), `The resource "${resource}" is not known`);
+	}
+
+	return [returnData];
+}
+
+
+// === File: v2/actions/versionDescription.ts ===
+/* eslint-disable n8n-nodes-base/node-filename-against-convention */
+import { NodeConnectionTypes, type INodeTypeDescription } from 'n8n-workflow';
+
+import * as channel from './channel';
+import * as member from './member';
+import * as message from './message';
+import * as webhook from './webhook';
+import { sendAndWaitWebhooksDescription } from '../../../../utils/sendAndWait/descriptions';
+
+export const versionDescription: INodeTypeDescription = {
+	displayName: 'Discord',
+	name: 'discord',
+	icon: 'file:discord.svg',
+	group: ['output'],
+	version: 2,
+	subtitle: '={{ $parameter["operation"] + ": " + $parameter["resource"] }}',
+	description: 'Sends data to Discord',
+	defaults: {
+		name: 'Discord',
+	},
+	inputs: [NodeConnectionTypes.Main],
+	outputs: [NodeConnectionTypes.Main],
+	webhooks: sendAndWaitWebhooksDescription,
+	credentials: [
+		{
+			name: 'discordBotApi',
+			required: true,
+			displayOptions: {
+				show: {
+					authentication: ['botToken'],
+				},
+			},
+		},
+		{
+			name: 'discordOAuth2Api',
+			required: true,
+			displayOptions: {
+				show: {
+					authentication: ['oAuth2'],
+				},
+			},
+		},
+		{
+			name: 'discordWebhookApi',
+			displayOptions: {
+				show: {
+					authentication: ['webhook'],
+				},
+			},
+		},
+	],
+	properties: [
+		{
+			displayName: 'Connection Type',
+			name: 'authentication',
+			type: 'options',
+			options: [
+				{
+					name: 'Bot Token',
+					value: 'botToken',
+					description: 'Manage messages, channels, and members on a server',
+				},
+				{
+					name: 'OAuth2',
+					value: 'oAuth2',
+					description: "Same features as 'Bot Token' with easier Bot installation",
+				},
+				{
+					name: 'Webhook',
+					value: 'webhook',
+					description: 'Send messages to a specific channel',
+				},
+			],
+			default: 'botToken',
+		},
+		{
+			displayName: 'Resource',
+			name: 'resource',
+			type: 'options',
+			noDataExpression: true,
+			options: [
+				{
+					name: 'Channel',
+					value: 'channel',
+				},
+				{
+					name: 'Message',
+					value: 'message',
+				},
+				{
+					name: 'Member',
+					value: 'member',
+				},
+			],
+			default: 'channel',
+			displayOptions: {
+				hide: {
+					authentication: ['webhook'],
+				},
+			},
+		},
+
+		...message.description,
+		...channel.description,
+		...member.description,
+		...webhook.description,
+	],
+};
+
+
+// === File: v2/actions/webhook/index.ts ===
+import type { INodeProperties } from 'n8n-workflow';
+
+import * as sendLegacy from './sendLegacy.operation';
+
+export { sendLegacy };
+
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				authentication: ['webhook'],
+			},
+		},
+		options: [
+			{
+				name: 'Send a Message',
+				value: 'sendLegacy',
+				description: 'Send a message to a channel using the webhook',
+				action: 'Send a message',
+			},
+		],
+		default: 'sendLegacy',
+	},
+	...sendLegacy.description,
+];
+
+
+// === File: v2/actions/webhook/sendLegacy.operation.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeProperties,
+} from 'n8n-workflow';
+
+import { updateDisplayOptions } from '../../../../../utils/utilities';
+import {
+	parseDiscordError,
+	prepareEmbeds,
+	prepareErrorData,
+	prepareMultiPartForm,
+	prepareOptions,
+} from '../../helpers/utils';
+import { discordApiMultiPartRequest, discordApiRequest } from '../../transport';
+import { embedsFixedCollection, filesFixedCollection } from '../common.description';
+
+const properties: INodeProperties[] = [
+	{
+		displayName: 'Message',
+		name: 'content',
+		type: 'string',
+		default: '',
+		description: 'The content of the message (up to 2000 characters)',
+		placeholder: 'e.g. My message',
+		typeOptions: {
+			rows: 2,
+		},
+	},
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add option',
+		default: {},
+		options: [
+			{
+				displayName: 'Avatar URL',
+				name: 'avatar_url',
+				type: 'string',
+				default: '',
+				description: 'Override the default avatar of the webhook',
+				placeholder: 'e.g. https://example.com/image.png',
+			},
+			{
+				displayName: 'Flags',
+				name: 'flags',
+				type: 'multiOptions',
+				default: [],
+				description:
+					'Message flags. <a href="https://discord.com/developers/docs/resources/channel#message-object-message-flags" target="_blank">More info</a>.”.',
+				options: [
+					{
+						name: 'Suppress Embeds',
+						value: 'SUPPRESS_EMBEDS',
+					},
+					{
+						name: 'Suppress Notifications',
+						value: 'SUPPRESS_NOTIFICATIONS',
+					},
+				],
+			},
+			{
+				displayName: 'Text-to-Speech (TTS)',
+				name: 'tts',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to have a bot reading the message directly in the channel',
+			},
+			{
+				displayName: 'Username',
+				name: 'username',
+				type: 'string',
+				default: '',
+				description: 'Override the default username of the webhook',
+				placeholder: 'e.g. My Username',
+			},
+			{
+				displayName: 'Wait',
+				name: 'wait',
+				type: 'boolean',
+				default: false,
+				description: 'Whether wait for the message to be created before returning its response',
+			},
+		],
+	},
+	embedsFixedCollection,
+	filesFixedCollection,
+];
+
+const displayOptions = {
+	show: {
+		operation: ['sendLegacy'],
+	},
+	hide: {
+		authentication: ['botToken', 'oAuth2'],
+	},
+};
+
+export const description = updateDisplayOptions(displayOptions, properties);
+
+export async function execute(this: IExecuteFunctions): Promise<INodeExecutionData[]> {
+	const returnData: INodeExecutionData[] = [];
+	const items = this.getInputData();
+
+	for (let i = 0; i < items.length; i++) {
+		const content = this.getNodeParameter('content', i) as string;
+		const options = prepareOptions(this.getNodeParameter('options', i, {}));
+
+		const embeds = (this.getNodeParameter('embeds', i, undefined) as IDataObject)
+			?.values as IDataObject[];
+		const files = (this.getNodeParameter('files', i, undefined) as IDataObject)
+			?.values as IDataObject[];
+
+		let qs: IDataObject | undefined = undefined;
+
+		if (options.wait) {
+			qs = {
+				wait: options.wait,
+			};
+
+			delete options.wait;
+		}
+
+		const body: IDataObject = {
+			content,
+			...options,
+		};
+
+		if (embeds) {
+			body.embeds = prepareEmbeds.call(this, embeds);
+		}
+
+		try {
+			let response: IDataObject[] = [];
+
+			if (files?.length) {
+				const multiPartBody = await prepareMultiPartForm.call(this, items, files, body, i);
+
+				response = await discordApiMultiPartRequest.call(this, 'POST', '', multiPartBody);
+			} else {
+				response = await discordApiRequest.call(this, 'POST', '', body, qs);
+			}
+
+			const executionData = this.helpers.constructExecutionMetaData(
+				this.helpers.returnJsonArray(response),
+				{ itemData: { item: i } },
+			);
+
+			returnData.push(...executionData);
+		} catch (error) {
+			const err = parseDiscordError.call(this, error, i);
+
+			if (this.continueOnFail()) {
+				returnData.push(...prepareErrorData.call(this, err, i));
+				continue;
+			}
+
+			throw err;
+		}
+	}
+
+	return returnData;
+}
+
+
+// === File: v2/helpers/utils.ts ===
+import FormData from 'form-data';
+import isEmpty from 'lodash/isEmpty';
+import { extension } from 'mime-types';
+import type {
+	IBinaryKeyData,
+	IDataObject,
+	IExecuteFunctions,
+	INode,
+	INodeExecutionData,
+} from 'n8n-workflow';
+import { jsonParse, NodeApiError, NodeOperationError } from 'n8n-workflow';
+
+import { getSendAndWaitConfig } from '../../../../utils/sendAndWait/utils';
+import { capitalize, createUtmCampaignLink } from '../../../../utils/utilities';
+import { discordApiMultiPartRequest, discordApiRequest } from '../transport';
+
+export const createSimplifyFunction =
+	(includedFields: string[]) =>
+	(item: IDataObject): IDataObject => {
+		const result: IDataObject = {};
+
+		for (const field of includedFields) {
+			if (item[field] === undefined) continue;
+
+			result[field] = item[field];
+		}
+
+		return result;
+	};
+
+export function parseDiscordError(this: IExecuteFunctions, error: any, itemIndex = 0) {
+	let errorData = error.cause.error;
+	const errorOptions: IDataObject = { itemIndex };
+
+	if (!errorData && error.description) {
+		try {
+			const errorString = (error.description as string).split(' - ')[1];
+			if (errorString) {
+				errorData = jsonParse(errorString);
+			}
+		} catch (err) {}
+	}
+
+	if (errorData?.message) {
+		errorOptions.message = errorData.message;
+	}
+
+	if ((error?.message as string)?.toLowerCase()?.includes('bad request') && errorData) {
+		if (errorData?.message) {
+			errorOptions.message = errorData.message;
+		}
+
+		if (errorData?.errors?.embeds) {
+			const embedErrors = errorData.errors.embeds?.[0];
+			const embedErrorsKeys = Object.keys(embedErrors).map((key) => capitalize(key));
+
+			if (embedErrorsKeys.length) {
+				const message =
+					embedErrorsKeys.length === 1
+						? `The parameter ${embedErrorsKeys[0]} is not properly formatted`
+						: `The parameters ${embedErrorsKeys.join(', ')} are not properly formatted`;
+				errorOptions.message = message;
+				errorOptions.description = 'Review the formatting or clear it';
+			}
+
+			return new NodeOperationError(this.getNode(), errorData.errors, errorOptions);
+		}
+
+		if (errorData?.errors?.message_reference) {
+			errorOptions.message = "The message to reply to ID can't be found";
+			errorOptions.description =
+				'Check the "Message to Reply to" parameter and remove it if you don\'t want to reply to an existing message';
+
+			return new NodeOperationError(this.getNode(), errorData.errors, errorOptions);
+		}
+
+		if (errorOptions.message === 'Cannot send an empty message') {
+			errorOptions.description =
+				'Something has to be send to the channel whether it is a message, an embed or a file';
+		}
+	}
+	return new NodeOperationError(this.getNode(), errorData || error, errorOptions);
+}
+
+export function prepareErrorData(this: IExecuteFunctions, error: any, i: number) {
+	let description = error.description;
+
+	try {
+		description = JSON.parse(error.description as string);
+	} catch (err) {}
+
+	return this.helpers.constructExecutionMetaData(
+		this.helpers.returnJsonArray({ error: error.message, description }),
+		{ itemData: { item: i } },
+	);
+}
+
+export function prepareOptions(options: IDataObject, guildId?: string) {
+	if (options.flags) {
+		if ((options.flags as string[]).length === 2) {
+			options.flags = (1 << 2) + (1 << 12);
+		} else if ((options.flags as string[]).includes('SUPPRESS_EMBEDS')) {
+			options.flags = 1 << 2;
+		} else if ((options.flags as string[]).includes('SUPPRESS_NOTIFICATIONS')) {
+			options.flags = 1 << 12;
+		}
+	}
+
+	if (options.message_reference) {
+		options.message_reference = {
+			message_id: options.message_reference,
+			guild_id: guildId,
+		};
+	}
+
+	return options;
+}
+
+export function prepareEmbeds(this: IExecuteFunctions, embeds: IDataObject[]) {
+	return embeds
+		.map((embed) => {
+			let embedReturnData: IDataObject = {};
+
+			if (embed.inputMethod === 'json') {
+				if (typeof embed.json === 'object') {
+					embedReturnData = embed.json as IDataObject;
+				}
+				try {
+					embedReturnData = jsonParse(embed.json as string);
+				} catch (error) {
+					throw new NodeOperationError(this.getNode(), 'Not a valid JSON', error);
+				}
+			} else {
+				delete embed.inputMethod;
+
+				for (const key of Object.keys(embed)) {
+					if (embed[key] !== '') {
+						embedReturnData[key] = embed[key];
+					}
+				}
+			}
+
+			if (embedReturnData.author) {
+				embedReturnData.author = {
+					name: embedReturnData.author,
+				};
+			}
+			if (embedReturnData.color && typeof embedReturnData.color === 'string') {
+				embedReturnData.color = parseInt(embedReturnData.color.replace('#', ''), 16);
+			}
+			if (embedReturnData.video) {
+				embedReturnData.video = {
+					url: embedReturnData.video,
+					width: 1270,
+					height: 720,
+				};
+			}
+			if (embedReturnData.thumbnail) {
+				embedReturnData.thumbnail = {
+					url: embedReturnData.thumbnail,
+				};
+			}
+			if (embedReturnData.image) {
+				embedReturnData.image = {
+					url: embedReturnData.image,
+				};
+			}
+
+			return embedReturnData;
+		})
+		.filter((embed) => !isEmpty(embed));
+}
+
+export async function prepareMultiPartForm(
+	this: IExecuteFunctions,
+	items: INodeExecutionData[],
+	files: IDataObject[],
+	jsonPayload: IDataObject,
+	i: number,
+) {
+	const multiPartBody = new FormData();
+	const attachments: IDataObject[] = [];
+	const filesData: IDataObject[] = [];
+
+	for (const [index, file] of files.entries()) {
+		const binaryData = (items[i].binary as IBinaryKeyData)?.[file.inputFieldName as string];
+
+		if (!binaryData) {
+			throw new NodeOperationError(
+				this.getNode(),
+				`Input item [${i}] does not contain binary data on property ${file.inputFieldName}`,
+			);
+		}
+
+		let filename = binaryData.fileName as string;
+
+		if (!filename.includes('.')) {
+			if (binaryData.fileExtension) {
+				filename += `.${binaryData.fileExtension}`;
+			}
+			if (binaryData.mimeType) {
+				filename += `.${extension(binaryData.mimeType)}`;
+			}
+		}
+
+		attachments.push({
+			id: index,
+			filename,
+		});
+
+		filesData.push({
+			data: await this.helpers.getBinaryDataBuffer(i, file.inputFieldName as string),
+			name: filename,
+			mime: binaryData.mimeType,
+		});
+	}
+
+	multiPartBody.append('payload_json', JSON.stringify({ ...jsonPayload, attachments }), {
+		contentType: 'application/json',
+	});
+
+	for (const [index, binaryData] of filesData.entries()) {
+		multiPartBody.append(`files[${index}]`, binaryData.data, {
+			contentType: binaryData.name as string,
+			filename: binaryData.mime as string,
+		});
+	}
+
+	return multiPartBody;
+}
+
+export function checkAccessToGuild(
+	node: INode,
+	guildId: string,
+	userGuilds: IDataObject[],
+	itemIndex = 0,
+) {
+	if (!userGuilds.some((guild) => guild.id === guildId)) {
+		throw new NodeOperationError(
+			node,
+			`You do not have access to the guild with the id ${guildId}`,
+			{
+				itemIndex,
+				level: 'warning',
+			},
+		);
+	}
+}
+
+export async function checkAccessToChannel(
+	this: IExecuteFunctions,
+	channelId: string,
+	userGuilds: IDataObject[],
+	itemIndex = 0,
+) {
+	let guildId = '';
+
+	try {
+		const channel = await discordApiRequest.call(this, 'GET', `/channels/${channelId}`);
+		guildId = channel.guild_id;
+	} catch (error) {}
+
+	if (!guildId) {
+		throw new NodeOperationError(
+			this.getNode(),
+			`Could not find server for channel with the id ${channelId}`,
+			{
+				itemIndex,
+			},
+		);
+	}
+
+	checkAccessToGuild(this.getNode(), guildId, userGuilds, itemIndex);
+}
+
+export async function setupChannelGetter(this: IExecuteFunctions, userGuilds: IDataObject[]) {
+	const isOAuth2 = this.getNodeParameter('authentication', 0) === 'oAuth2';
+
+	return async (i: number) => {
+		const channelId = this.getNodeParameter('channelId', i, undefined, {
+			extractValue: true,
+		}) as string;
+
+		if (isOAuth2) await checkAccessToChannel.call(this, channelId, userGuilds, i);
+
+		return channelId;
+	};
+}
+
+export async function sendDiscordMessage(
+	this: IExecuteFunctions,
+	{
+		guildId,
+		userGuilds,
+		isOAuth2,
+		body,
+		items,
+		files = [],
+		itemIndex = 0,
+	}: {
+		guildId: string;
+		userGuilds: IDataObject[];
+		isOAuth2: boolean;
+		body: IDataObject;
+		items: INodeExecutionData[];
+		files?: IDataObject[];
+		itemIndex?: number;
+	},
+) {
+	const sendTo = this.getNodeParameter('sendTo', itemIndex) as string;
+
+	let channelId = '';
+
+	if (sendTo === 'user') {
+		const userId = this.getNodeParameter('userId', itemIndex, undefined, {
+			extractValue: true,
+		}) as string;
+
+		if (isOAuth2) {
+			try {
+				await discordApiRequest.call(this, 'GET', `/guilds/${guildId}/members/${userId}`);
+			} catch (error) {
+				if (error instanceof NodeApiError && error.httpCode === '404') {
+					throw new NodeOperationError(
+						this.getNode(),
+						`User with the id ${userId} is not a member of the selected guild`,
+						{
+							itemIndex,
+						},
+					);
+				}
+
+				throw new NodeOperationError(this.getNode(), error, {
+					itemIndex,
+				});
+			}
+		}
+
+		channelId = (
+			(await discordApiRequest.call(this, 'POST', '/users/@me/channels', {
+				recipient_id: userId,
+			})) as IDataObject
+		).id as string;
+
+		if (!channelId) {
+			throw new NodeOperationError(
+				this.getNode(),
+				'Could not create a channel to send direct message to',
+				{ itemIndex },
+			);
+		}
+	}
+
+	if (sendTo === 'channel') {
+		channelId = this.getNodeParameter('channelId', itemIndex, undefined, {
+			extractValue: true,
+		}) as string;
+	}
+
+	if (isOAuth2 && sendTo !== 'user') {
+		await checkAccessToChannel.call(this, channelId, userGuilds, itemIndex);
+	}
+
+	if (!channelId) {
+		throw new NodeOperationError(this.getNode(), 'Channel ID is required', {
+			itemIndex,
+		});
+	}
+
+	let response: IDataObject[] = [];
+
+	if (files?.length) {
+		const multiPartBody = await prepareMultiPartForm.call(this, items, files, body, itemIndex);
+
+		response = await discordApiMultiPartRequest.call(
+			this,
+			'POST',
+			`/channels/${channelId}/messages`,
+			multiPartBody,
+		);
+	} else {
+		response = await discordApiRequest.call(this, 'POST', `/channels/${channelId}/messages`, body);
+	}
+
+	const executionData = this.helpers.constructExecutionMetaData(
+		this.helpers.returnJsonArray(response),
+		{ itemData: { item: itemIndex } },
+	);
+
+	return executionData;
+}
+
+export function createSendAndWaitMessageBody(context: IExecuteFunctions) {
+	const config = getSendAndWaitConfig(context);
+	let description = config.message;
+	if (config.appendAttribution !== false) {
+		const instanceId = context.getInstanceId();
+		const attributionText = 'This message was sent automatically with ';
+		const link = createUtmCampaignLink('n8n-nodes-base.discord', instanceId);
+		description = `${config.message}\n\n_${attributionText}_[n8n](${link})`;
+	}
+
+	const body = {
+		embeds: [
+			{
+				description,
+				color: 5814783,
+			},
+		],
+		components: [
+			{
+				type: 1,
+				components: config.options.map((option) => {
+					return {
+						type: 2,
+						style: 5,
+						label: option.label,
+						url: option.url,
+					};
+				}),
+			},
+		],
+	};
+
+	return body;
+}
+
+
+// === File: v2/methods/index.ts ===
+export * as listSearch from './listSearch';
+export * as loadOptions from './loadOptions';
+
+
+// === File: v2/methods/listSearch.ts ===
+import {
+	type IDataObject,
+	type ILoadOptionsFunctions,
+	type INodeListSearchResult,
+} from 'n8n-workflow';
+
+import { checkAccessToGuild } from '../helpers/utils';
+import { discordApiRequest } from '../transport';
+
+async function getGuildId(this: ILoadOptionsFunctions) {
+	const guildId = this.getNodeParameter('guildId', undefined, {
+		extractValue: true,
+	}) as string;
+
+	const isOAuth2 = this.getNodeParameter('authentication', '') === 'oAuth2';
+
+	if (isOAuth2) {
+		const userGuilds = (await discordApiRequest.call(
+			this,
+			'GET',
+			'/users/@me/guilds',
+		)) as IDataObject[];
+
+		checkAccessToGuild(this.getNode(), guildId, userGuilds);
+	}
+
+	return guildId;
+}
+
+async function checkBotAccessToGuild(this: ILoadOptionsFunctions, guildId: string, botId: string) {
+	try {
+		const members: Array<{ user: { id: string } }> = await discordApiRequest.call(
+			this,
+			'GET',
+			`/guilds/${guildId}/members`,
+			undefined,
+			{ limit: 1000 },
+		);
+
+		return members.some((member) => member.user.id === botId);
+	} catch (error) {}
+
+	return false;
+}
+
+export async function guildSearch(this: ILoadOptionsFunctions): Promise<INodeListSearchResult> {
+	const response = (await discordApiRequest.call(
+		this,
+		'GET',
+		'/users/@me/guilds',
+	)) as IDataObject[];
+
+	let guilds: IDataObject[] = [];
+
+	const isOAuth2 = this.getNodeParameter('authentication', 0) === 'oAuth2';
+
+	if (isOAuth2) {
+		const botId = (await discordApiRequest.call(this, 'GET', '/users/@me')).id as string;
+
+		for (const guild of response) {
+			if (!(await checkBotAccessToGuild.call(this, guild.id as string, botId))) continue;
+			guilds.push(guild);
+		}
+	} else {
+		guilds = response;
+	}
+
+	return {
+		results: guilds.map((guild) => ({
+			name: guild.name as string,
+			value: guild.id as string,
+			url: `https://discord.com/channels/${guild.id}`,
+		})),
+	};
+}
+
+export async function channelSearch(this: ILoadOptionsFunctions): Promise<INodeListSearchResult> {
+	const guildId = await getGuildId.call(this);
+	const response = await discordApiRequest.call(this, 'GET', `/guilds/${guildId}/channels`);
+
+	return {
+		results: (response as IDataObject[])
+			.filter((cannel) => cannel.type !== 4) // Filter out categories
+			.map((channel) => ({
+				name: channel.name as string,
+				value: channel.id as string,
+				url: `https://discord.com/channels/${guildId}/${channel.id}`,
+			})),
+	};
+}
+
+export async function textChannelSearch(
+	this: ILoadOptionsFunctions,
+): Promise<INodeListSearchResult> {
+	const guildId = await getGuildId.call(this);
+
+	const response = await discordApiRequest.call(this, 'GET', `/guilds/${guildId}/channels`);
+
+	return {
+		results: (response as IDataObject[])
+			.filter((cannel) => ![2, 4].includes(cannel.type as number)) // Only text channels
+			.map((channel) => ({
+				name: channel.name as string,
+				value: channel.id as string,
+				url: `https://discord.com/channels/${guildId}/${channel.id}`,
+			})),
+	};
+}
+
+export async function categorySearch(this: ILoadOptionsFunctions): Promise<INodeListSearchResult> {
+	const guildId = await getGuildId.call(this);
+
+	const response = await discordApiRequest.call(this, 'GET', `/guilds/${guildId}/channels`);
+
+	return {
+		results: (response as IDataObject[])
+			.filter((cannel) => cannel.type === 4) // Return only categories
+			.map((channel) => ({
+				name: channel.name as string,
+				value: channel.id as string,
+				url: `https://discord.com/channels/${guildId}/${channel.id}`,
+			})),
+	};
+}
+
+export async function userSearch(
+	this: ILoadOptionsFunctions,
+	_filter?: string,
+	paginationToken?: string,
+): Promise<INodeListSearchResult> {
+	const guildId = await getGuildId.call(this);
+
+	const limit = 100;
+	const qs = { limit, after: paginationToken };
+
+	const response = await discordApiRequest.call(
+		this,
+		'GET',
+		`/guilds/${guildId}/members`,
+		undefined,
+		qs,
+	);
+
+	if (response.length === 0) {
+		return {
+			results: [],
+			paginationToken: undefined,
+		};
+	}
+
+	let lastUserId;
+
+	//less then limit means that there are no more users to return, so leave lastUserId undefined
+	if (!(response.length < limit)) {
+		lastUserId = response[response.length - 1].user.id as string;
+	}
+
+	return {
+		results: (response as Array<{ user: IDataObject }>).map(({ user }) => ({
+			name: user.username as string,
+			value: user.id as string,
+		})),
+		paginationToken: lastUserId,
+	};
+}
+
+
+// === File: v2/methods/loadOptions.ts ===
+import type { IDataObject, ILoadOptionsFunctions, INodePropertyOptions } from 'n8n-workflow';
+
+import { checkAccessToGuild } from '../helpers/utils';
+import { discordApiRequest } from '../transport';
+
+export async function getRoles(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+	const guildId = this.getNodeParameter('guildId', undefined, {
+		extractValue: true,
+	}) as string;
+
+	const isOAuth2 = this.getNodeParameter('authentication', '') === 'oAuth2';
+
+	if (isOAuth2) {
+		const userGuilds = (await discordApiRequest.call(
+			this,
+			'GET',
+			'/users/@me/guilds',
+		)) as IDataObject[];
+
+		checkAccessToGuild(this.getNode(), guildId, userGuilds);
+	}
+
+	let response = await discordApiRequest.call(this, 'GET', `/guilds/${guildId}/roles`);
+
+	const operations = this.getNodeParameter('operation') as string;
+
+	if (operations === 'roleRemove') {
+		const userId = this.getNodeParameter('userId', undefined, {
+			extractValue: true,
+		}) as string;
+
+		const userRoles = ((
+			await discordApiRequest.call(this, 'GET', `/guilds/${guildId}/members/${userId}`)
+		).roles || []) as string[];
+
+		response = response.filter((role: IDataObject) => {
+			return userRoles.includes(role.id as string);
+		});
+	}
+
+	return response
+		.filter((role: IDataObject) => role.name !== '@everyone' && !role.managed)
+		.map((role: IDataObject) => ({
+			name: role.name as string,
+			value: role.id as string,
+		}));
+}
+
+
+// === File: v2/transport/discord.api.ts ===
+import type FormData from 'form-data';
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	IExecuteSingleFunctions,
+	IHookFunctions,
+	IHttpRequestMethods,
+	ILoadOptionsFunctions,
+	IRequestOptions,
+} from 'n8n-workflow';
+import { sleep, NodeApiError, jsonParse } from 'n8n-workflow';
+
+import { getCredentialsType, requestApi } from './helpers';
+
+export async function discordApiRequest(
+	this: IHookFunctions | IExecuteFunctions | IExecuteSingleFunctions | ILoadOptionsFunctions,
+	method: IHttpRequestMethods,
+	endpoint: string,
+	body?: IDataObject,
+	qs?: IDataObject,
+) {
+	const authentication = this.getNodeParameter('authentication', 0, 'webhook') as string;
+	const headers: IDataObject = {};
+
+	const credentialType = getCredentialsType(authentication);
+
+	const options: IRequestOptions = {
+		headers,
+		method,
+		qs,
+		body,
+		url: `https://discord.com/api/v10${endpoint}`,
+		json: true,
+	};
+
+	if (credentialType === 'discordWebhookApi') {
+		const credentials = await this.getCredentials('discordWebhookApi');
+		options.url = credentials.webhookUri as string;
+	}
+
+	try {
+		const response = await requestApi.call(this, options, credentialType, endpoint);
+
+		const resetAfter = Number(response.headers['x-ratelimit-reset-after']);
+		const remaining = Number(response.headers['x-ratelimit-remaining']);
+
+		if (remaining === 0) {
+			await sleep(resetAfter);
+		} else {
+			await sleep(20); //prevent exceeding global rate limit of 50 requests per second
+		}
+
+		return response.body || { success: true };
+	} catch (error) {
+		throw new NodeApiError(this.getNode(), error);
+	}
+}
+
+export async function discordApiMultiPartRequest(
+	this: IHookFunctions | IExecuteFunctions | IExecuteSingleFunctions | ILoadOptionsFunctions,
+	method: IHttpRequestMethods,
+	endpoint: string,
+	formData: FormData,
+) {
+	const headers: IDataObject = {
+		'content-type': 'multipart/form-data; charset=utf-8',
+	};
+	const authentication = this.getNodeParameter('authentication', 0, 'webhook') as string;
+
+	const credentialType = getCredentialsType(authentication);
+
+	const options: IRequestOptions = {
+		headers,
+		method,
+		formData,
+		url: `https://discord.com/api/v10${endpoint}`,
+	};
+
+	if (credentialType === 'discordWebhookApi') {
+		const credentials = await this.getCredentials('discordWebhookApi');
+		options.url = credentials.webhookUri as string;
+	}
+
+	try {
+		const response = await requestApi.call(this, options, credentialType, endpoint);
+
+		const resetAfter = Number(response.headers['x-ratelimit-reset-after']);
+		const remaining = Number(response.headers['x-ratelimit-remaining']);
+
+		if (remaining === 0) {
+			await sleep(resetAfter);
+		} else {
+			await sleep(20); //prevent exceeding global rate limit of 50 requests per second
+		}
+
+		return jsonParse<IDataObject[]>(response.body);
+	} catch (error) {
+		throw new NodeApiError(this.getNode(), error);
+	}
+}
+
+
+// === File: v2/transport/helpers.ts ===
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	IExecuteSingleFunctions,
+	IHookFunctions,
+	ILoadOptionsFunctions,
+	IRequestOptions,
+} from 'n8n-workflow';
+
+export const getCredentialsType = (authentication: string) => {
+	let credentialType = '';
+	switch (authentication) {
+		case 'botToken':
+			credentialType = 'discordBotApi';
+			break;
+		case 'oAuth2':
+			credentialType = 'discordOAuth2Api';
+			break;
+		case 'webhook':
+			credentialType = 'discordWebhookApi';
+			break;
+		default:
+			credentialType = 'discordBotApi';
+	}
+	return credentialType;
+};
+
+export async function requestApi(
+	this: IHookFunctions | IExecuteFunctions | IExecuteSingleFunctions | ILoadOptionsFunctions,
+	options: IRequestOptions,
+	credentialType: string,
+	endpoint: string,
+) {
+	let response;
+	if (credentialType === 'discordOAuth2Api' && endpoint !== '/users/@me/guilds') {
+		const credentials = await this.getCredentials('discordOAuth2Api');
+		(options.headers as IDataObject).Authorization = `Bot ${credentials.botToken}`;
+		response = await this.helpers.request({ ...options, resolveWithFullResponse: true });
+	} else {
+		response = await this.helpers.requestWithAuthentication.call(this, credentialType, {
+			...options,
+			resolveWithFullResponse: true,
+		});
+	}
+	return response;
+}
+
+
+// === File: v2/transport/index.ts ===
+export * from './discord.api';
+export * from './helpers';

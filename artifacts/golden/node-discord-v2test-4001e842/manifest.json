@@ -1,0 +1,431 @@
+{
+  "correlation_id": "node-discord-v2test-4001e842",
+  "node_type": null,
+  "skill_name": "code-convert",
+  "created_at": "2026-01-06T04:51:06.080277",
+  "generated_code": {
+    "discord.py": "#!/usr/bin/env python3\n\"\"\"\nDiscord Node\n\nConverted from TypeScript by agent-skills/code-convert\nCorrelation ID: node-discord-v2test-4001e842\nGenerated: 2026-01-06T04:51:06.073974\n\nSYNC-CELERY SAFE: All methods are synchronous with timeouts.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport logging\nfrom typing import Any, Dict, List\n\nimport requests\n\nfrom .base import BaseNode, NodeParameterType, NodeExecutionData\n\nlogger = logging.getLogger(__name__)\n\n\nclass DiscordNode(BaseNode):\n    \"\"\"\n    Discord node.\n    \n    \n    \"\"\"\n\n    type = \"discord\"\n    version = 1\n    \n    description = {\n        \"displayName\": \"Discord\",\n        \"name\": \"discord\",\n        \"icon\": \"file:discord.svg\",\n        \"group\": ['output'],\n        \"description\": \"\",\n        \"inputs\": [{\"name\": \"main\", \"type\": \"main\", \"required\": True}],\n        \"outputs\": [{\"name\": \"main\", \"type\": \"main\", \"required\": True}],\n    }\n    \n    properties = {\n        \"parameters\": [\n            {\"name\": \"resource\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Resource\", \"options\": [\n                {\"name\": \"Channel\", \"value\": \"channel\"},\n                {\"name\": \"Message\", \"value\": \"message\"},\n                {\"name\": \"Member\", \"value\": \"member\"}\n            ], \"default\": \"channel\", \"description\": \"The resource to operate on\"},\n            {\"name\": \"authentication\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Connection Type\", \"options\": [\n                {\"name\": \"Bot Token\", \"value\": \"botToken\"},\n                {\"name\": \"OAuth2\", \"value\": \"oAuth2\"},\n                {\"name\": \"Webhook\", \"value\": \"webhook\"}\n            ], \"default\": \"botToken\"},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Create\", \"value\": \"create\", \"description\": \"Create a new channel\"},\n                {\"name\": \"Delete\", \"value\": \"deleteChannel\", \"description\": \"Delete a channel\"},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get a channel\"},\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Retrieve the channels of a server\"},\n                {\"name\": \"Update\", \"value\": \"update\", \"description\": \"Update a channel\"}\n            ], \"default\": \"create\", \"display_options\": {'show': {'resource': ['channel']}}},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Delete\", \"value\": \"deleteMessage\", \"description\": \"Delete a message in a channel\"},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get a message in a channel\"},\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Retrieve the latest messages in a channel\"},\n                {\"name\": \"React with Emoji\", \"value\": \"react\", \"description\": \"React to a message with an emoji\"},\n                {\"name\": \"Send\", \"value\": \"send\", \"description\": \"Send a message to a channel, thread, or member\"}\n            ], \"default\": \"deleteMessage\", \"display_options\": {'show': {'resource': ['message']}}},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Retrieve the members of a server\"},\n                {\"name\": \"Role Add\", \"value\": \"roleAdd\", \"description\": \"Add a role to a member\"},\n                {\"name\": \"Role Remove\", \"value\": \"roleRemove\", \"description\": \"Remove a role from a member\"}\n            ], \"default\": \"getAll\", \"display_options\": {'show': {'resource': ['member']}}}\n        ],\n        \"credentials\": [\n            {\"name\": \"discordBotApi\", \"required\": True}\n        ]\n    }\n    \n    icon = \"discord.svg\"\n\n    def execute(self) -> List[List[NodeExecutionData]]:\n        \"\"\"\n        Execute the node operations.\n        \n        SYNC-CELERY SAFE: All HTTP calls use timeout parameter.\n        \n        Returns:\n            List[List[NodeExecutionData]]: Nested list where outer list is output branches,\n            inner list is items in that branch.\n        \"\"\"\n        # Get input data from previous node\n        input_data = self.get_input_data()\n        \n        # Handle empty input\n        if not input_data:\n            return [[]]\n        \n        return_items: List[NodeExecutionData] = []\n\n        for i, item in enumerate(input_data):\n            try:\n                operation = self.get_node_parameter(\"operation\", i)\n                item_data = item.json_data if hasattr(item, 'json_data') else item.get('json', {})\n                \n                if operation == \"create\":\n                    result = self._create(i, item_data)\n                elif operation == \"deleteChannel\":\n                    result = self._deleteChannel(i, item_data)\n                elif operation == \"get\":\n                    result = self._get(i, item_data)\n                elif operation == \"getAll\":\n                    result = self._getAll(i, item_data)\n                elif operation == \"update\":\n                    result = self._update(i, item_data)\n                elif operation == \"deleteMessage\":\n                    result = self._deleteMessage(i, item_data)\n                elif operation == \"get\":\n                    result = self._get(i, item_data)\n                elif operation == \"getAll\":\n                    result = self._getAll(i, item_data)\n                elif operation == \"react\":\n                    result = self._react(i, item_data)\n                elif operation == \"send\":\n                    result = self._send(i, item_data)\n                elif operation == \"getAll\":\n                    result = self._getAll(i, item_data)\n                elif operation == \"roleAdd\":\n                    result = self._roleAdd(i, item_data)\n                elif operation == \"roleRemove\":\n                    result = self._roleRemove(i, item_data)\n                else:\n                    raise ValueError(f\"Unknown operation: {operation}\")\n                \n                # Handle array results\n                if isinstance(result, list):\n                    for r in result:\n                        return_items.append(NodeExecutionData(json_data=r))\n                else:\n                    return_items.append(NodeExecutionData(json_data=result))\n                    \n            except Exception as e:\n                logger.error(f\"Error in operation {operation}: {e}\")\n                if self.continue_on_fail:\n                    return_items.append(NodeExecutionData(json_data={\"error\": str(e)}))\n                else:\n                    raise\n        \n        return [return_items]\n\n    def _api_request(\n        self,\n        method: str,\n        endpoint: str,\n        body: Dict[str, Any] | None = None,\n        query: Dict[str, Any] | None = None,\n    ) -> Dict[str, Any]:\n        \"\"\"\n        Make authenticated API request.\n        \n        SYNC-CELERY SAFE: Uses requests with timeout.\n        \"\"\"\n        credentials = self.get_credentials(\"discordBotApi\")\n        \n        # Build headers based on credential type\n        headers = {}\n        if credentials.get(\"accessToken\"):\n            headers[\"Authorization\"] = f\"Bot {credentials.get('accessToken')}\"\n        elif credentials.get(\"apiKey\"):\n            query = query or {}\n            query[\"api_key\"] = credentials.get(\"apiKey\")\n        \n        url = f\"https://api.example.com{endpoint}\"\n        \n        response = requests.request(\n            method,\n            url,\n            params=query,\n            json=body,\n            headers=headers,\n            timeout=30,  # REQUIRED for Celery\n        )\n        response.raise_for_status()\n        return response.json()\n\n    def _create(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        create operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"create operation not implemented\")\n\n    def _deleteChannel(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        deleteChannel operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"deleteChannel operation not implemented\")\n\n    def _get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"get operation not implemented\")\n\n    def _getAll(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        getAll operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"getAll operation not implemented\")\n\n    def _update(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        update operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"update operation not implemented\")\n\n    def _deleteMessage(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        deleteMessage operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"deleteMessage operation not implemented\")\n\n    def _get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"get operation not implemented\")\n\n    def _getAll(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        getAll operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"getAll operation not implemented\")\n\n    def _react(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        react operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"react operation not implemented\")\n\n    def _send(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        send operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"send operation not implemented\")\n\n    def _getAll(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        getAll operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"getAll operation not implemented\")\n\n    def _roleAdd(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        roleAdd operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"roleAdd operation not implemented\")\n\n    def _roleRemove(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        roleRemove operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"roleRemove operation not implemented\")\n\n",
+    "__init__.py": "\"\"\"\nDiscord Node Package\nConverted from TypeScript by agent-skills/code-convert\n\"\"\"\n\nfrom .discord import DiscordNode\n\n__all__ = [\"DiscordNode\"]\n"
+  },
+  "node_schema": {
+    "type": "discord",
+    "version": 1,
+    "description": {
+      "displayName": "Discord",
+      "name": "discord",
+      "inputs": [
+        {
+          "name": "main",
+          "type": "main"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "main",
+          "type": "main"
+        }
+      ]
+    },
+    "properties": {
+      "parameters": [
+        {
+          "name": "resource",
+          "display_name": "Resource",
+          "type": "OPTIONS",
+          "options": [
+            {
+              "name": "Channel",
+              "value": "channel"
+            },
+            {
+              "name": "Message",
+              "value": "message"
+            },
+            {
+              "name": "Member",
+              "value": "member"
+            }
+          ],
+          "default": "channel",
+          "description": "The resource to operate on"
+        },
+        {
+          "name": "authentication",
+          "display_name": "Connection Type",
+          "type": "OPTIONS",
+          "options": [
+            {
+              "name": "Bot Token",
+              "value": "botToken"
+            },
+            {
+              "name": "OAuth2",
+              "value": "oAuth2"
+            },
+            {
+              "name": "Webhook",
+              "value": "webhook"
+            }
+          ],
+          "default": "botToken"
+        },
+        {
+          "name": "operation",
+          "display_name": "Operation",
+          "type": "OPTIONS",
+          "options": [
+            {
+              "name": "Create",
+              "value": "create",
+              "description": "Create a new channel"
+            },
+            {
+              "name": "Delete",
+              "value": "deleteChannel",
+              "description": "Delete a channel"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get a channel"
+            },
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Retrieve the channels of a server"
+            },
+            {
+              "name": "Update",
+              "value": "update",
+              "description": "Update a channel"
+            }
+          ],
+          "default": "create",
+          "display_options": {
+            "show": {
+              "resource": [
+                "channel"
+              ]
+            }
+          }
+        },
+        {
+          "name": "operation",
+          "display_name": "Operation",
+          "type": "OPTIONS",
+          "options": [
+            {
+              "name": "Delete",
+              "value": "deleteMessage",
+              "description": "Delete a message in a channel"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get a message in a channel"
+            },
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Retrieve the latest messages in a channel"
+            },
+            {
+              "name": "React with Emoji",
+              "value": "react",
+              "description": "React to a message with an emoji"
+            },
+            {
+              "name": "Send",
+              "value": "send",
+              "description": "Send a message to a channel, thread, or member"
+            }
+          ],
+          "default": "deleteMessage",
+          "display_options": {
+            "show": {
+              "resource": [
+                "message"
+              ]
+            }
+          }
+        },
+        {
+          "name": "operation",
+          "display_name": "Operation",
+          "type": "OPTIONS",
+          "options": [
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Retrieve the members of a server"
+            },
+            {
+              "name": "Role Add",
+              "value": "roleAdd",
+              "description": "Add a role to a member"
+            },
+            {
+              "name": "Role Remove",
+              "value": "roleRemove",
+              "description": "Remove a role from a member"
+            }
+          ],
+          "default": "getAll",
+          "display_options": {
+            "show": {
+              "resource": [
+                "member"
+              ]
+            }
+          }
+        }
+      ],
+      "credentials": [
+        {
+          "name": "discordBotApi",
+          "required": true
+        }
+      ]
+    },
+    "operations": [
+      {
+        "name": "create",
+        "display_name": "Create",
+        "description": "Create a new channel",
+        "resource": "channel"
+      },
+      {
+        "name": "deleteChannel",
+        "display_name": "Delete",
+        "description": "Delete a channel",
+        "resource": "channel"
+      },
+      {
+        "name": "get",
+        "display_name": "Get",
+        "description": "Get a channel",
+        "resource": "channel"
+      },
+      {
+        "name": "getAll",
+        "display_name": "Get Many",
+        "description": "Retrieve the channels of a server",
+        "resource": "channel"
+      },
+      {
+        "name": "update",
+        "display_name": "Update",
+        "description": "Update a channel",
+        "resource": "channel"
+      },
+      {
+        "name": "deleteMessage",
+        "display_name": "Delete",
+        "description": "Delete a message in a channel",
+        "resource": "message"
+      },
+      {
+        "name": "get",
+        "display_name": "Get",
+        "description": "Get a message in a channel",
+        "resource": "message"
+      },
+      {
+        "name": "getAll",
+        "display_name": "Get Many",
+        "description": "Retrieve the latest messages in a channel",
+        "resource": "message"
+      },
+      {
+        "name": "react",
+        "display_name": "React with Emoji",
+        "description": "React to a message with an emoji",
+        "resource": "message"
+      },
+      {
+        "name": "send",
+        "display_name": "Send",
+        "description": "Send a message to a channel, thread, or member",
+        "resource": "message"
+      },
+      {
+        "name": "getAll",
+        "display_name": "Get Many",
+        "description": "Retrieve the members of a server",
+        "resource": "member"
+      },
+      {
+        "name": "roleAdd",
+        "display_name": "Role Add",
+        "description": "Add a role to a member",
+        "resource": "member"
+      },
+      {
+        "name": "roleRemove",
+        "display_name": "Role Remove",
+        "description": "Remove a role from a member",
+        "resource": "member"
+      }
+    ],
+    "resources": [
+      {
+        "name": "Channel",
+        "value": "channel"
+      },
+      {
+        "name": "Message",
+        "value": "message"
+      },
+      {
+        "name": "Member",
+        "value": "member"
+      }
+    ],
+    "credentials": [
+      {
+        "name": "discordBotApi",
+        "required": true
+      }
+    ]
+  },
+  "trace_map": {
+    "correlation_id": "node-discord-v2test-4001e842",
+    "node_type": "discord",
+    "trace_entries": [
+      {
+        "field_path": "resources[0]",
+        "source": "SOURCE_CODE",
+        "evidence": "Resource 'channel' defined in v2/actions/versionDescription.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/versionDescription.ts"
+      },
+      {
+        "field_path": "resources[1]",
+        "source": "SOURCE_CODE",
+        "evidence": "Resource 'message' defined in v2/actions/versionDescription.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/versionDescription.ts"
+      },
+      {
+        "field_path": "resources[2]",
+        "source": "SOURCE_CODE",
+        "evidence": "Resource 'member' defined in v2/actions/versionDescription.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/versionDescription.ts"
+      },
+      {
+        "field_path": "credentials[0]",
+        "source": "SOURCE_CODE",
+        "evidence": "Credential 'discordBotApi' required in v2/actions/versionDescription.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/versionDescription.ts"
+      },
+      {
+        "field_path": "operations[0]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'create' for resource 'channel' in v2/actions/channel/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/channel/index.ts"
+      },
+      {
+        "field_path": "operations[1]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'deleteChannel' for resource 'channel' in v2/actions/channel/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/channel/index.ts"
+      },
+      {
+        "field_path": "operations[2]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'get' for resource 'channel' in v2/actions/channel/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/channel/index.ts"
+      },
+      {
+        "field_path": "operations[3]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'getAll' for resource 'channel' in v2/actions/channel/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/channel/index.ts"
+      },
+      {
+        "field_path": "operations[4]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'update' for resource 'channel' in v2/actions/channel/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/channel/index.ts"
+      },
+      {
+        "field_path": "operations[5]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'deleteMessage' for resource 'message' in v2/actions/message/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/message/index.ts"
+      },
+      {
+        "field_path": "operations[6]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'get' for resource 'message' in v2/actions/message/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/message/index.ts"
+      },
+      {
+        "field_path": "operations[7]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'getAll' for resource 'message' in v2/actions/message/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/message/index.ts"
+      },
+      {
+        "field_path": "operations[8]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'react' for resource 'message' in v2/actions/message/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/message/index.ts"
+      },
+      {
+        "field_path": "operations[9]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'send' for resource 'message' in v2/actions/message/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/message/index.ts"
+      },
+      {
+        "field_path": "operations[10]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'getAll' for resource 'member' in v2/actions/member/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/member/index.ts"
+      },
+      {
+        "field_path": "operations[11]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'roleAdd' for resource 'member' in v2/actions/member/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/member/index.ts"
+      },
+      {
+        "field_path": "operations[12]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'roleRemove' for resource 'member' in v2/actions/member/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/member/index.ts"
+      }
+    ],
+    "generated_at": "2026-01-06T04:51:05.786288",
+    "skill_version": "1.0.0",
+    "_hybrid_metadata": {
+      "source_type": "TYPE1",
+      "extraction_confidence": 0.9,
+      "advisor_used": false,
+      "assumption_ratio": 0.0,
+      "deterministic_operations": 17,
+      "assumption_operations": 0
+    }
+  },
+  "tests_passed": false,
+  "validation_passed": true,
+  "fix_iterations": 0,
+  "source_files": [],
+  "source_hash": null
+}

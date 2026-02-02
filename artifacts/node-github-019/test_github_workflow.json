@@ -1,0 +1,188 @@
+{
+  "name": "GitHub Node Complete Test Suite",
+  "description": "Comprehensive test workflow for GitHub node including: (1) Get Repository Info, (2) Get User Info, (3) List Issues, (4) Get File Content",
+  "nodes": [
+    {
+      "id": "node_start",
+      "name": "Manual Start",
+      "type": "start",
+      "position": [100, 300],
+      "parameters": {},
+      "credentials": {},
+      "is_start": true,
+      "is_end": false,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    },
+    {
+      "id": "node_get_repo",
+      "name": "1 Get Repository Info",
+      "type": "github",
+      "position": [300, 200],
+      "parameters": {
+        "resource": "repository",
+        "operation": "get",
+        "owner": "n8n-io",
+        "repository": "n8n"
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "github-test-credential",
+          "name": "GitHub Test"
+        }
+      },
+      "is_start": false,
+      "is_end": false,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    },
+    {
+      "id": "node_get_user",
+      "name": "2 Get Authenticated User",
+      "type": "github",
+      "position": [500, 200],
+      "parameters": {
+        "resource": "user",
+        "operation": "get"
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "github-test-credential",
+          "name": "GitHub Test"
+        }
+      },
+      "is_start": false,
+      "is_end": false,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    },
+    {
+      "id": "node_list_issues",
+      "name": "3 List Repository Issues",
+      "type": "github",
+      "position": [700, 200],
+      "parameters": {
+        "resource": "repository",
+        "operation": "getIssues",
+        "owner": "n8n-io",
+        "repository": "n8n",
+        "getRepositoryIssuesFilters": {
+          "state": "open"
+        },
+        "limit": 5
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "github-test-credential",
+          "name": "GitHub Test"
+        }
+      },
+      "is_start": false,
+      "is_end": false,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    },
+    {
+      "id": "node_get_file",
+      "name": "4 Get File Content",
+      "type": "github",
+      "position": [900, 200],
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": "n8n-io",
+        "repository": "n8n",
+        "filePath": "README.md"
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "github-test-credential",
+          "name": "GitHub Test"
+        }
+      },
+      "is_start": false,
+      "is_end": false,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    },
+    {
+      "id": "node_end",
+      "name": "End",
+      "type": "end",
+      "position": [1100, 300],
+      "parameters": {},
+      "credentials": {},
+      "is_start": false,
+      "is_end": true,
+      "is_webhook": false,
+      "is_schedule": false,
+      "webhook_id": null
+    }
+  ],
+  "connections": {
+    "Manual Start": {
+      "main": [
+        [
+          {
+            "node": "1 Get Repository Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1 Get Repository Info": {
+      "main": [
+        [
+          {
+            "node": "2 Get Authenticated User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2 Get Authenticated User": {
+      "main": [
+        [
+          {
+            "node": "3 List Repository Issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3 List Repository Issues": {
+      "main": [
+        [
+          {
+            "node": "4 Get File Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4 Get File Content": {
+      "main": [
+        [
+          {
+            "node": "End",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": null,
+  "pin_data": null,
+  "active": true,
+  "trigger_count": 0
+}

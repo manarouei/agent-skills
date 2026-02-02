@@ -1,0 +1,532 @@
+{
+  "correlation_id": "convert-redis-debug-002",
+  "node_type": null,
+  "skill_name": "code-convert",
+  "created_at": "2026-02-02T05:32:58.930105",
+  "generated_code": {
+    "redis.py": "#!/usr/bin/env python3\n\"\"\"\nRedis Node\n\nConverted from TypeScript by agent-skills/code-convert\nCorrelation ID: convert-redis-debug-002\nGenerated: 2026-02-02T05:32:58.920035\n\nSYNC-CELERY SAFE: All methods are synchronous with timeouts.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport logging\nfrom typing import Any, Dict, List\nfrom urllib.parse import quote\n\nimport requests\n\nfrom .base import BaseNode, NodeParameterType, NodeExecutionData\n\nlogger = logging.getLogger(__name__)\n\n\nclass RedisNode(BaseNode):\n    \"\"\"\n    Redis node.\n    \n    \n    \"\"\"\n\n    type = \"redis\"\n    version = 1\n    \n    description = {\n        \"displayName\": \"Redis\",\n        \"name\": \"redis\",\n        \"icon\": \"file:redis.svg\",\n        \"group\": ['output'],\n        \"description\": \"\",\n        \"inputs\": [{\"name\": \"main\", \"type\": \"main\", \"required\": True}],\n        \"outputs\": [{\"name\": \"main\", \"type\": \"main\", \"required\": True}],\n    }\n    \n    properties = {\n        \"parameters\": [\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Delete\", \"value\": \"delete\", \"description\": \"Delete a key from Redis\", \"display_options\": {'show': {'resource': ['']}}},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get the value of a key from Redis\", \"display_options\": {'show': {'resource': ['']}}},\n                {\"name\": \"Increment\", \"value\": \"incr\", \"description\": \"Atomically increments a key by 1. Creates the key if it does not exist.\", \"display_options\": {'show': {'resource': ['']}}},\n                {\"name\": \"Info\", \"value\": \"info\", \"description\": \"Returns generic information about the Redis instance\", \"display_options\": {'show': {'resource': ['']}}},\n                {\"name\": \"Keys\", \"value\": \"keys\", \"description\": \"Returns all the keys matching a pattern\", \"display_options\": {'show': {'resource': ['']}}},\n                {\"name\": \"Pop\", \"value\": \"pop\", \"description\": \"Pop data from a redis list\", \"display_options\": {'show': {'resource': ['']}}},\n                {\"name\": \"Publish\", \"value\": \"publish\", \"description\": \"Publish message to redis channel\", \"display_options\": {'show': {'resource': ['']}}},\n                {\"name\": \"Push\", \"value\": \"push\", \"description\": \"Push data to a redis list\", \"display_options\": {'show': {'resource': ['']}}},\n                {\"name\": \"Set\", \"value\": \"set\", \"description\": \"Set the value of a key in redis\", \"display_options\": {'show': {'resource': ['']}}}\n            ], \"default\": \"delete\", \"description\": \"Operation to perform\"},\n            {\"name\": \"key\", \"type\": NodeParameterType.STRING, \"display_name\": \"Key\", \"default\": \"\", \"required\": True, \"description\": \"Name of the key to delete from Redis\", \"display_options\": {'show': {'operation': ['delete']}}},\n            {\"name\": \"propertyName\", \"type\": NodeParameterType.STRING, \"display_name\": \"Name\", \"default\": \"propertyName\", \"required\": True, \"description\": \"Name of the property to write received data to. Supports dot-notation. Example: \", \"display_options\": {'show': {'operation': ['get']}}},\n            {\"name\": \"keyType\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Key Type\", \"options\": [\n                {\"name\": \"Automatic\", \"value\": \"automatic\"},\n                {\"name\": \"Hash\", \"value\": \"hash\"},\n                {\"name\": \"List\", \"value\": \"list\"},\n                {\"name\": \"Sets\", \"value\": \"sets\"},\n                {\"name\": \"String\", \"value\": \"string\"}\n            ], \"default\": \"automatic\", \"description\": \"Requests the type before requesting the data (slower)\", \"display_options\": {'show': {'operation': ['get']}}},\n            {\"name\": \"options\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Options\", \"default\": \"\", \"description\": \"<p>By default, dot-notation is used in property names. This means that \", \"display_options\": {'show': {'operation': ['get']}}},\n            {\"name\": \"expire\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Expire\", \"default\": False, \"description\": \"Whether to set a timeout on key\", \"display_options\": {'show': {'operation': ['incr']}}},\n            {\"name\": \"ttl\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"TTL\", \"default\": 60, \"description\": \"Number of seconds before key expiration\", \"display_options\": {'show': {'operation': ['incr']}}},\n            {\"name\": \"keyPattern\", \"type\": NodeParameterType.STRING, \"display_name\": \"Key Pattern\", \"default\": \"\", \"required\": True, \"description\": \"The key pattern for the keys to return\", \"display_options\": {'show': {'operation': ['keys']}}},\n            {\"name\": \"getValues\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Get Values\", \"default\": True, \"description\": \"Whether to get the value of matching keys\", \"display_options\": {'show': {'operation': ['keys']}}},\n            {\"name\": \"value\", \"type\": NodeParameterType.STRING, \"display_name\": \"Value\", \"default\": \"\", \"description\": \"The value to write in Redis\", \"display_options\": {'show': {'operation': ['set']}}},\n            {\"name\": \"valueIsJSON\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Value Is JSON\", \"default\": True, \"description\": \"Whether the value is JSON or key value pairs\"},\n            {\"name\": \"channel\", \"type\": NodeParameterType.STRING, \"display_name\": \"Channel\", \"default\": \"\", \"required\": True, \"description\": \"Channel name\", \"display_options\": {'show': {'operation': ['publish']}}},\n            {\"name\": \"messageData\", \"type\": NodeParameterType.STRING, \"display_name\": \"Data\", \"default\": \"\", \"required\": True, \"description\": \"Data to publish\", \"display_options\": {'show': {'operation': ['publish']}}},\n            {\"name\": \"list\", \"type\": NodeParameterType.STRING, \"display_name\": \"List\", \"default\": \"\", \"required\": True, \"description\": \"Name of the list in Redis\", \"display_options\": {'show': {'operation': ['push', 'pop']}}},\n            {\"name\": \"tail\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Tail\", \"default\": False, \"description\": \"Whether to push or pop data from the end of the list\", \"display_options\": {'show': {'operation': ['push', 'pop']}}}\n        ],\n        \"credentials\": [\n            {\"name\": \"redis\", \"required\": True}\n        ]\n    }\n    \n    icon = \"redis.svg\"\n\n    def execute(self) -> List[List[NodeExecutionData]]:\n        \"\"\"\n        Execute the node operations.\n        \n        SYNC-CELERY SAFE: All HTTP calls use timeout parameter.\n        \n        Returns:\n            List[List[NodeExecutionData]]: Nested list where outer list is output branches,\n            inner list is items in that branch.\n        \"\"\"\n        # Get input data from previous node\n        input_data = self.get_input_data()\n        \n        # FIX #40: Handle empty input - create default item so nodes work from Start\n        if not input_data:\n            input_data = [NodeExecutionData(json_data={})]\n        \n        return_items: List[NodeExecutionData] = []\n\n        for i, item in enumerate(input_data):\n            try:\n                operation = self.get_node_parameter(\"operation\", i)\n                item_data = item.json_data if hasattr(item, 'json_data') else item.get('json', {})\n                \n                if operation == \"delete\":\n                    result = self._delete(i, item_data)\n                elif operation == \"get\":\n                    result = self._get(i, item_data)\n                elif operation == \"incr\":\n                    result = self._incr(i, item_data)\n                elif operation == \"info\":\n                    result = self._info(i, item_data)\n                elif operation == \"keys\":\n                    result = self._keys(i, item_data)\n                elif operation == \"pop\":\n                    result = self._pop(i, item_data)\n                elif operation == \"publish\":\n                    result = self._publish(i, item_data)\n                elif operation == \"push\":\n                    result = self._push(i, item_data)\n                elif operation == \"set\":\n                    result = self._set(i, item_data)\n                else:\n                    raise ValueError(f\"Unknown operation: {operation}\")\n                \n                # Handle array results\n                if isinstance(result, list):\n                    for r in result:\n                        return_items.append(NodeExecutionData(json_data=r))\n                else:\n                    return_items.append(NodeExecutionData(json_data=result))\n                    \n            except Exception as e:\n                logger.error(f\"Error in operation {operation}: {e}\")\n                # Platform doesn't support continue_on_fail - always raise\n                raise\n        \n        return [return_items]\n\n    def _get_redis_client(self) -> \"redis.Redis\":\n        \"\"\"\n        Create and return a Redis client using configured credentials.\n        \n        SYNC-CELERY SAFE: Synchronous connection with timeout.\n        \n        Returns:\n            redis.Redis: Configured Redis client instance\n        \"\"\"\n        credentials = self.get_credentials(\"redisApi\")\n        \n        if not credentials:\n            raise Exception(\"Redis credentials not configured\")\n        \n        host = credentials.get(\"host\", \"localhost\")\n        port = int(credentials.get(\"port\", 6379))\n        database = int(credentials.get(\"database\", 0))\n        user = credentials.get(\"user\", \"\") or None\n        password = credentials.get(\"password\", \"\") or None\n        ssl = credentials.get(\"ssl\", False)\n        connection_timeout = int(credentials.get(\"connectionTimeout\", 10))\n        socket_timeout = int(credentials.get(\"socketTimeout\", 30))\n        \n        client = redis.Redis(\n            host=host,\n            port=port,\n            db=database,\n            username=user if user else None,\n            password=password if password else None,\n            ssl=ssl,\n            socket_timeout=socket_timeout,\n            socket_connect_timeout=connection_timeout,\n            decode_responses=True,\n        )\n        \n        return client\n    \n    def _execute_redis_operation(\n        self,\n        operation: str,\n        **kwargs,\n    ) -> Any:\n        \"\"\"\n        Execute a Redis operation with proper connection handling.\n        \n        SYNC-CELERY SAFE: All operations are synchronous.\n        \"\"\"\n        client = self._get_redis_client()\n        \n        try:\n            # Get the operation method\n            op_method = getattr(client, operation, None)\n            if not op_method:\n                raise ValueError(f\"Unknown Redis operation: {operation}\")\n            \n            return op_method(**kwargs)\n        finally:\n            # Redis client doesn't need explicit close for single operations\n            pass\n\n\n    def _delete(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        delete operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n\n        # Delete operation\n        key = self.get_node_parameter(\"key\", item_index, \"\")\n        if not key:\n            raise ValueError(\"Key is required for delete operation\")\n        \n        client = self._get_redis_client()\n        result = client.delete(key)\n        \n        return {\n            \"json\": {\"key\": key, \"deleted\": result > 0, \"count\": result},\n            \"pairedItem\": {\"item\": item_index},\n        }\n\n\n    def _get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n\n        # Get operation\n        key = self.get_node_parameter(\"key\", item_index, \"\")\n        key_type = self.get_node_parameter(\"keyType\", item_index, \"automatic\")\n        property_name = self.get_node_parameter(\"propertyName\", item_index, \"propertyName\")\n        \n        if not key:\n            raise ValueError(\"Key is required for get operation\")\n        \n        client = self._get_redis_client()\n        \n        # Detect key type if automatic\n        if key_type == \"automatic\":\n            key_type = client.type(key)\n        \n        # Get value based on type\n        if key_type == \"string\":\n            value = client.get(key)\n        elif key_type == \"hash\":\n            value = client.hgetall(key)\n        elif key_type == \"list\":\n            value = client.lrange(key, 0, -1)\n        elif key_type == \"set\":\n            value = list(client.smembers(key))\n        elif key_type == \"zset\":\n            value = client.zrange(key, 0, -1, withscores=True)\n        else:\n            value = client.get(key)\n        \n        return {\n            \"json\": {property_name: value},\n            \"pairedItem\": {\"item\": item_index},\n        }\n\n\n    def _incr(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        incr operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n\n        # Increment operation\n        key = self.get_node_parameter(\"key\", item_index, \"\")\n        value = self.get_node_parameter(\"value\", item_index, 1)\n        \n        if not key:\n            raise ValueError(\"Key is required for incr operation\")\n        \n        client = self._get_redis_client()\n        \n        if value == 1:\n            result = client.incr(key)\n        else:\n            result = client.incrby(key, int(value))\n        \n        return {\n            \"json\": {\"key\": key, \"value\": result},\n            \"pairedItem\": {\"item\": item_index},\n        }\n\n\n    def _info(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        info operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n\n        # Info operation\n        client = self._get_redis_client()\n        info = client.info()\n        \n        return {\n            \"json\": info,\n            \"pairedItem\": {\"item\": item_index},\n        }\n\n\n    def _keys(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        keys operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n\n        # Keys operation\n        pattern = self.get_node_parameter(\"keyPattern\", item_index, \"*\")\n        \n        client = self._get_redis_client()\n        keys = client.keys(pattern)\n        \n        return {\n            \"json\": {\"keys\": keys, \"count\": len(keys)},\n            \"pairedItem\": {\"item\": item_index},\n        }\n\n\n    def _pop(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        pop operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n\n        # Pop operation\n        list_name = self.get_node_parameter(\"list\", item_index, \"\")\n        tail = self.get_node_parameter(\"tail\", item_index, False)\n        property_name = self.get_node_parameter(\"propertyName\", item_index, \"propertyName\")\n        \n        if not list_name:\n            raise ValueError(\"List name is required for pop operation\")\n        \n        client = self._get_redis_client()\n        \n        if tail:\n            value = client.rpop(list_name)\n        else:\n            value = client.lpop(list_name)\n        \n        return {\n            \"json\": {property_name: value},\n            \"pairedItem\": {\"item\": item_index},\n        }\n\n\n    def _publish(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        publish operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n\n        # Publish operation\n        channel = self.get_node_parameter(\"channel\", item_index, \"\")\n        message = self.get_node_parameter(\"messageData\", item_index, \"\")\n        \n        if not channel:\n            raise ValueError(\"Channel is required for publish operation\")\n        \n        client = self._get_redis_client()\n        result = client.publish(channel, message)\n        \n        return {\n            \"json\": {\"channel\": channel, \"subscribers\": result},\n            \"pairedItem\": {\"item\": item_index},\n        }\n\n\n    def _push(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        push operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n\n        # Push operation\n        list_name = self.get_node_parameter(\"list\", item_index, \"\")\n        values = self.get_node_parameter(\"messageData\", item_index, \"\")\n        tail = self.get_node_parameter(\"tail\", item_index, False)\n        \n        if not list_name:\n            raise ValueError(\"List name is required for push operation\")\n        \n        client = self._get_redis_client()\n        \n        if tail:\n            result = client.rpush(list_name, values)\n        else:\n            result = client.lpush(list_name, values)\n        \n        return {\n            \"json\": {\"list\": list_name, \"length\": result},\n            \"pairedItem\": {\"item\": item_index},\n        }\n\n\n    def _set(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        set operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n\n        # Set operation\n        key = self.get_node_parameter(\"key\", item_index, \"\")\n        value = self.get_node_parameter(\"value\", item_index, \"\")\n        key_type = self.get_node_parameter(\"keyType\", item_index, \"string\")\n        expire = self.get_node_parameter(\"expire\", item_index, False)\n        ttl = self.get_node_parameter(\"ttl\", item_index, None)\n        \n        if not key:\n            raise ValueError(\"Key is required for set operation\")\n        \n        client = self._get_redis_client()\n        \n        if key_type == \"string\":\n            if expire and ttl:\n                client.setex(key, int(ttl), value)\n            else:\n                client.set(key, value)\n        elif key_type == \"hash\":\n            if isinstance(value, dict):\n                client.hset(key, mapping=value)\n            else:\n                # Try to parse as JSON\n                import json\n                try:\n                    value = json.loads(value)\n                    client.hset(key, mapping=value)\n                except json.JSONDecodeError:\n                    client.set(key, value)\n        elif key_type == \"list\":\n            if isinstance(value, list):\n                client.rpush(key, *value)\n            else:\n                client.rpush(key, value)\n        elif key_type == \"set\":\n            if isinstance(value, (list, set)):\n                client.sadd(key, *value)\n            else:\n                client.sadd(key, value)\n        else:\n            client.set(key, value)\n        \n        return {\n            \"json\": {\"key\": key, \"success\": True},\n            \"pairedItem\": {\"item\": item_index},\n        }\n\n\n",
+    "__init__.py": "\"\"\"\nRedis Node Package\nConverted from TypeScript by agent-skills/code-convert\n\"\"\"\n\nfrom .redis import RedisNode\n\n__all__ = [\"RedisNode\"]\n"
+  },
+  "node_schema": {
+    "type": "redis",
+    "version": 1,
+    "description": {
+      "displayName": "Redis",
+      "name": "redis",
+      "inputs": [
+        {
+          "name": "main",
+          "type": "main"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "main",
+          "type": "main"
+        }
+      ]
+    },
+    "properties": {
+      "parameters": [
+        {
+          "name": "operation",
+          "display_name": "Operation",
+          "type": "OPTIONS",
+          "options": [
+            {
+              "name": "Delete",
+              "value": "delete",
+              "description": "Delete a key from Redis"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get the value of a key from Redis"
+            },
+            {
+              "name": "Increment",
+              "value": "incr",
+              "description": "Atomically increments a key by 1. Creates the key if it does not exist."
+            },
+            {
+              "name": "Info",
+              "value": "info",
+              "description": "Returns generic information about the Redis instance"
+            },
+            {
+              "name": "Keys",
+              "value": "keys",
+              "description": "Returns all the keys matching a pattern"
+            },
+            {
+              "name": "Pop",
+              "value": "pop",
+              "description": "Pop data from a redis list"
+            },
+            {
+              "name": "Publish",
+              "value": "publish",
+              "description": "Publish message to redis channel"
+            },
+            {
+              "name": "Push",
+              "value": "push",
+              "description": "Push data to a redis list"
+            },
+            {
+              "name": "Set",
+              "value": "set",
+              "description": "Set the value of a key in redis"
+            }
+          ],
+          "default": "delete",
+          "description": "Operation to perform"
+        },
+        {
+          "name": "key",
+          "display_name": "Key",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "Name of the key to delete from Redis",
+          "display_options": {
+            "show": {
+              "operation": [
+                "delete"
+              ]
+            }
+          }
+        },
+        {
+          "name": "propertyName",
+          "display_name": "Name",
+          "type": "STRING",
+          "default": "propertyName",
+          "required": true,
+          "description": "Name of the property to write received data to. Supports dot-notation. Example: ",
+          "display_options": {
+            "show": {
+              "operation": [
+                "get"
+              ]
+            }
+          }
+        },
+        {
+          "name": "keyType",
+          "display_name": "Key Type",
+          "type": "OPTIONS",
+          "default": "automatic",
+          "description": "Requests the type before requesting the data (slower)",
+          "display_options": {
+            "show": {
+              "operation": [
+                "get"
+              ]
+            }
+          },
+          "options": [
+            {
+              "name": "Automatic",
+              "value": "automatic"
+            },
+            {
+              "name": "Hash",
+              "value": "hash"
+            },
+            {
+              "name": "List",
+              "value": "list"
+            },
+            {
+              "name": "Sets",
+              "value": "sets"
+            },
+            {
+              "name": "String",
+              "value": "string"
+            }
+          ]
+        },
+        {
+          "name": "options",
+          "display_name": "Options",
+          "type": "COLLECTION",
+          "default": "",
+          "description": "<p>By default, dot-notation is used in property names. This means that ",
+          "display_options": {
+            "show": {
+              "operation": [
+                "get"
+              ]
+            }
+          }
+        },
+        {
+          "name": "expire",
+          "display_name": "Expire",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether to set a timeout on key",
+          "display_options": {
+            "show": {
+              "operation": [
+                "incr"
+              ]
+            }
+          }
+        },
+        {
+          "name": "ttl",
+          "display_name": "TTL",
+          "type": "NUMBER",
+          "default": 60,
+          "description": "Number of seconds before key expiration",
+          "display_options": {
+            "show": {
+              "operation": [
+                "incr"
+              ]
+            }
+          }
+        },
+        {
+          "name": "keyPattern",
+          "display_name": "Key Pattern",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "The key pattern for the keys to return",
+          "display_options": {
+            "show": {
+              "operation": [
+                "keys"
+              ]
+            }
+          }
+        },
+        {
+          "name": "getValues",
+          "display_name": "Get Values",
+          "type": "BOOLEAN",
+          "default": true,
+          "description": "Whether to get the value of matching keys",
+          "display_options": {
+            "show": {
+              "operation": [
+                "keys"
+              ]
+            }
+          }
+        },
+        {
+          "name": "value",
+          "display_name": "Value",
+          "type": "STRING",
+          "default": "",
+          "description": "The value to write in Redis",
+          "display_options": {
+            "show": {
+              "operation": [
+                "set"
+              ]
+            }
+          }
+        },
+        {
+          "name": "valueIsJSON",
+          "display_name": "Value Is JSON",
+          "type": "BOOLEAN",
+          "default": true,
+          "description": "Whether the value is JSON or key value pairs"
+        },
+        {
+          "name": "channel",
+          "display_name": "Channel",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "Channel name",
+          "display_options": {
+            "show": {
+              "operation": [
+                "publish"
+              ]
+            }
+          }
+        },
+        {
+          "name": "messageData",
+          "display_name": "Data",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "Data to publish",
+          "display_options": {
+            "show": {
+              "operation": [
+                "publish"
+              ]
+            }
+          }
+        },
+        {
+          "name": "list",
+          "display_name": "List",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "Name of the list in Redis",
+          "display_options": {
+            "show": {
+              "operation": [
+                "push",
+                "pop"
+              ]
+            }
+          }
+        },
+        {
+          "name": "tail",
+          "display_name": "Tail",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether to push or pop data from the end of the list",
+          "display_options": {
+            "show": {
+              "operation": [
+                "push",
+                "pop"
+              ]
+            }
+          }
+        }
+      ],
+      "credentials": [
+        {
+          "name": "redis",
+          "required": true
+        }
+      ]
+    },
+    "operations": [
+      {
+        "name": "delete",
+        "display_name": "Delete",
+        "description": "Delete a key from Redis"
+      },
+      {
+        "name": "get",
+        "display_name": "Get",
+        "description": "Get the value of a key from Redis"
+      },
+      {
+        "name": "incr",
+        "display_name": "Increment",
+        "description": "Atomically increments a key by 1. Creates the key if it does not exist."
+      },
+      {
+        "name": "info",
+        "display_name": "Info",
+        "description": "Returns generic information about the Redis instance"
+      },
+      {
+        "name": "keys",
+        "display_name": "Keys",
+        "description": "Returns all the keys matching a pattern"
+      },
+      {
+        "name": "pop",
+        "display_name": "Pop",
+        "description": "Pop data from a redis list"
+      },
+      {
+        "name": "publish",
+        "display_name": "Publish",
+        "description": "Publish message to redis channel"
+      },
+      {
+        "name": "push",
+        "display_name": "Push",
+        "description": "Push data to a redis list"
+      },
+      {
+        "name": "set",
+        "display_name": "Set",
+        "description": "Set the value of a key in redis"
+      }
+    ],
+    "resources": [],
+    "credentials": [
+      {
+        "name": "redis",
+        "required": true
+      }
+    ],
+    "execution_contract": {
+      "semantic_class": "tcp_client",
+      "io_cardinality": {
+        "input_count": 1,
+        "input_required": [
+          0
+        ],
+        "output_count": 1,
+        "output_names": [
+          "main"
+        ],
+        "item_mapping": "1:1"
+      },
+      "connection": {
+        "type": "tcp",
+        "factory_method": "_get_redis_client",
+        "library": "redis",
+        "pooling": false,
+        "cleanup": "context_manager"
+      },
+      "state": {
+        "cross_execution": "none",
+        "within_execution": "none",
+        "persistence_key": null
+      },
+      "credentials": {
+        "type": "redisApi",
+        "resolution": "direct",
+        "selector_param": null,
+        "connection_params": []
+      },
+      "http_config": null,
+      "sdk_config": null,
+      "transform_config": null
+    }
+  },
+  "trace_map": {
+    "correlation_id": "convert-redis-debug-002",
+    "node_type": "redis",
+    "trace_entries": [
+      {
+        "field_path": "operations[0].name",
+        "source": "SOURCE_CODE",
+        "evidence": "n8n operation 'delete' (display: 'Delete') in Redis.node.ts",
+        "confidence": "high",
+        "source_file": "Redis.node.ts",
+        "line_range": "L42",
+        "excerpt_hash": "762cadbe0268"
+      },
+      {
+        "field_path": "operations[1].name",
+        "source": "SOURCE_CODE",
+        "evidence": "n8n operation 'get' (display: 'Get') in Redis.node.ts",
+        "confidence": "high",
+        "source_file": "Redis.node.ts",
+        "line_range": "L42",
+        "excerpt_hash": "c9d917f6e0c5"
+      },
+      {
+        "field_path": "operations[2].name",
+        "source": "SOURCE_CODE",
+        "evidence": "n8n operation 'incr' (display: 'Increment') in Redis.node.ts",
+        "confidence": "high",
+        "source_file": "Redis.node.ts",
+        "line_range": "L42",
+        "excerpt_hash": "fd79c76ae160"
+      },
+      {
+        "field_path": "operations[3].name",
+        "source": "SOURCE_CODE",
+        "evidence": "n8n operation 'info' (display: 'Info') in Redis.node.ts",
+        "confidence": "high",
+        "source_file": "Redis.node.ts",
+        "line_range": "L42",
+        "excerpt_hash": "b65c974301fb"
+      },
+      {
+        "field_path": "operations[4].name",
+        "source": "SOURCE_CODE",
+        "evidence": "n8n operation 'keys' (display: 'Keys') in Redis.node.ts",
+        "confidence": "high",
+        "source_file": "Redis.node.ts",
+        "line_range": "L42",
+        "excerpt_hash": "e095cc304207"
+      },
+      {
+        "field_path": "operations[5].name",
+        "source": "SOURCE_CODE",
+        "evidence": "n8n operation 'pop' (display: 'Pop') in Redis.node.ts",
+        "confidence": "high",
+        "source_file": "Redis.node.ts",
+        "line_range": "L42",
+        "excerpt_hash": "7b6e2846d044"
+      },
+      {
+        "field_path": "operations[6].name",
+        "source": "SOURCE_CODE",
+        "evidence": "n8n operation 'publish' (display: 'Publish') in Redis.node.ts",
+        "confidence": "high",
+        "source_file": "Redis.node.ts",
+        "line_range": "L42",
+        "excerpt_hash": "89c2f708a4fa"
+      },
+      {
+        "field_path": "operations[7].name",
+        "source": "SOURCE_CODE",
+        "evidence": "n8n operation 'push' (display: 'Push') in Redis.node.ts",
+        "confidence": "high",
+        "source_file": "Redis.node.ts",
+        "line_range": "L42",
+        "excerpt_hash": "c15d260785b8"
+      },
+      {
+        "field_path": "operations[8].name",
+        "source": "SOURCE_CODE",
+        "evidence": "n8n operation 'set' (display: 'Set') in Redis.node.ts",
+        "confidence": "high",
+        "source_file": "Redis.node.ts",
+        "line_range": "L42",
+        "excerpt_hash": "ed0d55c489a4"
+      },
+      {
+        "field_path": "description.displayName",
+        "source": "SOURCE_CODE",
+        "evidence": "displayName: 'Redis' in Redis.node.ts",
+        "confidence": "high",
+        "source_file": "Redis.node.ts"
+      },
+      {
+        "field_path": "parameters.operation",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation parameter with 9 options in Redis.node.ts",
+        "confidence": "high",
+        "source_file": "Redis.node.ts"
+      },
+      {
+        "field_path": "credentials[0]",
+        "source": "SOURCE_CODE",
+        "evidence": "Credential 'redis' (required=True) in Redis.node.ts",
+        "confidence": "high",
+        "source_file": "Redis.node.ts"
+      },
+      {
+        "field_path": "execution_contract.semantic_class",
+        "source": "SOURCE_CODE",
+        "evidence": "Detected semantic class 'tcp_client' from code patterns and node type",
+        "confidence": "high",
+        "source_file": "multiple"
+      }
+    ],
+    "generated_at": "2026-02-02T05:32:58.550907",
+    "skill_version": "1.0.0",
+    "_hybrid_metadata": {
+      "source_type": "TYPE1",
+      "extraction_confidence": 0.935,
+      "advisor_used": false,
+      "assumption_ratio": 0.0,
+      "deterministic_operations": 13,
+      "assumption_operations": 0
+    }
+  },
+  "tests_passed": false,
+  "validation_passed": true,
+  "fix_iterations": 0,
+  "source_files": [],
+  "source_hash": null
+}

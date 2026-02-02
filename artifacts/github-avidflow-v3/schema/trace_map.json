@@ -1,0 +1,123 @@
+{
+  "correlation_id": "github-avidflow-v3",
+  "node_type": "github",
+  "trace_entries": [
+    {
+      "field_path": "operations[6].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'getRepositories' (display: 'Get Repositories') in Github.node.ts",
+      "confidence": "high",
+      "source_file": "Github.node.ts",
+      "line_range": "L141",
+      "excerpt_hash": "6b82a17354ab"
+    },
+    {
+      "field_path": "operations[1].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'checkExists' defined in GithubTrigger.node.ts",
+      "confidence": "high",
+      "source_file": "GithubTrigger.node.ts",
+      "line_range": "L459",
+      "excerpt_hash": "5be11dd57b5f"
+    },
+    {
+      "field_path": "operations[2].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'create' defined in GithubTrigger.node.ts",
+      "confidence": "high",
+      "source_file": "GithubTrigger.node.ts",
+      "line_range": "L491",
+      "excerpt_hash": "537a3dc6a4d7"
+    },
+    {
+      "field_path": "operations[3].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'webhook' defined in GithubTrigger.node.ts",
+      "confidence": "high",
+      "source_file": "GithubTrigger.node.ts",
+      "line_range": "L611",
+      "excerpt_hash": "d4d633bde3c3"
+    },
+    {
+      "field_path": "operations[4].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'getUsers' defined in SearchFunctions.ts",
+      "confidence": "high",
+      "source_file": "SearchFunctions.ts",
+      "line_range": "L33",
+      "excerpt_hash": "acb150b818af"
+    },
+    {
+      "field_path": "operations[5].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'getRepositories' defined in SearchFunctions.ts",
+      "confidence": "high",
+      "source_file": "SearchFunctions.ts",
+      "line_range": "L68",
+      "excerpt_hash": "0ad2a01442a6"
+    },
+    {
+      "field_path": "operations[6].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'getWorkflows' defined in SearchFunctions.ts",
+      "confidence": "high",
+      "source_file": "SearchFunctions.ts",
+      "line_range": "L104",
+      "excerpt_hash": "8985deabe145"
+    },
+    {
+      "field_path": "operations[7].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'getRefs' defined in SearchFunctions.ts",
+      "confidence": "high",
+      "source_file": "SearchFunctions.ts",
+      "line_range": "L133",
+      "excerpt_hash": "a77f95c7d15e"
+    },
+    {
+      "field_path": "description.displayName",
+      "source": "SOURCE_CODE",
+      "evidence": "displayName: 'GitHub' in Github.node.ts",
+      "confidence": "high",
+      "source_file": "Github.node.ts"
+    },
+    {
+      "field_path": "parameters.resource",
+      "source": "SOURCE_CODE",
+      "evidence": "Resource parameter with 8 options in Github.node.ts",
+      "confidence": "high",
+      "source_file": "Github.node.ts"
+    },
+    {
+      "field_path": "parameters.operation",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation parameter with 22 options in Github.node.ts",
+      "confidence": "high",
+      "source_file": "Github.node.ts"
+    },
+    {
+      "field_path": "credentials[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Credential 'githubApi' (required=True) in Github.node.ts",
+      "confidence": "high",
+      "source_file": "Github.node.ts"
+    },
+    {
+      "field_path": "credentials[1]",
+      "source": "SOURCE_CODE",
+      "evidence": "Credential 'githubOAuth2Api' (required=True) in Github.node.ts",
+      "confidence": "high",
+      "source_file": "Github.node.ts"
+    }
+  ],
+  "generated_at": "2026-01-08T11:09:19.450289",
+  "skill_version": "1.0.0",
+  "_hybrid_metadata": {
+    "source_type": "TYPE1",
+    "extraction_confidence": 0.8333333333333333,
+    "advisor_used": false,
+    "assumption_ratio": 0.0,
+    "deterministic_operations": 13,
+    "assumption_operations": 0
+  }
+}

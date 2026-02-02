@@ -1,0 +1,97 @@
+{
+  "type": "discord",
+  "version": 1,
+  "description": {
+    "displayName": "Discord",
+    "name": "discord",
+    "inputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ]
+  },
+  "properties": {
+    "parameters": [
+      {
+        "name": "resource",
+        "display_name": "Resource",
+        "type": "OPTIONS",
+        "options": [
+          {
+            "name": "Channel",
+            "value": "channel"
+          },
+          {
+            "name": "Message",
+            "value": "message"
+          },
+          {
+            "name": "Member",
+            "value": "member"
+          }
+        ],
+        "default": "channel",
+        "description": "The resource to operate on"
+      },
+      {
+        "name": "authentication",
+        "display_name": "Connection Type",
+        "type": "OPTIONS",
+        "options": [
+          {
+            "name": "Bot Token",
+            "value": "botToken"
+          },
+          {
+            "name": "OAuth2",
+            "value": "oAuth2"
+          },
+          {
+            "name": "Webhook",
+            "value": "webhook"
+          }
+        ],
+        "default": "botToken"
+      }
+    ],
+    "credentials": [
+      {
+        "name": "discordBotApi",
+        "required": true
+      }
+    ]
+  },
+  "operations": [
+    {
+      "name": "execute",
+      "description": "Default operation"
+    }
+  ],
+  "resources": [
+    {
+      "name": "Channel",
+      "value": "channel"
+    },
+    {
+      "name": "Message",
+      "value": "message"
+    },
+    {
+      "name": "Member",
+      "value": "member"
+    }
+  ],
+  "credentials": [
+    {
+      "name": "discordBotApi",
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,152 @@
+{
+  "pipeline_name": "convert_node_v1",
+  "correlation_id": "node-discord-v2test-77043e62",
+  "status": "failed",
+  "started_at": "2026-01-06T04:46:14.611153",
+  "completed_at": "2026-01-06T04:46:14.616063",
+  "duration_ms": 4,
+  "steps": [
+    {
+      "step_name": "normalize",
+      "skill_name": "node-normalize",
+      "status": "failed",
+      "started_at": "2026-01-06T04:46:14.611362",
+      "completed_at": "2026-01-06T04:46:14.616013",
+      "duration_ms": 4,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required input: raw_node_name",
+        "Input validation failed"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "classify",
+      "skill_name": "source-classify",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:46:14.616030",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "ground",
+      "skill_name": "repo-ground",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:46:14.616035",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "ingest",
+      "skill_name": "source-ingest",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:46:14.616038",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "infer-schema",
+      "skill_name": "schema-infer",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:46:14.616040",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "scaffold",
+      "skill_name": "node-scaffold",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:46:14.616043",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "convert",
+      "skill_name": "code-convert",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:46:14.616045",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "package",
+      "skill_name": "node-package",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:46:14.616050",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "pre-validate",
+      "skill_name": "node-validate",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:46:14.616055",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "apply",
+      "skill_name": "apply-changes",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:46:14.616057",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "smoke-test",
+      "skill_name": "node-smoke-test",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:46:14.616060",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    }
+  ],
+  "outputs": {
+    "normalize": {}
+  },
+  "artifacts_dir": "/home/toni/agent-skills/artifacts/node-discord-v2test-77043e62",
+  "errors": [
+    "Step 'normalize' failed"
+  ]
+}

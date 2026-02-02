@@ -1,0 +1,18 @@
+{
+  "node_name": "Github",
+  "allowed_paths": [
+    "nodes/github*",
+    "nodes/Github*",
+    "tests/*github*",
+    "tests/*Github*",
+    "credentials/*github*",
+    "credentials/*Github*"
+  ],
+  "forbidden_paths": [
+    "**/base.py",
+    "**/Base*.py",
+    "**/__init__.py"
+  ],
+  "generated_at": "2026-01-07T10:30:07.931844",
+  "correlation_id": "github-avidflow-v2"
+}

@@ -1,0 +1,388 @@
+# Pipeline Configuration
+# Defines available pipelines for node conversion
+
+version: "1.0.0"
+
+# Pipeline: TYPE1 - TypeScript to Python conversion
+type1-convert:
+  name: type1-convert
+  version: "1.0.0"
+  description: "Convert TypeScript n8n node to Python"
+  
+  steps:
+    - name: ingest
+      skill: source-ingest
+      produces_artifacts:
+        - source_bundle/
+    
+    # schema-infer requires: [correlation_id, parsed_sections, source_type]
+    - name: infer-schema
+      skill: schema-infer
+      depends_on: [ingest]
+      requires_artifacts:
+        - source_bundle/
+      produces_artifacts:
+        - inferred_schema.json
+        - trace_map.json
+      input_mappings:
+        parsed_sections: ingest.parsed_sections
+    
+    # node-scaffold requires: [correlation_id, node_schema, normalized_name]
+    - name: scaffold
+      skill: node-scaffold
+      depends_on: [infer-schema]
+      requires_artifacts:
+        - inferred_schema.json
+      produces_artifacts:
+        - converted/
+      input_mappings:
+        node_schema: infer-schema.inferred_schema
+    
+    # repo-ground requires: [correlation_id, repo_root] - produces repo_facts.json for code gen gates
+    - name: ground
+      skill: repo-ground
+      depends_on: [scaffold]
+      produces_artifacts:
+        - repo_facts.json
+        - target_repo_layout.json
+    
+    # code-convert requires: [correlation_id, source_type, parsed_sections, node_schema, allowlist]
+    - name: convert
+      skill: code-convert
+      depends_on: [ground]
+      requires_artifacts:
+        - source_bundle/
+        - inferred_schema.json
+        - repo_facts.json
+      produces_artifacts:
+        - converted/*.py
+      input_mappings:
+        parsed_sections: ingest.parsed_sections
+        node_schema: infer-schema.inferred_schema
+        allowlist: scaffold.allowlist
+    
+    # test-generate requires: [correlation_id, node_schema, files_modified, allowlist]
+    - name: generate-tests
+      skill: test-generate
+      depends_on: [convert]
+      requires_artifacts:
+        - converted/
+      produces_artifacts:
+        - tests/
+      continue_on_fail: true
+      input_mappings:
+        node_schema: infer-schema.inferred_schema
+        files_modified: convert.files_modified
+        allowlist: scaffold.allowlist
+    
+    # code-validate requires: [correlation_id, files_modified, test_files, allowlist]
+    - name: validate
+      skill: code-validate
+      depends_on: [generate-tests]
+      requires_artifacts:
+        - converted/
+      produces_artifacts:
+        - validation_logs.txt
+      continue_on_fail: true
+      input_mappings:
+        files_modified: convert.files_modified
+        test_files: generate-tests.test_files_created
+        allowlist: scaffold.allowlist
+  
+  initial_inputs:
+    source_type: TYPE1
+
+# Pipeline: TYPE1 with credentials and scenario testing
+type1-convert-with-scenarios:
+  name: type1-convert-with-scenarios
+  version: "1.0.0"
+  description: "Convert TypeScript n8n node to Python with credential conversion and scenario testing"
+  
+  steps:
+    - name: ingest
+      skill: source-ingest
+      produces_artifacts:
+        - source_bundle/
+    
+    - name: infer-schema
+      skill: schema-infer
+      depends_on: [ingest]
+      requires_artifacts:
+        - source_bundle/
+      produces_artifacts:
+        - inferred_schema.json
+        - trace_map.json
+      input_mappings:
+        parsed_sections: ingest.parsed_sections
+    
+    - name: scaffold
+      skill: node-scaffold
+      depends_on: [infer-schema]
+      requires_artifacts:
+        - inferred_schema.json
+      produces_artifacts:
+        - converted/
+      input_mappings:
+        node_schema: infer-schema.inferred_schema
+    
+    - name: ground
+      skill: repo-ground
+      depends_on: [scaffold]
+      produces_artifacts:
+        - repo_facts.json
+        - target_repo_layout.json
+    
+    # Credential conversion: extract and convert credential types
+    - name: convert-credentials
+      skill: credential-convert
+      depends_on: [ground]
+      requires_artifacts:
+        - source_bundle/
+        - inferred_schema.json
+      produces_artifacts:
+        - credentials/
+        - credential_conversion_log.json
+        - credential_registry_entries.json
+      input_mappings:
+        credential_types: infer-schema.credential_types
+        source_bundle_path: ingest.source_bundle_path
+    
+    - name: convert
+      skill: code-convert
+      depends_on: [convert-credentials]
+      requires_artifacts:
+        - source_bundle/
+        - inferred_schema.json
+        - repo_facts.json
+      produces_artifacts:
+        - converted/*.py
+      input_mappings:
+        parsed_sections: ingest.parsed_sections
+        node_schema: infer-schema.inferred_schema
+        allowlist: scaffold.allowlist
+    
+    - name: generate-tests
+      skill: test-generate
+      depends_on: [convert]
+      requires_artifacts:
+        - converted/
+      produces_artifacts:
+        - tests/
+      continue_on_fail: true
+      input_mappings:
+        node_schema: infer-schema.inferred_schema
+        files_modified: convert.files_modified
+        allowlist: scaffold.allowlist
+    
+    - name: validate
+      skill: code-validate
+      depends_on: [generate-tests]
+      requires_artifacts:
+        - converted/
+      produces_artifacts:
+        - validation_logs.txt
+      continue_on_fail: true
+      input_mappings:
+        files_modified: convert.files_modified
+        test_files: generate-tests.test_files_created
+        allowlist: scaffold.allowlist
+    
+    # Apply changes to target repository
+    - name: apply
+      skill: apply-changes
+      depends_on: [validate]
+      requires_artifacts:
+        - converted/
+        - validation_logs.txt
+      produces_artifacts:
+        - apply_log.json
+      input_mappings:
+        target_repo_layout: ground.target_repo_layout
+    
+    # Provision test credentials
+    - name: provision-credentials
+      skill: credential-provision
+      depends_on: [apply]
+      requires_artifacts:
+        - credentials/
+      produces_artifacts:
+        - credentials_provisioned.json
+      input_mappings:
+        credential_instances: convert-credentials.test_credential_instances
+    
+    # Execute scenario tests
+    - name: scenario-test
+      skill: scenario-workflow-test
+      depends_on: [provision-credentials]
+      requires_artifacts:
+        - credentials_provisioned.json
+      produces_artifacts:
+        - scenarios/
+        - scenario_summary.json
+      input_mappings:
+        node_type: infer-schema.node_type
+        test_scenarios: infer-schema.test_scenarios
+    
+    # Self-healing loop
+    - name: self-heal
+      skill: self-heal-coordinator
+      depends_on: [scenario-test]
+      requires_artifacts:
+        - scenarios/
+        - scenario_summary.json
+      produces_artifacts:
+        - self_heal_report.json
+      continue_on_fail: true
+      input_mappings:
+        scenario_results: scenario-test.results
+        node_type: infer-schema.node_type
+  
+  initial_inputs:
+    source_type: TYPE1
+
+# Pipeline: TYPE2 - Documentation to Python implementation  
+type2-implement:
+  name: type2-implement
+  version: "1.0.0"
+  description: "Implement node from API documentation"
+  
+  steps:
+    - name: ingest
+      skill: source-ingest
+      produces_artifacts:
+        - source_bundle/
+    
+    # schema-infer requires: [correlation_id, parsed_sections, source_type]
+    - name: infer-schema
+      skill: schema-infer
+      depends_on: [ingest]
+      requires_artifacts:
+        - source_bundle/
+      produces_artifacts:
+        - inferred_schema.json
+        - trace_map.json
+      input_mappings:
+        parsed_sections: ingest.parsed_sections
+    
+    # node-scaffold requires: [correlation_id, node_schema, normalized_name]
+    - name: scaffold
+      skill: node-scaffold
+      depends_on: [infer-schema]
+      requires_artifacts:
+        - inferred_schema.json
+      produces_artifacts:
+        - converted/
+      input_mappings:
+        node_schema: infer-schema.inferred_schema
+    
+    # repo-ground requires: [correlation_id, repo_root] - produces repo_facts.json for code gen gates
+    - name: ground
+      skill: repo-ground
+      depends_on: [scaffold]
+      produces_artifacts:
+        - repo_facts.json
+        - target_repo_layout.json
+    
+    # code-implement requires: [correlation_id, source_type, node_schema, trace_map, allowlist]
+    - name: implement
+      skill: code-implement
+      depends_on: [ground]
+      requires_artifacts:
+        - source_bundle/
+        - inferred_schema.json
+        - repo_facts.json
+      produces_artifacts:
+        - converted/*.py
+      input_mappings:
+        node_schema: infer-schema.inferred_schema
+        trace_map: infer-schema.trace_map
+        allowlist: scaffold.allowlist
+    
+    # test-generate requires: [correlation_id, node_schema, files_modified, allowlist]
+    - name: generate-tests
+      skill: test-generate
+      depends_on: [implement]
+      requires_artifacts:
+        - converted/
+      produces_artifacts:
+        - tests/
+      continue_on_fail: true
+      input_mappings:
+        node_schema: infer-schema.inferred_schema
+        files_modified: implement.files_modified
+        allowlist: scaffold.allowlist
+    
+    # code-validate requires: [correlation_id, files_modified, test_files, allowlist]
+    - name: validate
+      skill: code-validate
+      depends_on: [generate-tests]
+      requires_artifacts:
+        - converted/
+      produces_artifacts:
+        - validation_logs.txt
+      continue_on_fail: true
+      input_mappings:
+        files_modified: implement.files_modified
+        test_files: generate-tests.test_files_created
+        allowlist: scaffold.allowlist
+  
+  initial_inputs:
+    source_type: TYPE2
+
+# Pipeline: Quick conversion (skip test generation)
+quick-convert:
+  name: quick-convert
+  version: "1.0.0"
+  description: "Quick TYPE1 conversion without tests"
+  
+  steps:
+    - name: ingest
+      skill: source-ingest
+      produces_artifacts:
+        - source_bundle/
+    
+    # schema-infer requires: [correlation_id, parsed_sections, source_type]
+    - name: infer-schema
+      skill: schema-infer
+      depends_on: [ingest]
+      produces_artifacts:
+        - inferred_schema.json
+        - trace_map.json
+      input_mappings:
+        parsed_sections: ingest.parsed_sections
+    
+    # node-scaffold requires: [correlation_id, node_schema, normalized_name]
+    - name: scaffold
+      skill: node-scaffold
+      depends_on: [infer-schema]
+      requires_artifacts:
+        - inferred_schema.json
+      produces_artifacts:
+        - converted/
+      input_mappings:
+        node_schema: infer-schema.inferred_schema
+    
+    # repo-ground requires: [correlation_id, repo_root] - produces repo_facts.json for code gen gates
+    - name: ground
+      skill: repo-ground
+      depends_on: [scaffold]
+      produces_artifacts:
+        - repo_facts.json
+        - target_repo_layout.json
+    
+    # code-convert requires: [correlation_id, source_type, parsed_sections, node_schema, allowlist]
+    - name: convert
+      skill: code-convert
+      depends_on: [ground]
+      requires_artifacts:
+        - inferred_schema.json
+        - repo_facts.json
+      produces_artifacts:
+        - converted/*.py
+      input_mappings:
+        parsed_sections: ingest.parsed_sections
+        node_schema: infer-schema.inferred_schema
+        allowlist: scaffold.allowlist
+  
+  initial_inputs:
+    source_type: TYPE1

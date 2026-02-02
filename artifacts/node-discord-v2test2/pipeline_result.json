@@ -1,0 +1,278 @@
+{
+  "pipeline_name": "convert_node_v1",
+  "correlation_id": "node-discord-v2test2",
+  "status": "failed",
+  "started_at": "2026-01-06T04:37:02.126823",
+  "completed_at": "2026-01-06T04:37:02.148822",
+  "duration_ms": 21,
+  "steps": [
+    {
+      "step_name": "normalize",
+      "skill_name": "node-normalize",
+      "status": "completed",
+      "started_at": "2026-01-06T04:37:02.127136",
+      "completed_at": "2026-01-06T04:37:02.138915",
+      "duration_ms": 11,
+      "outputs": {
+        "correlation_id": "node-discord-5caef68c",
+        "normalized_name": "discord",
+        "snapshot": {
+          "version": "1.0",
+          "created_at": "2026-01-06T04:37:02.138705+00:00",
+          "correlation_id": "node-discord-5caef68c",
+          "request": {
+            "raw_node_name": "Discord",
+            "normalized_name": "discord",
+            "source_refs": {}
+          },
+          "checksum": "18ed7776d8b29ba1"
+        },
+        "artifacts": {
+          "request_snapshot": "artifacts/node-discord-5caef68c/request_snapshot.json"
+        }
+      },
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "classify",
+      "skill_name": "source-classify",
+      "status": "completed",
+      "started_at": "2026-01-06T04:37:02.138932",
+      "completed_at": "2026-01-06T04:37:02.144933",
+      "duration_ms": 5,
+      "outputs": {
+        "source_type": "TYPE1",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "type": "ts_file",
+            "path_or_url": "input_sources/discord/Discord.node.ts",
+            "verified": true,
+            "description": "Found node file: Discord.node.ts"
+          },
+          {
+            "type": "ts_file",
+            "path_or_url": "input_sources/discord/v2/DiscordV2.node.ts",
+            "verified": true,
+            "description": "Found node file: DiscordV2.node.ts"
+          },
+          {
+            "type": "ts_file",
+            "path_or_url": "input_sources/discord/v1/DiscordV1.node.ts",
+            "verified": true,
+            "description": "Found node file: DiscordV1.node.ts"
+          },
+          {
+            "type": "v2_router",
+            "path_or_url": "input_sources/discord",
+            "verified": true,
+            "description": "Found router.ts - indicates v2 node structure"
+          },
+          {
+            "type": "v2_structure",
+            "path_or_url": "input_sources/discord",
+            "verified": true,
+            "description": "Found v2 directory structure with actions"
+          },
+          {
+            "type": "file_count",
+            "path_or_url": "input_sources/discord",
+            "verified": true,
+            "description": "Found 50 TypeScript files in source directory"
+          }
+        ],
+        "artifacts": {
+          "classification": "artifacts/node-discord-v2test2/classification.json"
+        }
+      },
+      "artifacts_produced": [
+        "artifacts/node-discord-v2test2/classification.json"
+      ],
+      "errors": [],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "ground",
+      "skill_name": "repo-ground",
+      "status": "failed",
+      "started_at": "2026-01-06T04:37:02.144947",
+      "completed_at": "2026-01-06T04:37:02.148784",
+      "duration_ms": 3,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required input: repo_root",
+        "Input validation failed"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "ingest",
+      "skill_name": "source-ingest",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:37:02.148797",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "infer-schema",
+      "skill_name": "schema-infer",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:37:02.148802",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "scaffold",
+      "skill_name": "node-scaffold",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:37:02.148808",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "convert",
+      "skill_name": "code-convert",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:37:02.148810",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "package",
+      "skill_name": "node-package",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:37:02.148812",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "pre-validate",
+      "skill_name": "node-validate",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:37:02.148814",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "apply",
+      "skill_name": "apply-changes",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:37:02.148817",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "smoke-test",
+      "skill_name": "node-smoke-test",
+      "status": "skipped",
+      "started_at": "2026-01-06T04:37:02.148819",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    }
+  ],
+  "outputs": {
+    "normalize": {
+      "correlation_id": "node-discord-5caef68c",
+      "normalized_name": "discord",
+      "snapshot": {
+        "version": "1.0",
+        "created_at": "2026-01-06T04:37:02.138705+00:00",
+        "correlation_id": "node-discord-5caef68c",
+        "request": {
+          "raw_node_name": "Discord",
+          "normalized_name": "discord",
+          "source_refs": {}
+        },
+        "checksum": "18ed7776d8b29ba1"
+      },
+      "artifacts": {
+        "request_snapshot": "artifacts/node-discord-5caef68c/request_snapshot.json"
+      }
+    },
+    "classify": {
+      "source_type": "TYPE1",
+      "confidence": 1.0,
+      "evidence": [
+        {
+          "type": "ts_file",
+          "path_or_url": "input_sources/discord/Discord.node.ts",
+          "verified": true,
+          "description": "Found node file: Discord.node.ts"
+        },
+        {
+          "type": "ts_file",
+          "path_or_url": "input_sources/discord/v2/DiscordV2.node.ts",
+          "verified": true,
+          "description": "Found node file: DiscordV2.node.ts"
+        },
+        {
+          "type": "ts_file",
+          "path_or_url": "input_sources/discord/v1/DiscordV1.node.ts",
+          "verified": true,
+          "description": "Found node file: DiscordV1.node.ts"
+        },
+        {
+          "type": "v2_router",
+          "path_or_url": "input_sources/discord",
+          "verified": true,
+          "description": "Found router.ts - indicates v2 node structure"
+        },
+        {
+          "type": "v2_structure",
+          "path_or_url": "input_sources/discord",
+          "verified": true,
+          "description": "Found v2 directory structure with actions"
+        },
+        {
+          "type": "file_count",
+          "path_or_url": "input_sources/discord",
+          "verified": true,
+          "description": "Found 50 TypeScript files in source directory"
+        }
+      ],
+      "artifacts": {
+        "classification": "artifacts/node-discord-v2test2/classification.json"
+      }
+    },
+    "ground": {}
+  },
+  "artifacts_dir": "artifacts/node-discord-v2test2",
+  "errors": [
+    "Step 'ground' failed"
+  ]
+}

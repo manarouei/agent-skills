@@ -1,0 +1,43 @@
+{
+  "correlation_id": "test-github-scenario-001",
+  "node_type": "github",
+  "test_scenarios": [
+    {
+      "scenario_name": "get_repository_info",
+      "description": "Get information about a public GitHub repository",
+      "operation": "getRepository",
+      "parameters": {
+        "owner": "n8n-io",
+        "repository": "n8n"
+      },
+      "credentials": {
+        "githubApi": "github-test-credential"
+      },
+      "input_data": null,
+      "expected_output": {
+        "type": "object",
+        "has_fields": ["name", "full_name", "owner", "description", "html_url"]
+      }
+    },
+    {
+      "scenario_name": "get_user_info",
+      "description": "Get authenticated user information",
+      "operation": "getUser",
+      "parameters": {},
+      "credentials": {
+        "githubApi": "github-test-credential"
+      },
+      "input_data": null,
+      "expected_output": {
+        "type": "object",
+        "has_fields": ["login", "id", "name", "email"]
+      }
+    }
+  ],
+  "platform_config": {
+    "base_url": "http://localhost:8000",
+    "auth_token": "${PLATFORM_AUTH_TOKEN}",
+    "timeout": 30
+  },
+  "execution_timeout": 60
+}

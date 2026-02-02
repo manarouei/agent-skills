@@ -1,0 +1,25 @@
+{
+  "correlation_id": "node-postgres-fix32-test",
+  "node_name": "Postgres",
+  "source_type": "TYPE1",
+  "operations_converted": 0,
+  "artifact_paths": [
+    "/home/toni/agent-skills/artifacts/node-postgres-fix32-test/converted/postgres.py",
+    "/home/toni/agent-skills/artifacts/node-postgres-fix32-test/converted/__init__.py"
+  ],
+  "target_paths": [
+    "nodes/postgres.py"
+  ],
+  "all_target_files": [
+    "nodes/postgres.py",
+    "nodes/__init__.py"
+  ],
+  "notes": [
+    "Selected PostgresV2.node.ts as main node (name match)",
+    "Found main node class for Postgres",
+    "Found 0 operation handlers",
+    "Using 1 parameters from inferred schema",
+    "No GenericFunctions.ts found, generating default helpers"
+  ],
+  "generated_at": "2026-01-07T08:26:09.994151"
+}

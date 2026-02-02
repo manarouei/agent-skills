@@ -1,0 +1,83 @@
+# Policy Configuration
+# Controls bounded autonomy and runtime behavior
+
+version: "1.0.0"
+
+# Runtime limits (hard caps)
+runtime:
+  max_steps: 50                    # Max steps per correlation_id
+  fix_loop_max: 3                  # Max fix iterations before escalation
+  max_changed_files: 20            # Max files changed per PR
+  default_timeout_seconds: 300     # Default skill timeout
+
+# PR/Merge behavior (SAFETY-CRITICAL)
+merge:
+  auto_merge_enabled: false        # NEVER auto-merge by default
+  require_human_review: true       # Always require human review for COMMIT
+
+# Agent capabilities limits  
+agent:
+  max_turns_per_context: 8         # Max turns before escalation
+  max_events_per_context: 100      # Max events in conversation log
+
+# Scope enforcement
+scope:
+  # Require git diff scope check for IMPLEMENT/COMMIT
+  require_git_diff_scope_check: true
+  
+  # Default forbidden paths (always blocked)
+  forbidden_paths:
+    - ".git/"
+    - ".github/workflows/"
+    - "*.env"
+    - "*secret*"
+    - "*credential*"
+    - "runtime/"            # Core runtime is protected
+    - "contracts/"          # Contracts are protected
+    - "scripts/agent_gate.py"  # Gate scripts are protected
+
+# Artifact retention
+artifacts:
+  # Auto-cleanup old artifacts after N days
+  retention_days: 30
+  
+  # Required artifacts for pr-prepare
+  required_for_pr:
+    - inferred_schema.json
+    - trace_map.json
+    - converted_node/
+    - validation_logs.txt
+
+# Sync Celery constraints (global)
+sync_celery:
+  # All generated code must be sync-safe
+  requires_sync_execution: true
+  forbids_async_dependencies: true
+  requires_timeouts_on_external_calls: true
+  forbids_background_tasks: true
+
+# Trace map requirements
+trace_map:
+  # Maximum percentage of ASSUMPTION entries
+  max_assumption_ratio: 0.30
+  
+  # Required evidence types
+  evidence_types:
+    - SOURCE_CODE
+    - API_DOCS
+    - ASSUMPTION
+
+# Learning loop
+learning:
+  # KB pattern categories
+  categories:
+    - auth
+    - pagination  
+    - ts_to_python
+    - service_quirk
+  
+  # Max patterns to inject per skill
+  max_patterns_per_skill: 8
+  
+  # Promotion requires human review
+  require_promotion_review: true

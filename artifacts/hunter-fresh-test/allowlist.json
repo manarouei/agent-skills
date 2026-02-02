@@ -1,0 +1,18 @@
+{
+  "node_name": "hunter",
+  "allowed_paths": [
+    "nodes/hunter*",
+    "nodes/hunter*",
+    "tests/*hunter*",
+    "tests/*hunter*",
+    "credentials/*hunter*",
+    "credentials/*hunter*"
+  ],
+  "forbidden_paths": [
+    "**/base.py",
+    "**/Base*.py",
+    "**/__init__.py"
+  ],
+  "generated_at": "2026-01-04T05:05:09.329194",
+  "correlation_id": "hunter-fresh-test"
+}

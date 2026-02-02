@@ -1,0 +1,18 @@
+{
+  "correlation_id": "node-github-fix20-1767770555",
+  "node_name": "github",
+  "class_name": "Github",
+  "module_name": "github",
+  "files_created": [
+    "/home/toni/agent-skills/artifacts/node-github-fix20-1767770555/generated_node/github.py",
+    "/home/toni/agent-skills/artifacts/node-github-fix20-1767770555/generated_node/__init__.py"
+  ],
+  "generated_at": "2026-01-07T07:22:36.681915",
+  "schema_summary": {
+    "type": "github",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 38,
+    "credential_count": 2
+  }
+}

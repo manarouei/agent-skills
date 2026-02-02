@@ -1,0 +1,1070 @@
+{
+  "type": "node",
+  "version": 1,
+  "description": {
+    "displayName": "Node",
+    "name": "node",
+    "inputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ]
+  },
+  "properties": {
+    "parameters": [
+      {
+        "name": "resource",
+        "display_name": "Resource",
+        "type": "OPTIONS",
+        "options": [
+          {
+            "name": "File",
+            "value": "file"
+          },
+          {
+            "name": "Issue",
+            "value": "issue"
+          },
+          {
+            "name": "Organization",
+            "value": "organization"
+          },
+          {
+            "name": "Release",
+            "value": "release"
+          },
+          {
+            "name": "Repository",
+            "value": "repository"
+          },
+          {
+            "name": "Review",
+            "value": "review"
+          },
+          {
+            "name": "User",
+            "value": "user"
+          },
+          {
+            "name": "Workflow",
+            "value": "workflow"
+          }
+        ],
+        "default": "issue",
+        "description": "The resource to operate on"
+      },
+      {
+        "name": "operation",
+        "display_name": "Operation",
+        "type": "OPTIONS",
+        "options": [
+          {
+            "name": "Get Repositories",
+            "value": "getRepositories",
+            "description": "Returns all repositories of an organization"
+          },
+          {
+            "name": "Create",
+            "value": "create",
+            "description": "Create a new issue"
+          },
+          {
+            "name": "Create Comment",
+            "value": "createComment",
+            "description": "Create a new comment on an issue"
+          },
+          {
+            "name": "Edit",
+            "value": "edit",
+            "description": "Edit an issue"
+          },
+          {
+            "name": "Get",
+            "value": "get",
+            "description": "Get the data of a single issue"
+          },
+          {
+            "name": "Lock",
+            "value": "lock",
+            "description": "Lock an issue"
+          },
+          {
+            "name": "Delete",
+            "value": "delete",
+            "description": "Delete a file in repository"
+          },
+          {
+            "name": "List",
+            "value": "list",
+            "description": "List contents of a folder"
+          },
+          {
+            "name": "Get Issues",
+            "value": "getIssues",
+            "description": "Returns issues of a repository"
+          },
+          {
+            "name": "Get License",
+            "value": "getLicense",
+            "description": "Returns the contents of the repository"
+          },
+          {
+            "name": "Get Profile",
+            "value": "getProfile",
+            "description": "Get the community profile of a repository with metrics, health score, description, license, etc"
+          },
+          {
+            "name": "Get Pull Requests",
+            "value": "getPullRequests",
+            "description": "Returns pull requests of a repository"
+          },
+          {
+            "name": "List Popular Paths",
+            "value": "listPopularPaths",
+            "description": "Get the top 10 popular content paths over the last 14 days"
+          },
+          {
+            "name": "List Referrers",
+            "value": "listReferrers",
+            "description": "Get the top 10 referrering domains over the last 14 days"
+          },
+          {
+            "name": "Invite",
+            "value": "invite",
+            "description": "Invites a user to an organization"
+          },
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "description": "Get many repository releases"
+          },
+          {
+            "name": "Update",
+            "value": "update",
+            "description": "Update a release"
+          },
+          {
+            "name": "Disable",
+            "value": "disable",
+            "description": "Disable a workflow"
+          },
+          {
+            "name": "Dispatch",
+            "value": "dispatch",
+            "description": "Dispatch a workflow event"
+          },
+          {
+            "name": "Dispatch and Wait for Completion",
+            "value": "dispatchAndWait",
+            "description": "Dispatch a workflow event and wait for a webhook to be called before proceeding"
+          },
+          {
+            "name": "Enable",
+            "value": "enable",
+            "description": "Enable a workflow"
+          },
+          {
+            "name": "Get Usage",
+            "value": "getUsage",
+            "description": "Get the usage of a workflow"
+          }
+        ],
+        "default": "getRepositories",
+        "description": "Operation to perform"
+      },
+      {
+        "name": "authentication",
+        "display_name": "Authentication",
+        "type": "OPTIONS",
+        "default": "accessToken",
+        "options": [
+          {
+            "name": "Access Token",
+            "value": "accessToken"
+          },
+          {
+            "name": "OAuth2",
+            "value": "oAuth2"
+          }
+        ]
+      },
+      {
+        "name": "webhookNotice",
+        "display_name": "Your execution will pause until a webhook is called. This URL will be generated at runtime and passed to your Github workflow as a resumeUrl input.",
+        "type": "NOTICE",
+        "default": "",
+        "display_options": {
+          "show": {
+            "operation": [
+              "dispatchAndWait"
+            ],
+            "resource": [
+              "workflow"
+            ]
+          }
+        }
+      },
+      {
+        "name": "owner",
+        "display_name": "Repository Owner",
+        "type": "RESOURCELOCATOR",
+        "default": "",
+        "required": true
+      },
+      {
+        "name": "repository",
+        "display_name": "Repository Name",
+        "type": "RESOURCELOCATOR",
+        "default": "",
+        "required": true
+      },
+      {
+        "name": "workflowId",
+        "display_name": "Workflow",
+        "type": "RESOURCELOCATOR",
+        "default": "",
+        "required": true,
+        "description": "The workflow to dispatch",
+        "display_options": {
+          "show": {
+            "operation": [
+              "disable",
+              "dispatch",
+              "dispatchAndWait",
+              "get",
+              "getUsage",
+              "enable"
+            ],
+            "resource": [
+              "workflow"
+            ]
+          }
+        }
+      },
+      {
+        "name": "ref",
+        "display_name": "Ref",
+        "type": "STRING",
+        "default": "main",
+        "required": true,
+        "description": "The git reference for the workflow dispatch (branch or tag name)",
+        "display_options": {
+          "show": {
+            "operation": [
+              "dispatch",
+              "dispatchAndWait"
+            ],
+            "resource": [
+              "workflow"
+            ]
+          }
+        }
+      },
+      {
+        "name": "inputs",
+        "display_name": "Inputs",
+        "type": "JSON",
+        "default": "{}",
+        "description": "JSON object with input parameters for the workflow",
+        "display_options": {
+          "show": {
+            "operation": [
+              "dispatch",
+              "dispatchAndWait"
+            ],
+            "resource": [
+              "workflow"
+            ]
+          }
+        }
+      },
+      {
+        "name": "filePath",
+        "display_name": "File Path",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The file path of the file. Has to contain the full path.",
+        "display_options": {
+          "show": {
+            "resource": [
+              "file"
+            ]
+          }
+        }
+      },
+      {
+        "name": "binaryData",
+        "display_name": "Binary File",
+        "type": "BOOLEAN",
+        "default": false,
+        "required": true,
+        "description": "Whether the data to upload should be taken from binary field",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create",
+              "edit"
+            ],
+            "resource": [
+              "file"
+            ]
+          }
+        }
+      },
+      {
+        "name": "fileContent",
+        "display_name": "File Content",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The text content of the file",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create",
+              "edit"
+            ],
+            "resource": [
+              "file"
+            ]
+          }
+        }
+      },
+      {
+        "name": "binaryPropertyName",
+        "display_name": "Input Binary Field",
+        "type": "STRING",
+        "default": "data",
+        "required": true,
+        "display_options": {
+          "show": {
+            "operation": [
+              "create",
+              "edit"
+            ],
+            "resource": [
+              "file"
+            ]
+          }
+        }
+      },
+      {
+        "name": "commitMessage",
+        "display_name": "Commit Message",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "display_options": {
+          "show": {
+            "operation": [
+              "create",
+              "delete",
+              "edit"
+            ],
+            "resource": [
+              "file"
+            ]
+          }
+        }
+      },
+      {
+        "name": "additionalParameters",
+        "display_name": "Additional Parameters",
+        "type": "COLLECTION",
+        "default": "",
+        "description": "Additional fields to add",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create",
+              "delete",
+              "edit"
+            ],
+            "resource": [
+              "file"
+            ]
+          }
+        }
+      },
+      {
+        "name": "asBinaryProperty",
+        "display_name": "As Binary Property",
+        "type": "BOOLEAN",
+        "default": true,
+        "description": "Whether to set the data of the file as binary property instead of returning the raw API response",
+        "display_options": {
+          "show": {
+            "operation": [
+              "get"
+            ],
+            "resource": [
+              "file"
+            ]
+          }
+        }
+      },
+      {
+        "name": "title",
+        "display_name": "Title",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The title of the issue",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create"
+            ],
+            "resource": [
+              "issue"
+            ]
+          }
+        }
+      },
+      {
+        "name": "body",
+        "display_name": "Body",
+        "type": "STRING",
+        "default": "",
+        "description": "The body of the issue",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create"
+            ],
+            "resource": [
+              "issue"
+            ]
+          }
+        }
+      },
+      {
+        "name": "labels",
+        "display_name": "Labels",
+        "type": "COLLECTION",
+        "default": "",
+        "description": "Label to add to issue",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create"
+            ],
+            "resource": [
+              "issue"
+            ]
+          }
+        }
+      },
+      {
+        "name": "assignees",
+        "display_name": "Assignees",
+        "type": "COLLECTION",
+        "default": "",
+        "description": "User to assign issue too",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create"
+            ],
+            "resource": [
+              "issue"
+            ]
+          }
+        }
+      },
+      {
+        "name": "issueNumber",
+        "display_name": "Issue Number",
+        "type": "NUMBER",
+        "default": 0,
+        "required": true,
+        "description": "The number of the issue on which to create the comment on",
+        "display_options": {
+          "show": {
+            "operation": [
+              "createComment"
+            ],
+            "resource": [
+              "issue"
+            ]
+          }
+        }
+      },
+      {
+        "name": "editFields",
+        "display_name": "Edit Fields",
+        "type": "COLLECTION",
+        "default": "",
+        "description": "User to assign issue to",
+        "display_options": {
+          "show": {
+            "operation": [
+              "edit"
+            ],
+            "resource": [
+              "issue"
+            ]
+          }
+        }
+      },
+      {
+        "name": "lockReason",
+        "display_name": "Lock Reason",
+        "type": "OPTIONS",
+        "default": "resolved",
+        "description": "The issue is Off-Topic",
+        "display_options": {
+          "show": {
+            "operation": [
+              "lock"
+            ],
+            "resource": [
+              "issue"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Off-Topic",
+            "value": "off-topic"
+          },
+          {
+            "name": "Too Heated",
+            "value": "too heated"
+          },
+          {
+            "name": "Resolved",
+            "value": "resolved"
+          },
+          {
+            "name": "Spam",
+            "value": "spam"
+          }
+        ]
+      },
+      {
+        "name": "releaseTag",
+        "display_name": "Tag",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The tag of the release",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create"
+            ],
+            "resource": [
+              "release"
+            ]
+          }
+        }
+      },
+      {
+        "name": "additionalFields",
+        "display_name": "Additional Fields",
+        "type": "COLLECTION",
+        "default": "",
+        "description": "The name of the issue",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create"
+            ],
+            "resource": [
+              "release"
+            ]
+          }
+        }
+      },
+      {
+        "name": "release_id",
+        "display_name": "Release ID",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "display_options": {
+          "show": {
+            "operation": [
+              "get",
+              "delete",
+              "update"
+            ],
+            "resource": [
+              "release"
+            ]
+          }
+        }
+      },
+      {
+        "name": "returnAll",
+        "display_name": "Return All",
+        "type": "BOOLEAN",
+        "default": false,
+        "description": "Whether to return all results or only up to a given limit",
+        "display_options": {
+          "show": {
+            "operation": [
+              "getAll"
+            ],
+            "resource": [
+              "release"
+            ]
+          }
+        }
+      },
+      {
+        "name": "limit",
+        "display_name": "Limit",
+        "type": "NUMBER",
+        "default": 50,
+        "description": "Max number of results to return",
+        "display_options": {
+          "show": {
+            "operation": [
+              "getAll"
+            ],
+            "resource": [
+              "release"
+            ]
+          }
+        }
+      },
+      {
+        "name": "getRepositoryIssuesFilters",
+        "display_name": "Filters",
+        "type": "COLLECTION",
+        "default": "",
+        "description": "Return only issues which are assigned to a specific user",
+        "display_options": {
+          "show": {
+            "operation": [
+              "getIssues"
+            ],
+            "resource": [
+              "repository"
+            ]
+          }
+        }
+      },
+      {
+        "name": "getRepositoryPullRequestsFilters",
+        "display_name": "Filters",
+        "type": "COLLECTION",
+        "default": "",
+        "description": "Returns pull requests with any state",
+        "display_options": {
+          "show": {
+            "operation": [
+              "getPullRequests"
+            ],
+            "resource": [
+              "repository"
+            ]
+          }
+        }
+      },
+      {
+        "name": "pullRequestNumber",
+        "display_name": "PR Number",
+        "type": "NUMBER",
+        "default": 0,
+        "required": true,
+        "description": "The number of the pull request",
+        "display_options": {
+          "show": {
+            "operation": [
+              "get",
+              "update"
+            ],
+            "resource": [
+              "review"
+            ]
+          }
+        }
+      },
+      {
+        "name": "reviewId",
+        "display_name": "Review ID",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "ID of the review",
+        "display_options": {
+          "show": {
+            "operation": [
+              "get",
+              "update"
+            ],
+            "resource": [
+              "review"
+            ]
+          }
+        }
+      },
+      {
+        "name": "event",
+        "display_name": "Event",
+        "type": "OPTIONS",
+        "default": "approve",
+        "description": "Approve the pull request",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create"
+            ],
+            "resource": [
+              "review"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Approve",
+            "value": "approve"
+          },
+          {
+            "name": "Request Change",
+            "value": "requestChanges"
+          },
+          {
+            "name": "Comment",
+            "value": "comment"
+          },
+          {
+            "name": "Pending",
+            "value": "pending"
+          }
+        ]
+      },
+      {
+        "name": "organization",
+        "display_name": "Organization",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The GitHub organization that the user is being invited to",
+        "display_options": {
+          "show": {
+            "operation": [
+              "invite"
+            ],
+            "resource": [
+              "user"
+            ]
+          }
+        }
+      },
+      {
+        "name": "email",
+        "display_name": "Email",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The email address of the invited user",
+        "display_options": {
+          "show": {
+            "operation": [
+              "invite"
+            ],
+            "resource": [
+              "user"
+            ]
+          }
+        }
+      },
+      {
+        "name": "notice",
+        "display_name": "Only members with owner privileges for an organization or admin privileges for a repository can set up the webhooks this node requires.",
+        "type": "NOTICE",
+        "default": ""
+      },
+      {
+        "name": "events",
+        "display_name": "Events",
+        "type": "MULTIOPTIONS",
+        "default": [],
+        "required": true,
+        "description": "Any time any event is triggered (Wildcard Event)",
+        "options": [
+          {
+            "name": "*",
+            "value": "*"
+          },
+          {
+            "name": "Check Run",
+            "value": "check_run"
+          },
+          {
+            "name": "Check Suite",
+            "value": "check_suite"
+          },
+          {
+            "name": "Commit Comment",
+            "value": "commit_comment"
+          },
+          {
+            "name": "Create",
+            "value": "create"
+          },
+          {
+            "name": "Delete",
+            "value": "delete"
+          },
+          {
+            "name": "Deploy Key",
+            "value": "deploy_key"
+          },
+          {
+            "name": "Deployment",
+            "value": "deployment"
+          },
+          {
+            "name": "Deployment Status",
+            "value": "deployment_status"
+          },
+          {
+            "name": "Fork",
+            "value": "fork"
+          },
+          {
+            "name": "Github App Authorization",
+            "value": "github_app_authorization"
+          },
+          {
+            "name": "Gollum",
+            "value": "gollum"
+          },
+          {
+            "name": "Installation",
+            "value": "installation"
+          },
+          {
+            "name": "Installation Repositories",
+            "value": "installation_repositories"
+          },
+          {
+            "name": "Issue Comment",
+            "value": "issue_comment"
+          },
+          {
+            "name": "Issues",
+            "value": "issues"
+          },
+          {
+            "name": "Label",
+            "value": "label"
+          },
+          {
+            "name": "Marketplace Purchase",
+            "value": "marketplace_purchase"
+          },
+          {
+            "name": "Member",
+            "value": "member"
+          },
+          {
+            "name": "Membership",
+            "value": "membership"
+          },
+          {
+            "name": "Meta",
+            "value": "meta"
+          },
+          {
+            "name": "Milestone",
+            "value": "milestone"
+          },
+          {
+            "name": "Org Block",
+            "value": "org_block"
+          },
+          {
+            "name": "Organization",
+            "value": "organization"
+          },
+          {
+            "name": "Page Build",
+            "value": "page_build"
+          },
+          {
+            "name": "Project",
+            "value": "project"
+          },
+          {
+            "name": "Project Card",
+            "value": "project_card"
+          },
+          {
+            "name": "Project Column",
+            "value": "project_column"
+          },
+          {
+            "name": "Public",
+            "value": "public"
+          },
+          {
+            "name": "Pull Request",
+            "value": "pull_request"
+          },
+          {
+            "name": "Pull Request Review",
+            "value": "pull_request_review"
+          },
+          {
+            "name": "Pull Request Review Comment",
+            "value": "pull_request_review_comment"
+          },
+          {
+            "name": "Push",
+            "value": "push"
+          },
+          {
+            "name": "Release",
+            "value": "release"
+          },
+          {
+            "name": "Repository",
+            "value": "repository"
+          },
+          {
+            "name": "Repository Import",
+            "value": "repository_import"
+          },
+          {
+            "name": "Repository Vulnerability Alert",
+            "value": "repository_vulnerability_alert"
+          },
+          {
+            "name": "Security Advisory",
+            "value": "security_advisory"
+          },
+          {
+            "name": "Star",
+            "value": "star"
+          },
+          {
+            "name": "Status",
+            "value": "status"
+          },
+          {
+            "name": "Team",
+            "value": "team"
+          },
+          {
+            "name": "Team Add",
+            "value": "team_add"
+          },
+          {
+            "name": "Watch",
+            "value": "watch"
+          }
+        ]
+      },
+      {
+        "name": "options",
+        "display_name": "Options",
+        "type": "COLLECTION",
+        "default": "",
+        "description": "Whether the SSL certificate of the n8n host be verified by GitHub when delivering payloads"
+      }
+    ],
+    "credentials": [
+      {
+        "name": "githubApi",
+        "required": true
+      },
+      {
+        "name": "githubOAuth2Api",
+        "required": true
+      }
+    ]
+  },
+  "operations": [
+    {
+      "name": "getRepositories",
+      "display_name": "Get Repositories",
+      "description": "Returns all repositories of an organization"
+    },
+    {
+      "name": "checkExists",
+      "description": "Operation: checkExists"
+    },
+    {
+      "name": "create",
+      "description": "Operation: create"
+    },
+    {
+      "name": "webhook",
+      "description": "Operation: webhook"
+    },
+    {
+      "name": "getUsers",
+      "description": "Operation: getUsers"
+    },
+    {
+      "name": "getRepositories",
+      "description": "Operation: getRepositories"
+    },
+    {
+      "name": "getWorkflows",
+      "description": "Operation: getWorkflows"
+    },
+    {
+      "name": "getRefs",
+      "description": "Operation: getRefs"
+    }
+  ],
+  "resources": [
+    {
+      "name": "File",
+      "value": "file"
+    },
+    {
+      "name": "Issue",
+      "value": "issue"
+    },
+    {
+      "name": "Organization",
+      "value": "organization"
+    },
+    {
+      "name": "Release",
+      "value": "release"
+    },
+    {
+      "name": "Repository",
+      "value": "repository"
+    },
+    {
+      "name": "Review",
+      "value": "review"
+    },
+    {
+      "name": "User",
+      "value": "user"
+    },
+    {
+      "name": "Workflow",
+      "value": "workflow"
+    }
+  ],
+  "credentials": [
+    {
+      "name": "githubApi",
+      "required": true
+    },
+    {
+      "name": "githubOAuth2Api",
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "name": "Start",
+      "parameters": {},
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "id": "github_node",
+      "type": "github",
+      "name": "GitHub Node",
+      "parameters": {
+        "operation": "getUser"
+      },
+      "credentials": {
+        "githubApi": "cred_github_test_001"
+      },
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "name": "End",
+      "parameters": {},
+      "position": [
+        650,
+        300
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "source": "start",
+      "target": "github_node",
+      "sourceOutput": "main",
+      "targetInput": "main"
+    },
+    {
+      "source": "github_node",
+      "target": "end",
+      "sourceOutput": "main",
+      "targetInput": "main"
+    }
+  ],
+  "settings": {
+    "executionTimeout": 60
+  }
+}

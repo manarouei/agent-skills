@@ -1,0 +1,18 @@
+{
+  "correlation_id": "github-avidflow-v2",
+  "node_name": "Github",
+  "class_name": "Github",
+  "module_name": "github",
+  "files_created": [
+    "/home/toni/agent-skills/artifacts/github-avidflow-v2/generated_node/github.py",
+    "/home/toni/agent-skills/artifacts/github-avidflow-v2/generated_node/__init__.py"
+  ],
+  "generated_at": "2026-01-07T10:30:07.931858",
+  "schema_summary": {
+    "type": "github",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 38,
+    "credential_count": 2
+  }
+}

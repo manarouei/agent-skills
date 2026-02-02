@@ -1,0 +1,191 @@
+{
+  "pipeline_name": "type1-convert",
+  "correlation_id": "node-github-89cd9679",
+  "status": "blocked",
+  "started_at": "2026-01-07T04:58:24.314783",
+  "completed_at": "2026-01-07T04:58:24.470079",
+  "duration_ms": 155,
+  "steps": [
+    {
+      "step_name": "ingest",
+      "skill_name": "source-ingest",
+      "status": "completed",
+      "started_at": "2026-01-07T04:58:24.314876",
+      "completed_at": "2026-01-07T04:58:24.319923",
+      "duration_ms": 5,
+      "outputs": {
+        "skipped": true,
+        "reason": "idempotency"
+      },
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "infer-schema",
+      "skill_name": "schema-infer",
+      "status": "completed",
+      "started_at": "2026-01-07T04:58:24.319941",
+      "completed_at": "2026-01-07T04:58:24.407470",
+      "duration_ms": 87,
+      "outputs": {
+        "skipped": true,
+        "reason": "idempotency"
+      },
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "scaffold",
+      "skill_name": "node-scaffold",
+      "status": "blocked",
+      "started_at": "2026-01-07T04:58:24.407485",
+      "completed_at": "2026-01-07T04:58:24.407517",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required artifacts: ['inferred_schema.json']"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "ground",
+      "skill_name": "repo-ground",
+      "status": "completed",
+      "started_at": "2026-01-07T04:58:24.407528",
+      "completed_at": "2026-01-07T04:58:24.459264",
+      "duration_ms": 51,
+      "outputs": {
+        "repo_facts_path": "/home/toni/agent-skills/artifacts/node-github-89cd9679/repo_facts.json",
+        "repo_facts": {
+          "basenode_contract_path": "contracts/BASENODE_CONTRACT.md",
+          "node_loader_paths": [
+            "runtime/kb/loader.py"
+          ],
+          "golden_node_paths": [
+            "nodepacks/core/nodes.py",
+            "src/node_sdk/basenode.py"
+          ],
+          "test_command": "pytest tests/"
+        },
+        "target_repo_layout_path": "/home/toni/agent-skills/artifacts/node-github-89cd9679/target_repo_layout.json",
+        "target_repo_layout": {
+          "target_repo_root": "/home/toni/agent-skills",
+          "node_output_base_dir": "nodes",
+          "registry_file": "nodes/__init__.py",
+          "registry_strategy": "dict_import",
+          "registry_dict_name": "node_definitions",
+          "base_class_file": "nodes/base.py",
+          "base_class_name": "BaseNode",
+          "tests_dir": "tests",
+          "python_version": null,
+          "venv_path": ".venv",
+          "extra_allowlist_patterns": []
+        }
+      },
+      "artifacts_produced": [
+        "/home/toni/agent-skills/artifacts/node-github-89cd9679/repo_facts.json",
+        "/home/toni/agent-skills/artifacts/node-github-89cd9679/target_repo_layout.json"
+      ],
+      "errors": [],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "convert",
+      "skill_name": "code-convert",
+      "status": "blocked",
+      "started_at": "2026-01-07T04:58:24.459302",
+      "completed_at": "2026-01-07T04:58:24.459354",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required artifacts: ['inferred_schema.json']"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "generate-tests",
+      "skill_name": "test-generate",
+      "status": "failed",
+      "started_at": "2026-01-07T04:58:24.459368",
+      "completed_at": "2026-01-07T04:58:24.463799",
+      "duration_ms": 4,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required input: node_schema",
+        "Missing required input: files_modified",
+        "Missing required input: allowlist",
+        "Input validation failed"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "validate",
+      "skill_name": "code-validate",
+      "status": "failed",
+      "started_at": "2026-01-07T04:58:24.463815",
+      "completed_at": "2026-01-07T04:58:24.470062",
+      "duration_ms": 6,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required input: files_modified",
+        "Missing required input: test_files",
+        "Missing required input: allowlist",
+        "Input validation failed"
+      ],
+      "skipped_reason": null
+    }
+  ],
+  "outputs": {
+    "ingest": {
+      "skipped": true,
+      "reason": "idempotency"
+    },
+    "infer-schema": {
+      "skipped": true,
+      "reason": "idempotency"
+    },
+    "scaffold": {},
+    "ground": {
+      "repo_facts_path": "/home/toni/agent-skills/artifacts/node-github-89cd9679/repo_facts.json",
+      "repo_facts": {
+        "basenode_contract_path": "contracts/BASENODE_CONTRACT.md",
+        "node_loader_paths": [
+          "runtime/kb/loader.py"
+        ],
+        "golden_node_paths": [
+          "nodepacks/core/nodes.py",
+          "src/node_sdk/basenode.py"
+        ],
+        "test_command": "pytest tests/"
+      },
+      "target_repo_layout_path": "/home/toni/agent-skills/artifacts/node-github-89cd9679/target_repo_layout.json",
+      "target_repo_layout": {
+        "target_repo_root": "/home/toni/agent-skills",
+        "node_output_base_dir": "nodes",
+        "registry_file": "nodes/__init__.py",
+        "registry_strategy": "dict_import",
+        "registry_dict_name": "node_definitions",
+        "base_class_file": "nodes/base.py",
+        "base_class_name": "BaseNode",
+        "tests_dir": "tests",
+        "python_version": null,
+        "venv_path": ".venv",
+        "extra_allowlist_patterns": []
+      }
+    },
+    "convert": {},
+    "generate-tests": {},
+    "validate": {}
+  },
+  "artifacts_dir": "/home/toni/agent-skills/artifacts/node-github-89cd9679",
+  "errors": [
+    "Step 'scaffold' blocked by gate",
+    "Step 'convert' blocked by gate"
+  ]
+}

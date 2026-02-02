@@ -1,0 +1,18 @@
+{
+  "correlation_id": "convert-redis-test-003",
+  "node_name": "redis",
+  "class_name": "Redis",
+  "module_name": "redis",
+  "files_created": [
+    "/home/toni/agent-skills/artifacts/convert-redis-test-003/generated_node/redis.py",
+    "/home/toni/agent-skills/artifacts/convert-redis-test-003/generated_node/__init__.py"
+  ],
+  "generated_at": "2026-02-02T05:23:55.328833",
+  "schema_summary": {
+    "type": "redis",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 15,
+    "credential_count": 1
+  }
+}

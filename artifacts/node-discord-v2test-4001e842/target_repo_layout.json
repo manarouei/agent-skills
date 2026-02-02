@@ -1,0 +1,13 @@
+{
+  "target_repo_root": "/home/toni/n8n/back",
+  "node_output_base_dir": "nodes",
+  "registry_file": "nodes/__init__.py",
+  "registry_strategy": "dict_import",
+  "registry_dict_name": "node_definitions",
+  "base_class_file": "nodes/base.py",
+  "base_class_name": "BaseNode",
+  "tests_dir": "tests",
+  "python_version": "3.10",
+  "venv_path": ".venv",
+  "extra_allowlist_patterns": []
+}

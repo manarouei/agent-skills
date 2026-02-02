@@ -1,0 +1,28 @@
+{
+  "correlation_id": "node-github-014",
+  "node_name": "Github",
+  "source_type": "TYPE1",
+  "operations_converted": 0,
+  "artifact_paths": [
+    "/home/toni/agent-skills/artifacts/node-github-014/converted/github.py",
+    "/home/toni/agent-skills/artifacts/node-github-014/converted/__init__.py"
+  ],
+  "target_paths": [
+    "nodes/github.py"
+  ],
+  "all_target_files": [
+    "nodes/github.py",
+    "nodes/__init__.py"
+  ],
+  "notes": [
+    "Found main node class for Github",
+    "DEBUG: main_node_ts length = 18612",
+    "DEBUG: 'async execute' in source = False",
+    "DEBUG: execute_body length = 0",
+    "WARNING: Could not extract execute() body, using scaffold",
+    "Found 0 operation handlers",
+    "Converted GenericFunctions.ts to Python helpers",
+    "Using 38 parameters from inferred schema"
+  ],
+  "generated_at": "2026-01-06T09:26:37.333430"
+}

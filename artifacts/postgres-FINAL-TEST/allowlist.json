@@ -1,0 +1,18 @@
+{
+  "node_name": "postgres",
+  "allowed_paths": [
+    "nodes/postgres*",
+    "nodes/postgres*",
+    "tests/*postgres*",
+    "tests/*postgres*",
+    "credentials/*postgres*",
+    "credentials/*postgres*"
+  ],
+  "forbidden_paths": [
+    "**/base.py",
+    "**/Base*.py",
+    "**/__init__.py"
+  ],
+  "generated_at": "2026-01-07T09:04:42.010197",
+  "correlation_id": "postgres-FINAL-TEST"
+}

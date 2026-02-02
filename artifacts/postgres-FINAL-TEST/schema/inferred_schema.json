@@ -1,0 +1,61 @@
+{
+  "type": "postgres",
+  "version": 1,
+  "description": {
+    "displayName": "Postgres",
+    "name": "postgres",
+    "inputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ]
+  },
+  "properties": {
+    "parameters": [
+      {
+        "name": "resource",
+        "display_name": "Resource",
+        "type": "OPTIONS",
+        "options": [
+          {
+            "name": "Database",
+            "value": "database"
+          }
+        ],
+        "default": "database",
+        "description": "The resource to operate on"
+      }
+    ],
+    "credentials": [
+      {
+        "name": "postgres",
+        "required": true
+      }
+    ]
+  },
+  "operations": [
+    {
+      "name": "execute",
+      "description": "Default operation"
+    }
+  ],
+  "resources": [
+    {
+      "name": "Database",
+      "value": "database"
+    }
+  ],
+  "credentials": [
+    {
+      "name": "postgres",
+      "required": true
+    }
+  ]
+}

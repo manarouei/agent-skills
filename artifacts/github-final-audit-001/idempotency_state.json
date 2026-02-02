@@ -1,0 +1,22 @@
+{
+  "source-ingest:39b1da0f85b3dd9d": {
+    "completed_at": "2026-02-01T09:54:07.236301",
+    "skill": "source-ingest"
+  },
+  "schema-infer:39b1da0f85b3dd9d": {
+    "completed_at": "2026-02-01T09:54:07.680935",
+    "skill": "schema-infer"
+  },
+  "node-scaffold:39b1da0f85b3dd9d": {
+    "completed_at": "2026-02-01T09:54:07.695653",
+    "skill": "node-scaffold"
+  },
+  "repo-ground:39b1da0f85b3dd9d": {
+    "completed_at": "2026-02-01T09:54:07.846963",
+    "skill": "repo-ground"
+  },
+  "code-convert:39b1da0f85b3dd9d": {
+    "completed_at": "2026-02-01T09:54:07.892888",
+    "skill": "code-convert"
+  }
+}

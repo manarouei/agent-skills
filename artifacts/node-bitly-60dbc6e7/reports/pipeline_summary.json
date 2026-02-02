@@ -1,0 +1,118 @@
+{
+  "pipeline_name": "convert_node_v1",
+  "correlation_id": "node-bitly-60dbc6e7",
+  "status": "blocked",
+  "started_at": "2026-01-04T10:59:50.055356",
+  "completed_at": "2026-01-04T10:59:50.056259",
+  "duration_ms": 0,
+  "node_id": "bitly",
+  "target_repo": "/home/toni/n8n/back",
+  "artifacts_dir": "/home/toni/agent-skills/artifacts/node-bitly-60dbc6e7",
+  "steps": [
+    {
+      "name": "normalize",
+      "skill": "node-normalize",
+      "status": "completed",
+      "duration_ms": 0,
+      "errors": [],
+      "artifacts_produced": []
+    },
+    {
+      "name": "classify",
+      "skill": "source-classify",
+      "status": "completed",
+      "duration_ms": 0,
+      "errors": [],
+      "artifacts_produced": []
+    },
+    {
+      "name": "ground",
+      "skill": "repo-ground",
+      "status": "completed",
+      "duration_ms": 0,
+      "errors": [],
+      "artifacts_produced": []
+    },
+    {
+      "name": "ingest",
+      "skill": "source-ingest",
+      "status": "completed",
+      "duration_ms": 0,
+      "errors": [],
+      "artifacts_produced": []
+    },
+    {
+      "name": "infer-schema",
+      "skill": "schema-infer",
+      "status": "blocked",
+      "duration_ms": 0,
+      "errors": [
+        "Missing required artifacts: ['repo_facts.json']"
+      ],
+      "artifacts_produced": []
+    },
+    {
+      "name": "scaffold",
+      "skill": "node-scaffold",
+      "status": "blocked",
+      "duration_ms": 0,
+      "errors": [
+        "Missing required artifacts: ['schema/inferred_schema.json']"
+      ],
+      "artifacts_produced": []
+    },
+    {
+      "name": "convert",
+      "skill": "code-convert",
+      "status": "blocked",
+      "duration_ms": 0,
+      "errors": [
+        "Missing required artifacts: ['allowlist.json', 'repo_facts.json']"
+      ],
+      "artifacts_produced": []
+    },
+    {
+      "name": "package",
+      "skill": "node-package",
+      "status": "blocked",
+      "duration_ms": 0,
+      "errors": [
+        "Missing required artifacts: ['target_repo_layout.json']"
+      ],
+      "artifacts_produced": []
+    },
+    {
+      "name": "pre-validate",
+      "skill": "node-validate",
+      "status": "blocked",
+      "duration_ms": 0,
+      "errors": [
+        "Missing required artifacts: ['package/']"
+      ],
+      "artifacts_produced": []
+    },
+    {
+      "name": "apply",
+      "skill": "apply-changes",
+      "status": "skipped",
+      "duration_ms": 0,
+      "errors": [],
+      "artifacts_produced": []
+    },
+    {
+      "name": "smoke-test",
+      "skill": "node-smoke-test",
+      "status": "skipped",
+      "duration_ms": 0,
+      "errors": [],
+      "artifacts_produced": []
+    }
+  ],
+  "errors": [
+    "Step 'infer-schema' blocked by gate",
+    "Step 'scaffold' blocked by gate",
+    "Step 'convert' blocked by gate",
+    "Step 'package' blocked by gate",
+    "Step 'pre-validate' blocked by gate"
+  ]
+}

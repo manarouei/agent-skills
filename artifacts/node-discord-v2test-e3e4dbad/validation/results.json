@@ -1,0 +1,43 @@
+{
+  "correlation_id": "node-discord-v2test-e3e4dbad",
+  "valid": true,
+  "checks": [
+    {
+      "name": "[discord.py] Syntax",
+      "passed": true,
+      "details": "Syntax valid"
+    },
+    {
+      "name": "[discord.py] AST",
+      "passed": true,
+      "details": "AST parsed successfully"
+    },
+    {
+      "name": "[discord.py] Imports",
+      "passed": true,
+      "details": "Found 5 imports"
+    },
+    {
+      "name": "[discord.py] Sync Celery",
+      "passed": true,
+      "details": "No async patterns detected"
+    },
+    {
+      "name": "[discord.py] Node Class",
+      "passed": true,
+      "details": "Valid node class: DiscordNode"
+    },
+    {
+      "name": "[discord.py] Timeouts",
+      "passed": false,
+      "details": "HTTP call 'get' at line 125 missing timeout; HTTP call 'get' at line 127 missing timeout; HTTP call 'get' at line 129 missing timeout; HTTP call 'get' at line 86 missing timeout; HTTP call 'get' at line 126 missing timeout"
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "[discord.py] HTTP call 'get' at line 125 missing timeout; HTTP call 'get' at line 127 missing timeout; HTTP call 'get' at line 129 missing timeout; HTTP call 'get' at line 86 missing timeout; HTTP call 'get' at line 126 missing timeout"
+  ],
+  "files_checked": [
+    "discord.py"
+  ]
+}

@@ -1,0 +1,189 @@
+{
+  "pipeline_name": "convert_node_v1",
+  "correlation_id": "node-bitly-1baef980",
+  "status": "blocked",
+  "started_at": "2026-01-04T12:13:49.995823",
+  "completed_at": "2026-01-04T12:13:49.996545",
+  "duration_ms": 0,
+  "steps": [
+    {
+      "step_name": "normalize",
+      "skill_name": "node-normalize",
+      "status": "completed",
+      "started_at": "2026-01-04T12:13:49.996064",
+      "completed_at": "2026-01-04T12:13:49.996080",
+      "duration_ms": 0,
+      "outputs": {
+        "dry_run": true
+      },
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Dry run mode"
+    },
+    {
+      "step_name": "classify",
+      "skill_name": "source-classify",
+      "status": "completed",
+      "started_at": "2026-01-04T12:13:49.996121",
+      "completed_at": "2026-01-04T12:13:49.996131",
+      "duration_ms": 0,
+      "outputs": {
+        "dry_run": true
+      },
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Dry run mode"
+    },
+    {
+      "step_name": "ground",
+      "skill_name": "repo-ground",
+      "status": "completed",
+      "started_at": "2026-01-04T12:13:49.996168",
+      "completed_at": "2026-01-04T12:13:49.996175",
+      "duration_ms": 0,
+      "outputs": {
+        "dry_run": true
+      },
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Dry run mode"
+    },
+    {
+      "step_name": "ingest",
+      "skill_name": "source-ingest",
+      "status": "completed",
+      "started_at": "2026-01-04T12:13:49.996187",
+      "completed_at": "2026-01-04T12:13:49.996211",
+      "duration_ms": 0,
+      "outputs": {
+        "dry_run": true
+      },
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Dry run mode"
+    },
+    {
+      "step_name": "infer-schema",
+      "skill_name": "schema-infer",
+      "status": "blocked",
+      "started_at": "2026-01-04T12:13:49.996222",
+      "completed_at": "2026-01-04T12:13:49.996259",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required artifacts: ['repo_facts.json']"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "scaffold",
+      "skill_name": "node-scaffold",
+      "status": "blocked",
+      "started_at": "2026-01-04T12:13:49.996325",
+      "completed_at": "2026-01-04T12:13:49.996347",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required artifacts: ['schema/inferred_schema.json']"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "convert",
+      "skill_name": "code-convert",
+      "status": "blocked",
+      "started_at": "2026-01-04T12:13:49.996368",
+      "completed_at": "2026-01-04T12:13:49.996401",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required artifacts: ['allowlist.json', 'repo_facts.json']"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "package",
+      "skill_name": "node-package",
+      "status": "blocked",
+      "started_at": "2026-01-04T12:13:49.996424",
+      "completed_at": "2026-01-04T12:13:49.996449",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required artifacts: ['target_repo_layout.json']"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "pre-validate",
+      "skill_name": "node-validate",
+      "status": "blocked",
+      "started_at": "2026-01-04T12:13:49.996469",
+      "completed_at": "2026-01-04T12:13:49.996487",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required artifacts: ['package/']"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "apply",
+      "skill_name": "apply-changes",
+      "status": "skipped",
+      "started_at": "2026-01-04T12:13:49.996506",
+      "completed_at": "2026-01-04T12:13:49.996514",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Condition 'apply == True' not met"
+    },
+    {
+      "step_name": "smoke-test",
+      "skill_name": "node-smoke-test",
+      "status": "skipped",
+      "started_at": "2026-01-04T12:13:49.996526",
+      "completed_at": "2026-01-04T12:13:49.996534",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Condition 'run_tests == True' not met"
+    }
+  ],
+  "outputs": {
+    "normalize": {
+      "dry_run": true
+    },
+    "classify": {
+      "dry_run": true
+    },
+    "ground": {
+      "dry_run": true
+    },
+    "ingest": {
+      "dry_run": true
+    },
+    "infer-schema": {},
+    "scaffold": {},
+    "convert": {},
+    "package": {},
+    "pre-validate": {},
+    "apply": {},
+    "smoke-test": {}
+  },
+  "artifacts_dir": "/home/toni/agent-skills/artifacts/node-bitly-1baef980",
+  "errors": [
+    "Step 'infer-schema' blocked by gate",
+    "Step 'scaffold' blocked by gate",
+    "Step 'convert' blocked by gate",
+    "Step 'package' blocked by gate",
+    "Step 'pre-validate' blocked by gate"
+  ]
+}

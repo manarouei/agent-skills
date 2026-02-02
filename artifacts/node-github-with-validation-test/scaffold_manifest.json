@@ -1,0 +1,18 @@
+{
+  "correlation_id": "node-github-with-validation-test",
+  "node_name": "github",
+  "class_name": "Github",
+  "module_name": "github",
+  "files_created": [
+    "/home/toni/agent-skills/artifacts/node-github-with-validation-test/generated_node/github.py",
+    "/home/toni/agent-skills/artifacts/node-github-with-validation-test/generated_node/__init__.py"
+  ],
+  "generated_at": "2026-01-07T08:19:15.121073",
+  "schema_summary": {
+    "type": "github",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 38,
+    "credential_count": 2
+  }
+}

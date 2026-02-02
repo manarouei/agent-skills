@@ -1,0 +1,18 @@
+{
+  "node_name": "discord",
+  "allowed_paths": [
+    "nodes/discord*",
+    "nodes/discord*",
+    "tests/*discord*",
+    "tests/*discord*",
+    "credentials/*discord*",
+    "credentials/*discord*"
+  ],
+  "forbidden_paths": [
+    "**/base.py",
+    "**/Base*.py",
+    "**/__init__.py"
+  ],
+  "generated_at": "2026-01-06T04:37:53.258241",
+  "correlation_id": "node-discord-v2test3"
+}

@@ -1,0 +1,10 @@
+{
+  "source-ingest:2c3ea4ac076ab2da": {
+    "completed_at": "2026-01-06T06:48:27.677284",
+    "skill": "source-ingest"
+  },
+  "schema-infer:2c3ea4ac076ab2da": {
+    "completed_at": "2026-01-06T06:48:27.770492",
+    "skill": "schema-infer"
+  }
+}

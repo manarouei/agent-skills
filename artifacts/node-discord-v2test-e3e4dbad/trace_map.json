@@ -1,0 +1,51 @@
+{
+  "correlation_id": "node-discord-v2test-e3e4dbad",
+  "node_type": "discord",
+  "trace_entries": [
+    {
+      "field_path": "resources[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Resource 'channel' defined in v2/actions/versionDescription.ts",
+      "confidence": "high",
+      "source_file": "v2/actions/versionDescription.ts"
+    },
+    {
+      "field_path": "resources[1]",
+      "source": "SOURCE_CODE",
+      "evidence": "Resource 'message' defined in v2/actions/versionDescription.ts",
+      "confidence": "high",
+      "source_file": "v2/actions/versionDescription.ts"
+    },
+    {
+      "field_path": "resources[2]",
+      "source": "SOURCE_CODE",
+      "evidence": "Resource 'member' defined in v2/actions/versionDescription.ts",
+      "confidence": "high",
+      "source_file": "v2/actions/versionDescription.ts"
+    },
+    {
+      "field_path": "credentials[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Credential 'discordBotApi' required in v2/actions/versionDescription.ts",
+      "confidence": "high",
+      "source_file": "v2/actions/versionDescription.ts"
+    },
+    {
+      "field_path": "operations[0]",
+      "source": "ASSUMPTION",
+      "evidence": "No operations found in source; defaulting to single 'execute' operation",
+      "confidence": "low",
+      "assumption_rationale": "Source may be incomplete or use different patterns"
+    }
+  ],
+  "generated_at": "2026-01-06T04:47:26.958056",
+  "skill_version": "1.0.0",
+  "_hybrid_metadata": {
+    "source_type": "TYPE1",
+    "extraction_confidence": 0.7,
+    "advisor_used": false,
+    "assumption_ratio": 0.2,
+    "deterministic_operations": 4,
+    "assumption_operations": 1
+  }
+}

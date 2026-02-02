@@ -1,0 +1,18 @@
+{
+  "correlation_id": "convert-postgres-001",
+  "node_name": "postgres",
+  "class_name": "Postgres",
+  "module_name": "postgres",
+  "files_created": [
+    "/home/toni/agent-skills/artifacts/convert-postgres-001/generated_node/postgres.py",
+    "/home/toni/agent-skills/artifacts/convert-postgres-001/generated_node/__init__.py"
+  ],
+  "generated_at": "2026-02-02T05:34:18.397200",
+  "schema_summary": {
+    "type": "postgres",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 1,
+    "credential_count": 1
+  }
+}

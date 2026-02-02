@@ -1,0 +1,343 @@
+{
+  "type": "node",
+  "version": 1,
+  "description": {
+    "displayName": "Node",
+    "name": "node",
+    "inputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ]
+  },
+  "properties": {
+    "parameters": [
+      {
+        "name": "operation",
+        "type": "OPTIONS",
+        "display_name": "Operation",
+        "options": [
+          {
+            "name": "Send a Message",
+            "value": "sendLegacy",
+            "description": "Send a message to a channel using the webhook"
+          },
+          {
+            "name": "parseDiscordError",
+            "value": "parseDiscordError",
+            "description": "Operation: parseDiscordError"
+          },
+          {
+            "name": "prepareErrorData",
+            "value": "prepareErrorData",
+            "description": "Operation: prepareErrorData"
+          },
+          {
+            "name": "prepareOptions",
+            "value": "prepareOptions",
+            "description": "Operation: prepareOptions"
+          },
+          {
+            "name": "prepareEmbeds",
+            "value": "prepareEmbeds",
+            "description": "Operation: prepareEmbeds"
+          },
+          {
+            "name": "prepareMultiPartForm",
+            "value": "prepareMultiPartForm",
+            "description": "Operation: prepareMultiPartForm"
+          },
+          {
+            "name": "checkAccessToGuild",
+            "value": "checkAccessToGuild",
+            "description": "Operation: checkAccessToGuild"
+          },
+          {
+            "name": "checkAccessToChannel",
+            "value": "checkAccessToChannel",
+            "description": "Operation: checkAccessToChannel"
+          },
+          {
+            "name": "setupChannelGetter",
+            "value": "setupChannelGetter",
+            "description": "Operation: setupChannelGetter"
+          },
+          {
+            "name": "sendDiscordMessage",
+            "value": "sendDiscordMessage",
+            "description": "Operation: sendDiscordMessage"
+          },
+          {
+            "name": "createSendAndWaitMessageBody",
+            "value": "createSendAndWaitMessageBody",
+            "description": "Operation: createSendAndWaitMessageBody"
+          },
+          {
+            "name": "getGuildId",
+            "value": "getGuildId",
+            "description": "Operation: getGuildId"
+          },
+          {
+            "name": "checkBotAccessToGuild",
+            "value": "checkBotAccessToGuild",
+            "description": "Operation: checkBotAccessToGuild"
+          },
+          {
+            "name": "guildSearch",
+            "value": "guildSearch",
+            "description": "Operation: guildSearch"
+          },
+          {
+            "name": "channelSearch",
+            "value": "channelSearch",
+            "description": "Operation: channelSearch"
+          },
+          {
+            "name": "textChannelSearch",
+            "value": "textChannelSearch",
+            "description": "Operation: textChannelSearch"
+          },
+          {
+            "name": "categorySearch",
+            "value": "categorySearch",
+            "description": "Operation: categorySearch"
+          },
+          {
+            "name": "userSearch",
+            "value": "userSearch",
+            "description": "Operation: userSearch"
+          },
+          {
+            "name": "getRoles",
+            "value": "getRoles",
+            "description": "Operation: getRoles"
+          },
+          {
+            "name": "discordApiRequest",
+            "value": "discordApiRequest",
+            "description": "Operation: discordApiRequest"
+          },
+          {
+            "name": "discordApiMultiPartRequest",
+            "value": "discordApiMultiPartRequest",
+            "description": "Operation: discordApiMultiPartRequest"
+          },
+          {
+            "name": "requestApi",
+            "value": "requestApi",
+            "description": "Operation: requestApi"
+          }
+        ],
+        "default": "sendLegacy",
+        "description": "Operation to perform"
+      },
+      {
+        "name": "webhookUri",
+        "display_name": "Webhook URL",
+        "type": "STRING",
+        "default": "",
+        "required": true
+      },
+      {
+        "name": "text",
+        "display_name": "Content",
+        "type": "STRING",
+        "default": ""
+      },
+      {
+        "name": "options",
+        "display_name": "Additional Fields",
+        "type": "COLLECTION",
+        "default": "{",
+        "description": "Whether this message be sent as a Text To Speech message"
+      },
+      {
+        "name": "allowedMentions",
+        "display_name": "Allowed Mentions",
+        "type": "JSON",
+        "default": ""
+      },
+      {
+        "name": "attachments",
+        "display_name": "Attachments",
+        "type": "JSON",
+        "default": ""
+      },
+      {
+        "name": "avatarUrl",
+        "display_name": "Avatar URL",
+        "type": "STRING",
+        "default": ""
+      },
+      {
+        "name": "components",
+        "display_name": "Components",
+        "type": "JSON",
+        "default": ""
+      },
+      {
+        "name": "embeds",
+        "display_name": "Embeds",
+        "type": "JSON",
+        "default": ""
+      },
+      {
+        "name": "flags",
+        "display_name": "Flags",
+        "type": "NUMBER",
+        "default": ""
+      },
+      {
+        "name": "payloadJson",
+        "display_name": "JSON Payload",
+        "type": "JSON",
+        "default": ""
+      },
+      {
+        "name": "username",
+        "display_name": "Username",
+        "type": "STRING",
+        "default": ""
+      },
+      {
+        "name": "tts",
+        "display_name": "TTS",
+        "type": "BOOLEAN",
+        "default": false,
+        "description": "Whether this message be sent as a Text To Speech message"
+      },
+      {
+        "name": "authentication",
+        "display_name": "Connection Type",
+        "type": "OPTIONS",
+        "default": "botToken",
+        "description": "Manage messages, channels, and members on a server",
+        "options": [
+          {
+            "name": "Bot Token",
+            "value": "botToken"
+          },
+          {
+            "name": "OAuth2",
+            "value": "oAuth2"
+          },
+          {
+            "name": "Webhook",
+            "value": "webhook"
+          }
+        ]
+      },
+      {
+        "name": "OAuth2",
+        "display_name": "Bot Token",
+        "type": "OPTIONS",
+        "description": "Manage messages, channels, and members on a server"
+      }
+    ],
+    "credentials": [
+      "oauth2"
+    ]
+  },
+  "operations": [
+    {
+      "name": "sendLegacy",
+      "display_name": "Send a Message",
+      "description": "Send a message to a channel using the webhook"
+    },
+    {
+      "name": "parseDiscordError",
+      "description": "Operation: parseDiscordError"
+    },
+    {
+      "name": "prepareErrorData",
+      "description": "Operation: prepareErrorData"
+    },
+    {
+      "name": "prepareOptions",
+      "description": "Operation: prepareOptions"
+    },
+    {
+      "name": "prepareEmbeds",
+      "description": "Operation: prepareEmbeds"
+    },
+    {
+      "name": "prepareMultiPartForm",
+      "description": "Operation: prepareMultiPartForm"
+    },
+    {
+      "name": "checkAccessToGuild",
+      "description": "Operation: checkAccessToGuild"
+    },
+    {
+      "name": "checkAccessToChannel",
+      "description": "Operation: checkAccessToChannel"
+    },
+    {
+      "name": "setupChannelGetter",
+      "description": "Operation: setupChannelGetter"
+    },
+    {
+      "name": "sendDiscordMessage",
+      "description": "Operation: sendDiscordMessage"
+    },
+    {
+      "name": "createSendAndWaitMessageBody",
+      "description": "Operation: createSendAndWaitMessageBody"
+    },
+    {
+      "name": "getGuildId",
+      "description": "Operation: getGuildId"
+    },
+    {
+      "name": "checkBotAccessToGuild",
+      "description": "Operation: checkBotAccessToGuild"
+    },
+    {
+      "name": "guildSearch",
+      "description": "Operation: guildSearch"
+    },
+    {
+      "name": "channelSearch",
+      "description": "Operation: channelSearch"
+    },
+    {
+      "name": "textChannelSearch",
+      "description": "Operation: textChannelSearch"
+    },
+    {
+      "name": "categorySearch",
+      "description": "Operation: categorySearch"
+    },
+    {
+      "name": "userSearch",
+      "description": "Operation: userSearch"
+    },
+    {
+      "name": "getRoles",
+      "description": "Operation: getRoles"
+    },
+    {
+      "name": "discordApiRequest",
+      "description": "Operation: discordApiRequest"
+    },
+    {
+      "name": "discordApiMultiPartRequest",
+      "description": "Operation: discordApiMultiPartRequest"
+    },
+    {
+      "name": "requestApi",
+      "description": "Operation: requestApi"
+    }
+  ],
+  "resources": [],
+  "credentials": [
+    "oauth2"
+  ]
+}

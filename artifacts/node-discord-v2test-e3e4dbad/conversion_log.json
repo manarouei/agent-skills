@@ -1,0 +1,23 @@
+{
+  "correlation_id": "node-discord-v2test-e3e4dbad",
+  "node_name": "Discord",
+  "source_type": "TYPE1",
+  "operations_converted": 0,
+  "artifact_paths": [
+    "/home/toni/agent-skills/artifacts/node-discord-v2test-e3e4dbad/converted/discord.py",
+    "/home/toni/agent-skills/artifacts/node-discord-v2test-e3e4dbad/converted/__init__.py"
+  ],
+  "target_paths": [
+    "nodes/discord.py"
+  ],
+  "all_target_files": [
+    "nodes/discord.py",
+    "nodes/__init__.py"
+  ],
+  "notes": [
+    "Found main node class for Discord",
+    "Found 0 operation handlers",
+    "Using 2 parameters from inferred schema"
+  ],
+  "generated_at": "2026-01-06T04:47:27.221791"
+}

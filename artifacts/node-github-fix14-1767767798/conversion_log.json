@@ -1,0 +1,58 @@
+{
+  "correlation_id": "node-github-fix14-1767767798",
+  "node_name": "Github",
+  "source_type": "TYPE1",
+  "operations_converted": 33,
+  "artifact_paths": [
+    "/home/toni/agent-skills/artifacts/node-github-fix14-1767767798/converted/github.py",
+    "/home/toni/agent-skills/artifacts/node-github-fix14-1767767798/converted/__init__.py"
+  ],
+  "target_paths": [
+    "nodes/github.py"
+  ],
+  "all_target_files": [
+    "nodes/github.py",
+    "nodes/__init__.py"
+  ],
+  "notes": [
+    "Selected Github.node.ts as main node (name match)",
+    "Found main node class for Github",
+    "Found 33 operation handlers",
+    "Converted file/edit",
+    "Converted file/delete",
+    "Converted file/get",
+    "Converted file/list",
+    "Converted issue/create",
+    "Converted issue/createComment",
+    "Converted issue/edit",
+    "Converted issue/get",
+    "Converted issue/lock",
+    "Converted release/create",
+    "Converted release/delete",
+    "Converted release/get",
+    "Converted release/getAll",
+    "Converted release/update",
+    "Converted repository/listPopularPaths",
+    "Converted repository/listReferrers",
+    "Converted repository/get",
+    "Converted repository/getLicense",
+    "Converted repository/getIssues",
+    "Converted repository/getPullRequests",
+    "Converted review/get",
+    "Converted review/getAll",
+    "Converted review/create",
+    "Converted review/update",
+    "Converted user/getRepositories",
+    "Converted user/invite",
+    "Converted organization/getRepositories",
+    "Converted workflow/disable",
+    "Converted workflow/dispatch",
+    "Converted workflow/enable",
+    "Converted workflow/get",
+    "Converted workflow/getUsage",
+    "Converted workflow/list",
+    "Converted GenericFunctions.ts to Python helpers",
+    "Using 38 parameters from inferred schema"
+  ],
+  "generated_at": "2026-01-07T06:36:39.904434"
+}

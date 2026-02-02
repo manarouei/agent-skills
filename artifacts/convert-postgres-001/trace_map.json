@@ -1,0 +1,44 @@
+{
+  "correlation_id": "convert-postgres-001",
+  "node_type": "postgres",
+  "trace_entries": [
+    {
+      "field_path": "resources[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Resource 'database' defined in actions/versionDescription.ts",
+      "confidence": "high",
+      "source_file": "actions/versionDescription.ts"
+    },
+    {
+      "field_path": "credentials[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Credential 'postgres' (required=True) in actions/versionDescription.ts",
+      "confidence": "high",
+      "source_file": "actions/versionDescription.ts"
+    },
+    {
+      "field_path": "operations[0]",
+      "source": "ASSUMPTION",
+      "evidence": "No operations found in source; defaulting to single 'execute' operation",
+      "confidence": "low",
+      "assumption_rationale": "Source may be incomplete or use different patterns"
+    },
+    {
+      "field_path": "execution_contract.semantic_class",
+      "source": "SOURCE_CODE",
+      "evidence": "Detected semantic class 'tcp_client' from code patterns and node type",
+      "confidence": "high",
+      "source_file": "multiple"
+    }
+  ],
+  "generated_at": "2026-02-02T05:34:18.174113",
+  "skill_version": "1.0.0",
+  "_hybrid_metadata": {
+    "source_type": "TYPE1",
+    "extraction_confidence": 0.7,
+    "advisor_used": false,
+    "assumption_ratio": 0.3333333333333333,
+    "deterministic_operations": 3,
+    "assumption_operations": 1
+  }
+}

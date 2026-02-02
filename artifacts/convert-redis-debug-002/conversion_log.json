@@ -1,0 +1,42 @@
+{
+  "correlation_id": "convert-redis-debug-002",
+  "node_name": "Redis",
+  "source_type": "TYPE1",
+  "operations_converted": 9,
+  "artifact_paths": [
+    "/home/toni/agent-skills/artifacts/convert-redis-debug-002/converted/redis.py",
+    "/home/toni/agent-skills/artifacts/convert-redis-debug-002/converted/__init__.py"
+  ],
+  "target_paths": [
+    "nodes/redis.py"
+  ],
+  "all_target_files": [
+    "nodes/redis.py",
+    "nodes/__init__.py"
+  ],
+  "notes": [
+    "Selected Redis.node.ts as main node (name match)",
+    "Found main node class for Redis",
+    "Found 9 operation handlers",
+    "Converted /info",
+    "Converted /delete",
+    "Converted /get",
+    "Converted /keys",
+    "Converted /set",
+    "Converted /incr",
+    "Converted /publish",
+    "Converted /push",
+    "Converted /pop",
+    "Using 15 parameters from inferred schema",
+    "Using 9 handlers from tcp_client backend",
+    "Using tcp_client backend for conversion",
+    "Using tcp_client backend for Redis",
+    "Library: redis",
+    "Credential type: redisApi",
+    "Connection params: ['host', 'port', 'database', 'password', 'user', 'ssl']",
+    "Added resource-based display_options to operation parameter",
+    "\u26a0\ufe0f Schema validation warnings: [\"Schema validation failed: 15 validation errors for BaseNodeSchema\\nproperties.parameters.0.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='OPTIONS', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.1.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='STRING', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.2.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='STRING', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.3.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='OPTIONS', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.4.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='COLLECTION', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.5.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='BOOLEAN', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.6.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='NUMBER', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.7.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='STRING', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.8.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='BOOLEAN', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.9.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='STRING', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.10.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='BOOLEAN', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.11.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='STRING', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.12.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='STRING', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.13.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='STRING', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\\nproperties.parameters.14.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='BOOLEAN', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\"]",
+    "\u2713 No stubs or placeholders detected"
+  ],
+  "generated_at": "2026-02-02T05:32:58.922915"
+}

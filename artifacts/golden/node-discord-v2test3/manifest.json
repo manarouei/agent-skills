@@ -1,0 +1,578 @@
+{
+  "correlation_id": "node-discord-v2test3",
+  "node_type": null,
+  "skill_name": "code-convert",
+  "created_at": "2026-01-06T04:37:53.291009",
+  "generated_code": {
+    "discord.py": "#!/usr/bin/env python3\n\"\"\"\nDiscord Node\n\nConverted from TypeScript by agent-skills/code-convert\nCorrelation ID: node-discord-v2test3\nGenerated: 2026-01-06T04:37:53.282221\n\nSYNC-CELERY SAFE: All methods are synchronous with timeouts.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport logging\nfrom typing import Any, Dict, List\n\nimport requests\n\nfrom .base import BaseNode, NodeParameterType, NodeExecutionData\n\nlogger = logging.getLogger(__name__)\n\n\nclass DiscordNode(BaseNode):\n    \"\"\"\n    Node node.\n    \n    \n    \"\"\"\n\n    type = \"discord\"\n    version = 1\n    \n    description = {\n        \"displayName\": \"Node\",\n        \"name\": \"discord\",\n        \"icon\": \"file:discord.svg\",\n        \"group\": ['output'],\n        \"description\": \"\",\n        \"inputs\": [{\"name\": \"main\", \"type\": \"main\", \"required\": True}],\n        \"outputs\": [{\"name\": \"main\", \"type\": \"main\", \"required\": True}],\n    }\n    \n    properties = {\n        \"parameters\": [\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Send a Message\", \"value\": \"sendLegacy\", \"description\": \"Send a message to a channel using the webhook\"},\n                {\"name\": \"parseDiscordError\", \"value\": \"parseDiscordError\", \"description\": \"Operation: parseDiscordError\"},\n                {\"name\": \"prepareErrorData\", \"value\": \"prepareErrorData\", \"description\": \"Operation: prepareErrorData\"},\n                {\"name\": \"prepareOptions\", \"value\": \"prepareOptions\", \"description\": \"Operation: prepareOptions\"},\n                {\"name\": \"prepareEmbeds\", \"value\": \"prepareEmbeds\", \"description\": \"Operation: prepareEmbeds\"},\n                {\"name\": \"prepareMultiPartForm\", \"value\": \"prepareMultiPartForm\", \"description\": \"Operation: prepareMultiPartForm\"},\n                {\"name\": \"checkAccessToGuild\", \"value\": \"checkAccessToGuild\", \"description\": \"Operation: checkAccessToGuild\"},\n                {\"name\": \"checkAccessToChannel\", \"value\": \"checkAccessToChannel\", \"description\": \"Operation: checkAccessToChannel\"},\n                {\"name\": \"setupChannelGetter\", \"value\": \"setupChannelGetter\", \"description\": \"Operation: setupChannelGetter\"},\n                {\"name\": \"sendDiscordMessage\", \"value\": \"sendDiscordMessage\", \"description\": \"Operation: sendDiscordMessage\"},\n                {\"name\": \"createSendAndWaitMessageBody\", \"value\": \"createSendAndWaitMessageBody\", \"description\": \"Operation: createSendAndWaitMessageBody\"},\n                {\"name\": \"getGuildId\", \"value\": \"getGuildId\", \"description\": \"Operation: getGuildId\"},\n                {\"name\": \"checkBotAccessToGuild\", \"value\": \"checkBotAccessToGuild\", \"description\": \"Operation: checkBotAccessToGuild\"},\n                {\"name\": \"guildSearch\", \"value\": \"guildSearch\", \"description\": \"Operation: guildSearch\"},\n                {\"name\": \"channelSearch\", \"value\": \"channelSearch\", \"description\": \"Operation: channelSearch\"},\n                {\"name\": \"textChannelSearch\", \"value\": \"textChannelSearch\", \"description\": \"Operation: textChannelSearch\"},\n                {\"name\": \"categorySearch\", \"value\": \"categorySearch\", \"description\": \"Operation: categorySearch\"},\n                {\"name\": \"userSearch\", \"value\": \"userSearch\", \"description\": \"Operation: userSearch\"},\n                {\"name\": \"getRoles\", \"value\": \"getRoles\", \"description\": \"Operation: getRoles\"},\n                {\"name\": \"discordApiRequest\", \"value\": \"discordApiRequest\", \"description\": \"Operation: discordApiRequest\"},\n                {\"name\": \"discordApiMultiPartRequest\", \"value\": \"discordApiMultiPartRequest\", \"description\": \"Operation: discordApiMultiPartRequest\"},\n                {\"name\": \"requestApi\", \"value\": \"requestApi\", \"description\": \"Operation: requestApi\"}\n            ], \"default\": \"sendLegacy\", \"description\": \"Operation to perform\"},\n            {\"name\": \"webhookUri\", \"type\": NodeParameterType.STRING, \"display_name\": \"Webhook URL\", \"default\": \"\", \"required\": True},\n            {\"name\": \"text\", \"type\": NodeParameterType.STRING, \"display_name\": \"Content\", \"default\": \"\"},\n            {\"name\": \"options\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Additional Fields\", \"default\": \"{\", \"description\": \"Whether this message be sent as a Text To Speech message\"},\n            {\"name\": \"allowedMentions\", \"type\": NodeParameterType.JSON, \"display_name\": \"Allowed Mentions\", \"default\": \"\"},\n            {\"name\": \"attachments\", \"type\": NodeParameterType.JSON, \"display_name\": \"Attachments\", \"default\": \"\"},\n            {\"name\": \"avatarUrl\", \"type\": NodeParameterType.STRING, \"display_name\": \"Avatar URL\", \"default\": \"\"},\n            {\"name\": \"components\", \"type\": NodeParameterType.JSON, \"display_name\": \"Components\", \"default\": \"\"},\n            {\"name\": \"embeds\", \"type\": NodeParameterType.JSON, \"display_name\": \"Embeds\", \"default\": \"\"},\n            {\"name\": \"flags\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Flags\", \"default\": \"\"},\n            {\"name\": \"payloadJson\", \"type\": NodeParameterType.JSON, \"display_name\": \"JSON Payload\", \"default\": \"\"},\n            {\"name\": \"username\", \"type\": NodeParameterType.STRING, \"display_name\": \"Username\", \"default\": \"\"},\n            {\"name\": \"tts\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"TTS\", \"default\": False, \"description\": \"Whether this message be sent as a Text To Speech message\"},\n            {\"name\": \"authentication\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Connection Type\", \"options\": [\n                {\"name\": \"Bot Token\", \"value\": \"botToken\"},\n                {\"name\": \"OAuth2\", \"value\": \"oAuth2\"},\n                {\"name\": \"Webhook\", \"value\": \"webhook\"}\n            ], \"default\": \"botToken\", \"description\": \"Manage messages, channels, and members on a server\"},\n            {\"name\": \"OAuth2\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Bot Token\", \"description\": \"Manage messages, channels, and members on a server\"}\n        ],\n        \"credentials\": [\n            {\"name\": \"oauth2\", \"required\": True}\n        ]\n    }\n    \n    icon = \"discord.svg\"\n\n    def execute(self) -> List[List[NodeExecutionData]]:\n        \"\"\"\n        Execute the node operations.\n        \n        SYNC-CELERY SAFE: All HTTP calls use timeout parameter.\n        \n        Returns:\n            List[List[NodeExecutionData]]: Nested list where outer list is output branches,\n            inner list is items in that branch.\n        \"\"\"\n        # Get input data from previous node\n        input_data = self.get_input_data()\n        \n        # Handle empty input\n        if not input_data:\n            return [[]]\n        \n        return_items: List[NodeExecutionData] = []\n\n        for i, item in enumerate(input_data):\n            try:\n                operation = self.get_node_parameter(\"operation\", i)\n                item_data = item.json_data if hasattr(item, 'json_data') else item.get('json', {})\n                \n                if operation == \"sendLegacy\":\n                    result = self._sendLegacy(i, item_data)\n                elif operation == \"parseDiscordError\":\n                    result = self._parseDiscordError(i, item_data)\n                elif operation == \"prepareErrorData\":\n                    result = self._prepareErrorData(i, item_data)\n                elif operation == \"prepareOptions\":\n                    result = self._prepareOptions(i, item_data)\n                elif operation == \"prepareEmbeds\":\n                    result = self._prepareEmbeds(i, item_data)\n                elif operation == \"prepareMultiPartForm\":\n                    result = self._prepareMultiPartForm(i, item_data)\n                elif operation == \"checkAccessToGuild\":\n                    result = self._checkAccessToGuild(i, item_data)\n                elif operation == \"checkAccessToChannel\":\n                    result = self._checkAccessToChannel(i, item_data)\n                elif operation == \"setupChannelGetter\":\n                    result = self._setupChannelGetter(i, item_data)\n                elif operation == \"sendDiscordMessage\":\n                    result = self._sendDiscordMessage(i, item_data)\n                elif operation == \"createSendAndWaitMessageBody\":\n                    result = self._createSendAndWaitMessageBody(i, item_data)\n                elif operation == \"getGuildId\":\n                    result = self._getGuildId(i, item_data)\n                elif operation == \"checkBotAccessToGuild\":\n                    result = self._checkBotAccessToGuild(i, item_data)\n                elif operation == \"guildSearch\":\n                    result = self._guildSearch(i, item_data)\n                elif operation == \"channelSearch\":\n                    result = self._channelSearch(i, item_data)\n                elif operation == \"textChannelSearch\":\n                    result = self._textChannelSearch(i, item_data)\n                elif operation == \"categorySearch\":\n                    result = self._categorySearch(i, item_data)\n                elif operation == \"userSearch\":\n                    result = self._userSearch(i, item_data)\n                elif operation == \"getRoles\":\n                    result = self._getRoles(i, item_data)\n                elif operation == \"discordApiRequest\":\n                    result = self._discordApiRequest(i, item_data)\n                elif operation == \"discordApiMultiPartRequest\":\n                    result = self._discordApiMultiPartRequest(i, item_data)\n                elif operation == \"requestApi\":\n                    result = self._requestApi(i, item_data)\n                else:\n                    raise ValueError(f\"Unknown operation: {operation}\")\n                \n                # Handle array results\n                if isinstance(result, list):\n                    for r in result:\n                        return_items.append(NodeExecutionData(json_data=r))\n                else:\n                    return_items.append(NodeExecutionData(json_data=result))\n                    \n            except Exception as e:\n                logger.error(f\"Error in operation {operation}: {e}\")\n                if self.continue_on_fail:\n                    return_items.append(NodeExecutionData(json_data={\"error\": str(e)}))\n                else:\n                    raise\n        \n        return [return_items]\n\n    def _api_request(\n        self,\n        method: str,\n        endpoint: str,\n        body: Dict[str, Any] | None = None,\n        query: Dict[str, Any] | None = None,\n    ) -> Dict[str, Any]:\n        \"\"\"\n        Make authenticated API request.\n        \n        SYNC-CELERY SAFE: Uses requests with timeout.\n        \"\"\"\n        credentials = self.get_credentials(\"oauth2\")\n        \n        # Build headers based on credential type\n        headers = {}\n        if credentials.get(\"accessToken\"):\n            headers[\"Authorization\"] = f\"Bot {credentials.get('accessToken')}\"\n        elif credentials.get(\"apiKey\"):\n            query = query or {}\n            query[\"api_key\"] = credentials.get(\"apiKey\")\n        \n        url = f\"https://api.example.com{endpoint}\"\n        \n        response = requests.request(\n            method,\n            url,\n            params=query,\n            json=body,\n            headers=headers,\n            timeout=30,  # REQUIRED for Celery\n        )\n        response.raise_for_status()\n        return response.json()\n\n    def _sendLegacy(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        sendLegacy operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"sendLegacy operation not implemented\")\n\n    def _parseDiscordError(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        parseDiscordError operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"parseDiscordError operation not implemented\")\n\n    def _prepareErrorData(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        prepareErrorData operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"prepareErrorData operation not implemented\")\n\n    def _prepareOptions(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        prepareOptions operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"prepareOptions operation not implemented\")\n\n    def _prepareEmbeds(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        prepareEmbeds operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"prepareEmbeds operation not implemented\")\n\n    def _prepareMultiPartForm(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        prepareMultiPartForm operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"prepareMultiPartForm operation not implemented\")\n\n    def _checkAccessToGuild(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        checkAccessToGuild operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"checkAccessToGuild operation not implemented\")\n\n    def _checkAccessToChannel(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        checkAccessToChannel operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"checkAccessToChannel operation not implemented\")\n\n    def _setupChannelGetter(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        setupChannelGetter operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"setupChannelGetter operation not implemented\")\n\n    def _sendDiscordMessage(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        sendDiscordMessage operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"sendDiscordMessage operation not implemented\")\n\n    def _createSendAndWaitMessageBody(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        createSendAndWaitMessageBody operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"createSendAndWaitMessageBody operation not implemented\")\n\n    def _getGuildId(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        getGuildId operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"getGuildId operation not implemented\")\n\n    def _checkBotAccessToGuild(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        checkBotAccessToGuild operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"checkBotAccessToGuild operation not implemented\")\n\n    def _guildSearch(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        guildSearch operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"guildSearch operation not implemented\")\n\n    def _channelSearch(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        channelSearch operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"channelSearch operation not implemented\")\n\n    def _textChannelSearch(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        textChannelSearch operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"textChannelSearch operation not implemented\")\n\n    def _categorySearch(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        categorySearch operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"categorySearch operation not implemented\")\n\n    def _userSearch(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        userSearch operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"userSearch operation not implemented\")\n\n    def _getRoles(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        getRoles operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"getRoles operation not implemented\")\n\n    def _discordApiRequest(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        discordApiRequest operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"discordApiRequest operation not implemented\")\n\n    def _discordApiMultiPartRequest(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        discordApiMultiPartRequest operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"discordApiMultiPartRequest operation not implemented\")\n\n    def _requestApi(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        requestApi operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n            \n        TODO: Implement operation logic.\n        \"\"\"\n        # TODO: Extract parameters using item_index\n        # param = self.get_node_parameter(\"paramName\", item_index)\n        \n        # TODO: Make API call\n        # response = self._api_request(\"GET\", \"/endpoint\", query={\"param\": param})\n        \n        raise NotImplementedError(\"requestApi operation not implemented\")\n\n",
+    "__init__.py": "\"\"\"\nDiscord Node Package\nConverted from TypeScript by agent-skills/code-convert\n\"\"\"\n\nfrom .discord import DiscordNode\n\n__all__ = [\"DiscordNode\"]\n"
+  },
+  "node_schema": {
+    "type": "node",
+    "version": 1,
+    "description": {
+      "displayName": "Node",
+      "name": "node",
+      "inputs": [
+        {
+          "name": "main",
+          "type": "main"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "main",
+          "type": "main"
+        }
+      ]
+    },
+    "properties": {
+      "parameters": [
+        {
+          "name": "operation",
+          "type": "OPTIONS",
+          "display_name": "Operation",
+          "options": [
+            {
+              "name": "Send a Message",
+              "value": "sendLegacy",
+              "description": "Send a message to a channel using the webhook"
+            },
+            {
+              "name": "parseDiscordError",
+              "value": "parseDiscordError",
+              "description": "Operation: parseDiscordError"
+            },
+            {
+              "name": "prepareErrorData",
+              "value": "prepareErrorData",
+              "description": "Operation: prepareErrorData"
+            },
+            {
+              "name": "prepareOptions",
+              "value": "prepareOptions",
+              "description": "Operation: prepareOptions"
+            },
+            {
+              "name": "prepareEmbeds",
+              "value": "prepareEmbeds",
+              "description": "Operation: prepareEmbeds"
+            },
+            {
+              "name": "prepareMultiPartForm",
+              "value": "prepareMultiPartForm",
+              "description": "Operation: prepareMultiPartForm"
+            },
+            {
+              "name": "checkAccessToGuild",
+              "value": "checkAccessToGuild",
+              "description": "Operation: checkAccessToGuild"
+            },
+            {
+              "name": "checkAccessToChannel",
+              "value": "checkAccessToChannel",
+              "description": "Operation: checkAccessToChannel"
+            },
+            {
+              "name": "setupChannelGetter",
+              "value": "setupChannelGetter",
+              "description": "Operation: setupChannelGetter"
+            },
+            {
+              "name": "sendDiscordMessage",
+              "value": "sendDiscordMessage",
+              "description": "Operation: sendDiscordMessage"
+            },
+            {
+              "name": "createSendAndWaitMessageBody",
+              "value": "createSendAndWaitMessageBody",
+              "description": "Operation: createSendAndWaitMessageBody"
+            },
+            {
+              "name": "getGuildId",
+              "value": "getGuildId",
+              "description": "Operation: getGuildId"
+            },
+            {
+              "name": "checkBotAccessToGuild",
+              "value": "checkBotAccessToGuild",
+              "description": "Operation: checkBotAccessToGuild"
+            },
+            {
+              "name": "guildSearch",
+              "value": "guildSearch",
+              "description": "Operation: guildSearch"
+            },
+            {
+              "name": "channelSearch",
+              "value": "channelSearch",
+              "description": "Operation: channelSearch"
+            },
+            {
+              "name": "textChannelSearch",
+              "value": "textChannelSearch",
+              "description": "Operation: textChannelSearch"
+            },
+            {
+              "name": "categorySearch",
+              "value": "categorySearch",
+              "description": "Operation: categorySearch"
+            },
+            {
+              "name": "userSearch",
+              "value": "userSearch",
+              "description": "Operation: userSearch"
+            },
+            {
+              "name": "getRoles",
+              "value": "getRoles",
+              "description": "Operation: getRoles"
+            },
+            {
+              "name": "discordApiRequest",
+              "value": "discordApiRequest",
+              "description": "Operation: discordApiRequest"
+            },
+            {
+              "name": "discordApiMultiPartRequest",
+              "value": "discordApiMultiPartRequest",
+              "description": "Operation: discordApiMultiPartRequest"
+            },
+            {
+              "name": "requestApi",
+              "value": "requestApi",
+              "description": "Operation: requestApi"
+            }
+          ],
+          "default": "sendLegacy",
+          "description": "Operation to perform"
+        },
+        {
+          "name": "webhookUri",
+          "display_name": "Webhook URL",
+          "type": "STRING",
+          "default": "",
+          "required": true
+        },
+        {
+          "name": "text",
+          "display_name": "Content",
+          "type": "STRING",
+          "default": ""
+        },
+        {
+          "name": "options",
+          "display_name": "Additional Fields",
+          "type": "COLLECTION",
+          "default": "{",
+          "description": "Whether this message be sent as a Text To Speech message"
+        },
+        {
+          "name": "allowedMentions",
+          "display_name": "Allowed Mentions",
+          "type": "JSON",
+          "default": ""
+        },
+        {
+          "name": "attachments",
+          "display_name": "Attachments",
+          "type": "JSON",
+          "default": ""
+        },
+        {
+          "name": "avatarUrl",
+          "display_name": "Avatar URL",
+          "type": "STRING",
+          "default": ""
+        },
+        {
+          "name": "components",
+          "display_name": "Components",
+          "type": "JSON",
+          "default": ""
+        },
+        {
+          "name": "embeds",
+          "display_name": "Embeds",
+          "type": "JSON",
+          "default": ""
+        },
+        {
+          "name": "flags",
+          "display_name": "Flags",
+          "type": "NUMBER",
+          "default": ""
+        },
+        {
+          "name": "payloadJson",
+          "display_name": "JSON Payload",
+          "type": "JSON",
+          "default": ""
+        },
+        {
+          "name": "username",
+          "display_name": "Username",
+          "type": "STRING",
+          "default": ""
+        },
+        {
+          "name": "tts",
+          "display_name": "TTS",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether this message be sent as a Text To Speech message"
+        },
+        {
+          "name": "authentication",
+          "display_name": "Connection Type",
+          "type": "OPTIONS",
+          "default": "botToken",
+          "description": "Manage messages, channels, and members on a server",
+          "options": [
+            {
+              "name": "Bot Token",
+              "value": "botToken"
+            },
+            {
+              "name": "OAuth2",
+              "value": "oAuth2"
+            },
+            {
+              "name": "Webhook",
+              "value": "webhook"
+            }
+          ]
+        },
+        {
+          "name": "OAuth2",
+          "display_name": "Bot Token",
+          "type": "OPTIONS",
+          "description": "Manage messages, channels, and members on a server"
+        }
+      ],
+      "credentials": [
+        "oauth2"
+      ]
+    },
+    "operations": [
+      {
+        "name": "sendLegacy",
+        "display_name": "Send a Message",
+        "description": "Send a message to a channel using the webhook"
+      },
+      {
+        "name": "parseDiscordError",
+        "description": "Operation: parseDiscordError"
+      },
+      {
+        "name": "prepareErrorData",
+        "description": "Operation: prepareErrorData"
+      },
+      {
+        "name": "prepareOptions",
+        "description": "Operation: prepareOptions"
+      },
+      {
+        "name": "prepareEmbeds",
+        "description": "Operation: prepareEmbeds"
+      },
+      {
+        "name": "prepareMultiPartForm",
+        "description": "Operation: prepareMultiPartForm"
+      },
+      {
+        "name": "checkAccessToGuild",
+        "description": "Operation: checkAccessToGuild"
+      },
+      {
+        "name": "checkAccessToChannel",
+        "description": "Operation: checkAccessToChannel"
+      },
+      {
+        "name": "setupChannelGetter",
+        "description": "Operation: setupChannelGetter"
+      },
+      {
+        "name": "sendDiscordMessage",
+        "description": "Operation: sendDiscordMessage"
+      },
+      {
+        "name": "createSendAndWaitMessageBody",
+        "description": "Operation: createSendAndWaitMessageBody"
+      },
+      {
+        "name": "getGuildId",
+        "description": "Operation: getGuildId"
+      },
+      {
+        "name": "checkBotAccessToGuild",
+        "description": "Operation: checkBotAccessToGuild"
+      },
+      {
+        "name": "guildSearch",
+        "description": "Operation: guildSearch"
+      },
+      {
+        "name": "channelSearch",
+        "description": "Operation: channelSearch"
+      },
+      {
+        "name": "textChannelSearch",
+        "description": "Operation: textChannelSearch"
+      },
+      {
+        "name": "categorySearch",
+        "description": "Operation: categorySearch"
+      },
+      {
+        "name": "userSearch",
+        "description": "Operation: userSearch"
+      },
+      {
+        "name": "getRoles",
+        "description": "Operation: getRoles"
+      },
+      {
+        "name": "discordApiRequest",
+        "description": "Operation: discordApiRequest"
+      },
+      {
+        "name": "discordApiMultiPartRequest",
+        "description": "Operation: discordApiMultiPartRequest"
+      },
+      {
+        "name": "requestApi",
+        "description": "Operation: requestApi"
+      }
+    ],
+    "resources": [],
+    "credentials": [
+      "oauth2"
+    ]
+  },
+  "trace_map": {
+    "correlation_id": "node-discord-v2test3",
+    "node_type": "node",
+    "trace_entries": [
+      {
+        "field_path": "operations[6].name",
+        "source": "SOURCE_CODE",
+        "evidence": "n8n operation 'sendLegacy' (display: 'Send a Message') in v2/actions/webhook/index.ts",
+        "confidence": "high",
+        "source_file": "v2/actions/webhook/index.ts",
+        "line_range": "L9",
+        "excerpt_hash": "fd3cec6eea12"
+      },
+      {
+        "field_path": "operations[1].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'parseDiscordError' defined in v2/helpers/utils.ts",
+        "confidence": "high",
+        "source_file": "v2/helpers/utils.ts",
+        "line_range": "L31",
+        "excerpt_hash": "42372fe2e01d"
+      },
+      {
+        "field_path": "operations[2].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'prepareErrorData' defined in v2/helpers/utils.ts",
+        "confidence": "high",
+        "source_file": "v2/helpers/utils.ts",
+        "line_range": "L85",
+        "excerpt_hash": "b6633c8b90ae"
+      },
+      {
+        "field_path": "operations[3].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'prepareOptions' defined in v2/helpers/utils.ts",
+        "confidence": "high",
+        "source_file": "v2/helpers/utils.ts",
+        "line_range": "L98",
+        "excerpt_hash": "da613906b237"
+      },
+      {
+        "field_path": "operations[4].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'prepareEmbeds' defined in v2/helpers/utils.ts",
+        "confidence": "high",
+        "source_file": "v2/helpers/utils.ts",
+        "line_range": "L119",
+        "excerpt_hash": "e5f387c655c2"
+      },
+      {
+        "field_path": "operations[5].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'prepareMultiPartForm' defined in v2/helpers/utils.ts",
+        "confidence": "high",
+        "source_file": "v2/helpers/utils.ts",
+        "line_range": "L174",
+        "excerpt_hash": "996c807696ed"
+      },
+      {
+        "field_path": "operations[6].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'checkAccessToGuild' defined in v2/helpers/utils.ts",
+        "confidence": "high",
+        "source_file": "v2/helpers/utils.ts",
+        "line_range": "L232",
+        "excerpt_hash": "9701125899e2"
+      },
+      {
+        "field_path": "operations[7].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'checkAccessToChannel' defined in v2/helpers/utils.ts",
+        "confidence": "high",
+        "source_file": "v2/helpers/utils.ts",
+        "line_range": "L250",
+        "excerpt_hash": "5e594774dff5"
+      },
+      {
+        "field_path": "operations[8].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'setupChannelGetter' defined in v2/helpers/utils.ts",
+        "confidence": "high",
+        "source_file": "v2/helpers/utils.ts",
+        "line_range": "L276",
+        "excerpt_hash": "c9b498a52d11"
+      },
+      {
+        "field_path": "operations[9].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'sendDiscordMessage' defined in v2/helpers/utils.ts",
+        "confidence": "high",
+        "source_file": "v2/helpers/utils.ts",
+        "line_range": "L290",
+        "excerpt_hash": "1f5515c2b7c5"
+      },
+      {
+        "field_path": "operations[10].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'createSendAndWaitMessageBody' defined in v2/helpers/utils.ts",
+        "confidence": "high",
+        "source_file": "v2/helpers/utils.ts",
+        "line_range": "L393",
+        "excerpt_hash": "331ea5ba48ff"
+      },
+      {
+        "field_path": "operations[11].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'getGuildId' defined in v2/methods/listSearch.ts",
+        "confidence": "high",
+        "source_file": "v2/methods/listSearch.ts",
+        "line_range": "L10",
+        "excerpt_hash": "f2f58ca622df"
+      },
+      {
+        "field_path": "operations[12].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'checkBotAccessToGuild' defined in v2/methods/listSearch.ts",
+        "confidence": "high",
+        "source_file": "v2/methods/listSearch.ts",
+        "line_range": "L30",
+        "excerpt_hash": "f0669cf1ab4d"
+      },
+      {
+        "field_path": "operations[13].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'guildSearch' defined in v2/methods/listSearch.ts",
+        "confidence": "high",
+        "source_file": "v2/methods/listSearch.ts",
+        "line_range": "L46",
+        "excerpt_hash": "b04bf300ebbf"
+      },
+      {
+        "field_path": "operations[14].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'channelSearch' defined in v2/methods/listSearch.ts",
+        "confidence": "high",
+        "source_file": "v2/methods/listSearch.ts",
+        "line_range": "L77",
+        "excerpt_hash": "819f0a046606"
+      },
+      {
+        "field_path": "operations[15].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'textChannelSearch' defined in v2/methods/listSearch.ts",
+        "confidence": "high",
+        "source_file": "v2/methods/listSearch.ts",
+        "line_range": "L92",
+        "excerpt_hash": "ac9743386f20"
+      },
+      {
+        "field_path": "operations[16].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'categorySearch' defined in v2/methods/listSearch.ts",
+        "confidence": "high",
+        "source_file": "v2/methods/listSearch.ts",
+        "line_range": "L110",
+        "excerpt_hash": "4106e9133377"
+      },
+      {
+        "field_path": "operations[17].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'userSearch' defined in v2/methods/listSearch.ts",
+        "confidence": "high",
+        "source_file": "v2/methods/listSearch.ts",
+        "line_range": "L126",
+        "excerpt_hash": "9a26f1450f53"
+      },
+      {
+        "field_path": "operations[18].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'getRoles' defined in v2/methods/loadOptions.ts",
+        "confidence": "high",
+        "source_file": "v2/methods/loadOptions.ts",
+        "line_range": "L6",
+        "excerpt_hash": "c278e41447fc"
+      },
+      {
+        "field_path": "operations[19].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'discordApiRequest' defined in v2/transport/discord.api.ts",
+        "confidence": "high",
+        "source_file": "v2/transport/discord.api.ts",
+        "line_range": "L15",
+        "excerpt_hash": "42374a6a2976"
+      },
+      {
+        "field_path": "operations[20].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'discordApiMultiPartRequest' defined in v2/transport/discord.api.ts",
+        "confidence": "high",
+        "source_file": "v2/transport/discord.api.ts",
+        "line_range": "L59",
+        "excerpt_hash": "6517fe6ed0be"
+      },
+      {
+        "field_path": "operations[21].name",
+        "source": "SOURCE_CODE",
+        "evidence": "Function 'requestApi' defined in v2/transport/helpers.ts",
+        "confidence": "high",
+        "source_file": "v2/transport/helpers.ts",
+        "line_range": "L28",
+        "excerpt_hash": "2e2a06acc0d6"
+      },
+      {
+        "field_path": "credentials[0]",
+        "source": "SOURCE_CODE",
+        "evidence": "Auth pattern 'oauth' found in source",
+        "confidence": "medium"
+      }
+    ],
+    "generated_at": "2026-01-06T04:37:52.855502",
+    "skill_version": "1.0.0",
+    "_hybrid_metadata": {
+      "source_type": "TYPE1",
+      "extraction_confidence": 0.7374999999999999,
+      "advisor_used": false,
+      "assumption_ratio": 0.0,
+      "deterministic_operations": 23,
+      "assumption_operations": 0
+    }
+  },
+  "tests_passed": false,
+  "validation_passed": true,
+  "fix_iterations": 0,
+  "source_files": [],
+  "source_hash": null
+}

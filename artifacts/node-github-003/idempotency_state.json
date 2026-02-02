@@ -1,0 +1,18 @@
+{
+  "source-ingest:7eccf7726c8e79ea": {
+    "completed_at": "2026-01-06T07:07:28.728011",
+    "skill": "source-ingest"
+  },
+  "schema-infer:7eccf7726c8e79ea": {
+    "completed_at": "2026-01-06T07:07:29.264960",
+    "skill": "schema-infer"
+  },
+  "node-scaffold:7eccf7726c8e79ea": {
+    "completed_at": "2026-01-06T07:07:29.282234",
+    "skill": "node-scaffold"
+  },
+  "code-convert:7eccf7726c8e79ea": {
+    "completed_at": "2026-01-06T07:07:29.287271",
+    "skill": "code-convert"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "correlation_id": "node-discord-v2test-e3e4dbad",
+  "node_type": "discord",
+  "node_class": "DiscordNode",
+  "registry_strategy": "dict_import",
+  "files": [
+    {
+      "filename": "discord.py",
+      "target_path": "nodes/discord.py",
+      "checksum": "b43fce5d968a5ea7",
+      "size_bytes": 145
+    },
+    {
+      "filename": "discord.py",
+      "target_path": "nodes/discord.py",
+      "checksum": "0383ed8cc3e8704c",
+      "size_bytes": 5244
+    }
+  ],
+  "registry_entry": {
+    "import_statement": "from .discord import DiscordNode",
+    "dict_entry": "'discord': {'node_class': DiscordNode, 'type': 'regular'}",
+    "node_type": "discord",
+    "node_class": "DiscordNode",
+    "module_name": "discord"
+  }
+}

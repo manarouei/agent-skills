@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "created_at": "2026-01-06T04:37:51.915515+00:00",
+  "correlation_id": "node-discord-v2test3",
+  "normalized_name": "discord",
+  "source_type": "TYPE1",
+  "confidence": 1.0,
+  "evidence": [
+    {
+      "type": "ts_file",
+      "path_or_url": "input_sources/discord/Discord.node.ts",
+      "verified": true,
+      "description": "Found node file: Discord.node.ts"
+    },
+    {
+      "type": "ts_file",
+      "path_or_url": "input_sources/discord/v2/DiscordV2.node.ts",
+      "verified": true,
+      "description": "Found node file: DiscordV2.node.ts"
+    },
+    {
+      "type": "ts_file",
+      "path_or_url": "input_sources/discord/v1/DiscordV1.node.ts",
+      "verified": true,
+      "description": "Found node file: DiscordV1.node.ts"
+    },
+    {
+      "type": "v2_router",
+      "path_or_url": "input_sources/discord",
+      "verified": true,
+      "description": "Found router.ts - indicates v2 node structure"
+    },
+    {
+      "type": "v2_structure",
+      "path_or_url": "input_sources/discord",
+      "verified": true,
+      "description": "Found v2 directory structure with actions"
+    },
+    {
+      "type": "file_count",
+      "path_or_url": "input_sources/discord",
+      "verified": true,
+      "description": "Found 50 TypeScript files in source directory"
+    }
+  ]
+}

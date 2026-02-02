@@ -1,0 +1,49 @@
+{
+  "correlation_id": "hunter-fresh-test",
+  "node_type": "Hunter",
+  "trace_entries": [
+    {
+      "field_path": "operations[2].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'domainSearch' (display: 'Domain Search') in Hunter.node.ts",
+      "confidence": "high",
+      "source_file": "Hunter.node.ts",
+      "line_range": "L36",
+      "excerpt_hash": "54ab0dcb0a22"
+    },
+    {
+      "field_path": "operations[3].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'emailFinder' (display: 'Email Finder') in Hunter.node.ts",
+      "confidence": "high",
+      "source_file": "Hunter.node.ts",
+      "line_range": "L36",
+      "excerpt_hash": "1b49eec85999"
+    },
+    {
+      "field_path": "operations[4].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'emailVerifier' (display: 'Email Verifier') in Hunter.node.ts",
+      "confidence": "high",
+      "source_file": "Hunter.node.ts",
+      "line_range": "L36",
+      "excerpt_hash": "3cba27e1d988"
+    },
+    {
+      "field_path": "credentials[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Auth pattern 'api[_-]?key' found in source",
+      "confidence": "medium"
+    }
+  ],
+  "generated_at": "2026-01-04T05:05:09.283402",
+  "skill_version": "1.0.0",
+  "_hybrid_metadata": {
+    "source_type": "TYPE1",
+    "extraction_confidence": 0.95,
+    "advisor_used": false,
+    "assumption_ratio": 0.0,
+    "deterministic_operations": 4,
+    "assumption_operations": 0
+  }
+}

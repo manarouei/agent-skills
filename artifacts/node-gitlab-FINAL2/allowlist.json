@@ -1,0 +1,18 @@
+{
+  "node_name": "gitlab",
+  "allowed_paths": [
+    "nodes/gitlab*",
+    "nodes/gitlab*",
+    "tests/*gitlab*",
+    "tests/*gitlab*",
+    "credentials/*gitlab*",
+    "credentials/*gitlab*"
+  ],
+  "forbidden_paths": [
+    "**/base.py",
+    "**/Base*.py",
+    "**/__init__.py"
+  ],
+  "generated_at": "2026-01-07T08:58:21.167267",
+  "correlation_id": "node-gitlab-FINAL2"
+}

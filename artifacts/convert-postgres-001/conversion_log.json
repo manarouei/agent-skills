@@ -1,0 +1,31 @@
+{
+  "correlation_id": "convert-postgres-001",
+  "node_name": "Postgres",
+  "source_type": "TYPE1",
+  "operations_converted": 0,
+  "artifact_paths": [
+    "/home/toni/agent-skills/artifacts/convert-postgres-001/converted/postgres.py",
+    "/home/toni/agent-skills/artifacts/convert-postgres-001/converted/__init__.py"
+  ],
+  "target_paths": [
+    "nodes/postgres.py"
+  ],
+  "all_target_files": [
+    "nodes/postgres.py",
+    "nodes/__init__.py"
+  ],
+  "notes": [
+    "Selected PostgresV2.node.ts as main node (name match)",
+    "Found main node class for Postgres",
+    "Found 0 operation handlers",
+    "Using 1 parameters from inferred schema",
+    "Using tcp_client backend for conversion",
+    "Using tcp_client backend for Postgres",
+    "Library: psycopg",
+    "Credential type: postgresApi",
+    "Connection params: ['host', 'port', 'database', 'user', 'password', 'ssl']",
+    "\u26a0\ufe0f Schema validation warnings: [\"Schema validation failed: 1 validation error for BaseNodeSchema\\nproperties.parameters.0.type\\n  Input should be 'string', 'number', 'boolean', 'options', 'multiOptions', 'color', 'json', 'collection', 'dateTime', 'node', 'resourceLocator', 'notice', 'array' or 'code' [type=literal_error, input_value='OPTIONS', input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error\"]",
+    "\u2713 No stubs or placeholders detected"
+  ],
+  "generated_at": "2026-02-02T05:34:18.517489"
+}

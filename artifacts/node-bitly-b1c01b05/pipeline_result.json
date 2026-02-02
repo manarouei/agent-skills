@@ -1,0 +1,163 @@
+{
+  "pipeline_name": "convert_node_v1",
+  "correlation_id": "node-bitly-b1c01b05",
+  "status": "failed",
+  "started_at": "2026-01-04T12:14:23.380195",
+  "completed_at": "2026-01-04T12:14:23.390008",
+  "duration_ms": 9,
+  "steps": [
+    {
+      "step_name": "normalize",
+      "skill_name": "node-normalize",
+      "status": "completed",
+      "started_at": "2026-01-04T12:14:23.380430",
+      "completed_at": "2026-01-04T12:14:23.384641",
+      "duration_ms": 4,
+      "outputs": {
+        "stub": true,
+        "message": "Skill node-normalize has no implementation registered"
+      },
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required output: correlation_id",
+        "Missing required output: normalized_name",
+        "Missing required output: snapshot"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "classify",
+      "skill_name": "source-classify",
+      "status": "failed",
+      "started_at": "2026-01-04T12:14:23.384699",
+      "completed_at": "2026-01-04T12:14:23.389871",
+      "duration_ms": 5,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required input: normalized_name",
+        "Input validation failed"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "ground",
+      "skill_name": "repo-ground",
+      "status": "skipped",
+      "started_at": "2026-01-04T12:14:23.389956",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "ingest",
+      "skill_name": "source-ingest",
+      "status": "skipped",
+      "started_at": "2026-01-04T12:14:23.389962",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "infer-schema",
+      "skill_name": "schema-infer",
+      "status": "skipped",
+      "started_at": "2026-01-04T12:14:23.389965",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "scaffold",
+      "skill_name": "node-scaffold",
+      "status": "skipped",
+      "started_at": "2026-01-04T12:14:23.389967",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "convert",
+      "skill_name": "code-convert",
+      "status": "skipped",
+      "started_at": "2026-01-04T12:14:23.389994",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "package",
+      "skill_name": "node-package",
+      "status": "skipped",
+      "started_at": "2026-01-04T12:14:23.389996",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "pre-validate",
+      "skill_name": "node-validate",
+      "status": "skipped",
+      "started_at": "2026-01-04T12:14:23.389999",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "apply",
+      "skill_name": "apply-changes",
+      "status": "skipped",
+      "started_at": "2026-01-04T12:14:23.390001",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "smoke-test",
+      "skill_name": "node-smoke-test",
+      "status": "skipped",
+      "started_at": "2026-01-04T12:14:23.390004",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    }
+  ],
+  "outputs": {
+    "normalize": {
+      "stub": true,
+      "message": "Skill node-normalize has no implementation registered"
+    },
+    "classify": {}
+  },
+  "artifacts_dir": "/home/toni/agent-skills/artifacts/node-bitly-b1c01b05",
+  "errors": [
+    "Step 'classify' failed"
+  ]
+}

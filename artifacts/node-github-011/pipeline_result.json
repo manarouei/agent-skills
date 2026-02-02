@@ -1,0 +1,117 @@
+{
+  "pipeline_name": "type1-convert",
+  "correlation_id": "node-github-011",
+  "status": "failed",
+  "started_at": "2026-01-06T09:16:18.080745",
+  "completed_at": "2026-01-06T09:16:18.187052",
+  "duration_ms": 106,
+  "steps": [
+    {
+      "step_name": "ingest",
+      "skill_name": "source-ingest",
+      "status": "completed",
+      "started_at": "2026-01-06T09:16:18.080945",
+      "completed_at": "2026-01-06T09:16:18.086266",
+      "duration_ms": 5,
+      "outputs": {
+        "status": "failed",
+        "error": "validation_error",
+        "error_message": "Source directory not found: input_sources/Github.node.ts"
+      },
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required output: raw_content",
+        "Missing required output: parsed_sections",
+        "Missing required output: metadata"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "infer-schema",
+      "skill_name": "schema-infer",
+      "status": "failed",
+      "started_at": "2026-01-06T09:16:18.086292",
+      "completed_at": "2026-01-06T09:16:18.187015",
+      "duration_ms": 100,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required input: parsed_sections",
+        "Input validation failed"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "scaffold",
+      "skill_name": "node-scaffold",
+      "status": "skipped",
+      "started_at": "2026-01-06T09:16:18.187031",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "ground",
+      "skill_name": "repo-ground",
+      "status": "skipped",
+      "started_at": "2026-01-06T09:16:18.187036",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "convert",
+      "skill_name": "code-convert",
+      "status": "skipped",
+      "started_at": "2026-01-06T09:16:18.187042",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "generate-tests",
+      "skill_name": "test-generate",
+      "status": "skipped",
+      "started_at": "2026-01-06T09:16:18.187045",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "validate",
+      "skill_name": "code-validate",
+      "status": "skipped",
+      "started_at": "2026-01-06T09:16:18.187048",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    }
+  ],
+  "outputs": {
+    "ingest": {
+      "status": "failed",
+      "error": "validation_error",
+      "error_message": "Source directory not found: input_sources/Github.node.ts"
+    },
+    "infer-schema": {}
+  },
+  "artifacts_dir": "/home/toni/agent-skills/artifacts/node-github-011",
+  "errors": [
+    "Step 'infer-schema' failed"
+  ]
+}

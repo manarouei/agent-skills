@@ -1,0 +1,96 @@
+{
+  "type": "postgres",
+  "version": 1,
+  "description": {
+    "displayName": "Postgres",
+    "name": "postgres",
+    "inputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ]
+  },
+  "properties": {
+    "parameters": [
+      {
+        "name": "resource",
+        "display_name": "Resource",
+        "type": "OPTIONS",
+        "options": [
+          {
+            "name": "Database",
+            "value": "database"
+          }
+        ],
+        "default": "database",
+        "description": "The resource to operate on"
+      }
+    ],
+    "credentials": [
+      {
+        "name": "postgres",
+        "required": true
+      }
+    ]
+  },
+  "operations": [
+    {
+      "name": "execute",
+      "description": "Default operation"
+    }
+  ],
+  "resources": [
+    {
+      "name": "Database",
+      "value": "database"
+    }
+  ],
+  "credentials": [
+    {
+      "name": "postgres",
+      "required": true
+    }
+  ],
+  "execution_contract": {
+    "semantic_class": "tcp_client",
+    "io_cardinality": {
+      "input_count": 1,
+      "input_required": [
+        0
+      ],
+      "output_count": 1,
+      "output_names": [
+        "main"
+      ],
+      "item_mapping": "1:1"
+    },
+    "connection": {
+      "type": "tcp",
+      "factory_method": "_get_postgres_client",
+      "library": "psycopg",
+      "pooling": false,
+      "cleanup": "context_manager"
+    },
+    "state": {
+      "cross_execution": "none",
+      "within_execution": "none",
+      "persistence_key": null
+    },
+    "credentials": {
+      "type": "postgresApi",
+      "resolution": "direct",
+      "selector_param": null,
+      "connection_params": []
+    },
+    "http_config": null,
+    "sdk_config": null,
+    "transform_config": null
+  }
+}

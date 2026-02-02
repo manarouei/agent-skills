@@ -1,0 +1,135 @@
+{
+  "info": {
+    "name": "GitHub Node Workflow Test",
+    "description": "Test the GitHub node workflow via the back project API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{JWT_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "JWT_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "GITHUB_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "WORKFLOW_ID",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Create GitHub Credential",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"GitHub Test\",\n  \"type\": \"githubApi\",\n  \"data\": {\n    \"server\": \"https://api.github.com\",\n    \"accessToken\": \"{{GITHUB_TOKEN}}\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/credentials",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "credentials"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. Create Workflow",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{WORKFLOW_JSON}}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/workflows",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "workflows"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. Execute Workflow",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/workflows/{{WORKFLOW_ID}}/execute",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "workflows",
+            "{{WORKFLOW_ID}}",
+            "execute"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Get Execution Result",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/executions/{{EXECUTION_ID}}",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "executions",
+            "{{EXECUTION_ID}}"
+          ]
+        }
+      }
+    }
+  ]
+}

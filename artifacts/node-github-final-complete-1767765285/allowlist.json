@@ -1,0 +1,18 @@
+{
+  "node_name": "github",
+  "allowed_paths": [
+    "nodes/github*",
+    "nodes/github*",
+    "tests/*github*",
+    "tests/*github*",
+    "credentials/*github*",
+    "credentials/*github*"
+  ],
+  "forbidden_paths": [
+    "**/base.py",
+    "**/Base*.py",
+    "**/__init__.py"
+  ],
+  "generated_at": "2026-01-07T05:54:46.438278",
+  "correlation_id": "node-github-final-complete-1767765285"
+}

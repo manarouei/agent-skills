@@ -1,0 +1,14 @@
+{
+  "source-ingest:594395471ed6d13a": {
+    "completed_at": "2026-01-06T06:53:03.009307",
+    "skill": "source-ingest"
+  },
+  "schema-infer:594395471ed6d13a": {
+    "completed_at": "2026-01-06T06:53:03.575235",
+    "skill": "schema-infer"
+  },
+  "node-scaffold:594395471ed6d13a": {
+    "completed_at": "2026-01-06T06:53:03.580195",
+    "skill": "node-scaffold"
+  }
+}

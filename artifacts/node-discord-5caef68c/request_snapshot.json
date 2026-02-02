@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "created_at": "2026-01-06T04:37:02.138705+00:00",
+  "correlation_id": "node-discord-5caef68c",
+  "request": {
+    "raw_node_name": "Discord",
+    "normalized_name": "discord",
+    "source_refs": {}
+  },
+  "checksum": "18ed7776d8b29ba1"
+}

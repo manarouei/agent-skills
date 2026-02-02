@@ -1,0 +1,18 @@
+{
+  "node_name": "postgres",
+  "allowed_paths": [
+    "nodes/postgres*",
+    "nodes/postgres*",
+    "tests/*postgres*",
+    "tests/*postgres*",
+    "credentials/*postgres*",
+    "credentials/*postgres*"
+  ],
+  "forbidden_paths": [
+    "**/base.py",
+    "**/Base*.py",
+    "**/__init__.py"
+  ],
+  "generated_at": "2026-02-02T05:34:18.397186",
+  "correlation_id": "convert-postgres-001"
+}

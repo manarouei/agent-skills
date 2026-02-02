@@ -1,0 +1,281 @@
+{
+  "type": "discord",
+  "version": 1,
+  "description": {
+    "displayName": "Discord",
+    "name": "discord",
+    "inputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ]
+  },
+  "properties": {
+    "parameters": [
+      {
+        "name": "resource",
+        "display_name": "Resource",
+        "type": "OPTIONS",
+        "options": [
+          {
+            "name": "Channel",
+            "value": "channel"
+          },
+          {
+            "name": "Message",
+            "value": "message"
+          },
+          {
+            "name": "Member",
+            "value": "member"
+          }
+        ],
+        "default": "channel",
+        "description": "The resource to operate on"
+      },
+      {
+        "name": "authentication",
+        "display_name": "Connection Type",
+        "type": "OPTIONS",
+        "options": [
+          {
+            "name": "Bot Token",
+            "value": "botToken"
+          },
+          {
+            "name": "OAuth2",
+            "value": "oAuth2"
+          },
+          {
+            "name": "Webhook",
+            "value": "webhook"
+          }
+        ],
+        "default": "botToken"
+      },
+      {
+        "name": "operation",
+        "display_name": "Operation",
+        "type": "OPTIONS",
+        "options": [
+          {
+            "name": "Create",
+            "value": "create",
+            "description": "Create a new channel"
+          },
+          {
+            "name": "Delete",
+            "value": "deleteChannel",
+            "description": "Delete a channel"
+          },
+          {
+            "name": "Get",
+            "value": "get",
+            "description": "Get a channel"
+          },
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "description": "Retrieve the channels of a server"
+          },
+          {
+            "name": "Update",
+            "value": "update",
+            "description": "Update a channel"
+          }
+        ],
+        "default": "create",
+        "display_options": {
+          "show": {
+            "resource": [
+              "channel"
+            ]
+          }
+        }
+      },
+      {
+        "name": "operation",
+        "display_name": "Operation",
+        "type": "OPTIONS",
+        "options": [
+          {
+            "name": "Delete",
+            "value": "deleteMessage",
+            "description": "Delete a message in a channel"
+          },
+          {
+            "name": "Get",
+            "value": "get",
+            "description": "Get a message in a channel"
+          },
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "description": "Retrieve the latest messages in a channel"
+          },
+          {
+            "name": "React with Emoji",
+            "value": "react",
+            "description": "React to a message with an emoji"
+          },
+          {
+            "name": "Send",
+            "value": "send",
+            "description": "Send a message to a channel, thread, or member"
+          }
+        ],
+        "default": "deleteMessage",
+        "display_options": {
+          "show": {
+            "resource": [
+              "message"
+            ]
+          }
+        }
+      },
+      {
+        "name": "operation",
+        "display_name": "Operation",
+        "type": "OPTIONS",
+        "options": [
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "description": "Retrieve the members of a server"
+          },
+          {
+            "name": "Role Add",
+            "value": "roleAdd",
+            "description": "Add a role to a member"
+          },
+          {
+            "name": "Role Remove",
+            "value": "roleRemove",
+            "description": "Remove a role from a member"
+          }
+        ],
+        "default": "getAll",
+        "display_options": {
+          "show": {
+            "resource": [
+              "member"
+            ]
+          }
+        }
+      }
+    ],
+    "credentials": [
+      {
+        "name": "discordBotApi",
+        "required": true
+      }
+    ]
+  },
+  "operations": [
+    {
+      "name": "create",
+      "display_name": "Create",
+      "description": "Create a new channel",
+      "resource": "channel"
+    },
+    {
+      "name": "deleteChannel",
+      "display_name": "Delete",
+      "description": "Delete a channel",
+      "resource": "channel"
+    },
+    {
+      "name": "get",
+      "display_name": "Get",
+      "description": "Get a channel",
+      "resource": "channel"
+    },
+    {
+      "name": "getAll",
+      "display_name": "Get Many",
+      "description": "Retrieve the channels of a server",
+      "resource": "channel"
+    },
+    {
+      "name": "update",
+      "display_name": "Update",
+      "description": "Update a channel",
+      "resource": "channel"
+    },
+    {
+      "name": "deleteMessage",
+      "display_name": "Delete",
+      "description": "Delete a message in a channel",
+      "resource": "message"
+    },
+    {
+      "name": "get",
+      "display_name": "Get",
+      "description": "Get a message in a channel",
+      "resource": "message"
+    },
+    {
+      "name": "getAll",
+      "display_name": "Get Many",
+      "description": "Retrieve the latest messages in a channel",
+      "resource": "message"
+    },
+    {
+      "name": "react",
+      "display_name": "React with Emoji",
+      "description": "React to a message with an emoji",
+      "resource": "message"
+    },
+    {
+      "name": "send",
+      "display_name": "Send",
+      "description": "Send a message to a channel, thread, or member",
+      "resource": "message"
+    },
+    {
+      "name": "getAll",
+      "display_name": "Get Many",
+      "description": "Retrieve the members of a server",
+      "resource": "member"
+    },
+    {
+      "name": "roleAdd",
+      "display_name": "Role Add",
+      "description": "Add a role to a member",
+      "resource": "member"
+    },
+    {
+      "name": "roleRemove",
+      "display_name": "Role Remove",
+      "description": "Remove a role from a member",
+      "resource": "member"
+    }
+  ],
+  "resources": [
+    {
+      "name": "Channel",
+      "value": "channel"
+    },
+    {
+      "name": "Message",
+      "value": "message"
+    },
+    {
+      "name": "Member",
+      "value": "member"
+    }
+  ],
+  "credentials": [
+    {
+      "name": "discordBotApi",
+      "required": true
+    }
+  ]
+}
