@@ -1,0 +1,104 @@
+{
+  "pipeline_name": "type1-convert",
+  "correlation_id": "trace-split-002",
+  "status": "failed",
+  "started_at": "2026-02-02T13:32:25.945697",
+  "completed_at": "2026-02-02T13:32:25.951516",
+  "duration_ms": 5,
+  "steps": [
+    {
+      "step_name": "ingest",
+      "skill_name": "source-ingest",
+      "status": "failed",
+      "started_at": "2026-02-02T13:32:25.945902",
+      "completed_at": "2026-02-02T13:32:25.951458",
+      "duration_ms": 5,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required input: evidence",
+        "Input validation failed"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "infer-schema",
+      "skill_name": "schema-infer",
+      "status": "skipped",
+      "started_at": "2026-02-02T13:32:25.951492",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "ground",
+      "skill_name": "repo-ground",
+      "status": "skipped",
+      "started_at": "2026-02-02T13:32:25.951499",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "scaffold",
+      "skill_name": "node-scaffold",
+      "status": "skipped",
+      "started_at": "2026-02-02T13:32:25.951503",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "convert",
+      "skill_name": "code-convert",
+      "status": "skipped",
+      "started_at": "2026-02-02T13:32:25.951507",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "generate-tests",
+      "skill_name": "test-generate",
+      "status": "skipped",
+      "started_at": "2026-02-02T13:32:25.951510",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "validate",
+      "skill_name": "code-validate",
+      "status": "skipped",
+      "started_at": "2026-02-02T13:32:25.951513",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    }
+  ],
+  "outputs": {
+    "ingest": {}
+  },
+  "artifacts_dir": "artifacts/trace-split-002",
+  "errors": [
+    "Step 'ingest' failed"
+  ]
+}

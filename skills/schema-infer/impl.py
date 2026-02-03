@@ -233,15 +233,35 @@ def _perform_schema_inference(
     Returns:
         Schema inference result with trace map linking every field to evidence
     """
+    # Handle both direct sections dict and wrapped format from source-ingest
+    # source-ingest wraps data as: { "sections": { ... }, "metadata": { ... } }
+    sections_data = parsed_sections.get("sections", parsed_sections)
+    
     # Extract node type from parsed sections or generate from correlation_id
-    node_type = parsed_sections.get("node_name", correlation_id.split("-")[0] if "-" in correlation_id else "unknown")
+    node_type = sections_data.get("node_name", sections_data.get("class_name", ""))
+    if not node_type:
+        node_type = correlation_id.split("-")[0] if "-" in correlation_id else "unknown"
+    # Normalize to lowercase for type field
+    node_type_normalized = node_type.lower().replace("node", "").strip()
     
     # Initialize trace entries
     trace_entries = []
     assumptions = []
     
     # =================================================================
-    # PHASE 1: DETERMINISTIC EXTRACTION (always runs first)
+    # PHASE 0: USE PRE-EXTRACTED DATA FROM SOURCE-INGEST (PREFERRED)
+    # =================================================================
+    
+    # source-ingest may have already extracted credentials, resources, operations
+    # Use this data first as it's higher quality than re-extracting
+    pre_extracted_credentials = sections_data.get("credentials", [])
+    pre_extracted_resources = sections_data.get("resources", [])
+    
+    # Get code sections for additional extraction if needed
+    code_sections = sections_data.get("code", [])
+    
+    # =================================================================
+    # PHASE 1: DETERMINISTIC EXTRACTION (only if not pre-extracted)
     # =================================================================
     
     operations = []
@@ -249,13 +269,29 @@ def _perform_schema_inference(
     extraction_confidence = 0.0
     
     if source_type == "TYPE1":
-        # TypeScript source - FULLY DETERMINISTIC
-        operations, op_traces, confidence = _extract_operations_deterministic_ts(parsed_sections)
-        trace_entries.extend(op_traces)
-        extraction_confidence = confidence
+        # TypeScript source - use pre-extracted resources or extract
+        if pre_extracted_resources:
+            # Build resource-based operations structure
+            operations, op_traces, confidence = _build_resource_operations(
+                pre_extracted_resources, code_sections, source_type="TYPE1"
+            )
+            trace_entries.extend(op_traces)
+            extraction_confidence = confidence
+            
+            # TYPE1 HARD-FAIL: If extraction returned no operations, fail
+            if not operations and extraction_confidence == 0.0:
+                error_traces = [t for t in op_traces if t.get("source") == "EXTRACTION_FAILED"]
+                raise ValueError(
+                    f"TYPE1 HARD-FAIL: Could not extract operations from source. "
+                    f"Errors: {[t.get('evidence') for t in error_traces]}"
+                )
+        else:
+            # Fall back to regex extraction
+            operations, op_traces, confidence = _extract_operations_deterministic_ts(sections_data)
+            trace_entries.extend(op_traces)
+            extraction_confidence = confidence
         
-        # Also extract n8n-specific parameters
-        code_sections = parsed_sections.get("code", [])
+        # Also extract n8n-specific parameters from code
         for section in code_sections:
             content = section.get("content", "") if isinstance(section, dict) else str(section)
             file_name = section.get("file", "unknown") if isinstance(section, dict) else "unknown"
@@ -311,8 +347,11 @@ def _perform_schema_inference(
         })
         assumptions.append("Default 'execute' operation assumed - verify against actual API")
     
-    # Extract credentials
-    credentials, cred_traces = _extract_credentials(parsed_sections, source_type)
+    # Extract credentials - prefer pre-extracted from source-ingest
+    if pre_extracted_credentials:
+        credentials, cred_traces = _build_credential_objects(pre_extracted_credentials, source_type)
+    else:
+        credentials, cred_traces = _extract_credentials(sections_data, source_type)
     trace_entries.extend(cred_traces)
     
     # =================================================================
@@ -331,9 +370,67 @@ def _perform_schema_inference(
     # Use extracted parameters if available, otherwise build from operations
     final_parameters = extracted_parameters if extracted_parameters else _build_parameters(operations)
     
-    # Add operation selector at the beginning if we have n8n operations
-    if operations and any("display_name" in op for op in operations):
-        # This is an n8n node with proper operations
+    # Add authentication selector if we have multiple credentials
+    if len(credentials) > 1:
+        auth_param = {
+            "name": "authentication",
+            "type": "OPTIONS",
+            "display_name": "Authentication",
+            "options": [
+                {"name": _to_display_name(cred.get("name", cred) if isinstance(cred, dict) else cred), 
+                 "value": cred.get("name", cred) if isinstance(cred, dict) else cred}
+                for cred in credentials
+            ],
+            "default": credentials[0].get("name", credentials[0]) if isinstance(credentials[0], dict) else credentials[0],
+            "description": "Authentication method to use",
+        }
+        # Insert authentication at the beginning
+        final_parameters = [auth_param] + [p for p in final_parameters if p.get("name") != "authentication"]
+    
+    # Add resource selector if we have pre-extracted resources
+    if pre_extracted_resources:
+        resource_param = {
+            "name": "resource",
+            "type": "OPTIONS",
+            "display_name": "Resource",
+            "options": [
+                {"name": r.capitalize(), "value": r}
+                for r in pre_extracted_resources
+            ],
+            "default": pre_extracted_resources[0],
+            "description": "The resource to operate on",
+        }
+        # Insert resource after authentication (if exists)
+        auth_index = next((i for i, p in enumerate(final_parameters) if p.get("name") == "authentication"), -1)
+        insert_pos = auth_index + 1 if auth_index >= 0 else 0
+        final_parameters = final_parameters[:insert_pos] + [resource_param] + [p for p in final_parameters[insert_pos:] if p.get("name") != "resource"]
+        
+        # Remove any existing flat operation parameter - we'll add per-resource ones
+        final_parameters = [p for p in final_parameters if p.get("name") != "operation"]
+        
+        # For resource-based nodes, create SEPARATE operation parameters per resource
+        # This is the n8n pattern: each resource has its own operation selector with display_options
+        for resource in pre_extracted_resources:
+            resource_ops = [op for op in operations if op.get("resource") == resource]
+            if resource_ops:
+                op_param = {
+                    "name": "operation",
+                    "type": "OPTIONS",
+                    "display_name": "Operation",
+                    "options": [
+                        {"name": op.get("display_name", op["name"]), "value": op["name"], "description": op.get("description", "")}
+                        for op in resource_ops
+                    ],
+                    "default": resource_ops[0]["name"],
+                    "description": f"Operation to perform on {resource}",
+                    "display_options": {"show": {"resource": [resource]}},
+                }
+                # Insert after resource parameter
+                resource_idx = next((i for i, p in enumerate(final_parameters) if p.get("name") == "resource"), 0)
+                final_parameters.insert(resource_idx + 1, op_param)
+    
+    elif operations and any("display_name" in op for op in operations):
+        # No resources - just add a single operation selector
         op_param = {
             "name": "operation",
             "type": "OPTIONS",
@@ -608,13 +705,27 @@ def _extract_n8n_parameters(content: str, file_name: str) -> List[Dict]:
     
     # Split by opening braces at proper level to get individual property objects
     # Simple approach: find each { ... } block that has name and type
+    
+    # Parameters to skip (handled elsewhere or not user-facing)
+    SKIP_PARAMS = {"operation", "resource", "authentication", "credentials"}
+    
     for match in re.finditer(param_pattern, props_content, re.DOTALL):
         display_name = match.group(1)
         name = match.group(2)
         param_type = match.group(3)
         
-        # Skip the operation parameter (already handled separately)
-        if name == "operation" or name == "resource":
+        # Skip parameters handled elsewhere
+        if name.lower() in SKIP_PARAMS or name == "operation" or name == "resource":
+            continue
+        
+        # Skip credential-related parameters (OAuth2, apiKey, etc.)
+        if "oauth" in name.lower() or "api" in name.lower() and "key" in name.lower():
+            continue
+        if name.lower().endswith("api") or name.lower().startswith("oauth"):
+            continue
+        
+        # Skip version parameters that are constants
+        if "version" in name.lower() and "api" in display_name.lower():
             continue
         
         # Map n8n types to our types
@@ -872,6 +983,276 @@ def _extract_credentials(parsed_sections: Dict[str, Any], source_type: str) -> T
         })
     
     return credentials, traces
+
+
+def _build_credential_objects(
+    credential_names: List[str], source_type: str
+) -> Tuple[List[Dict], List[Dict]]:
+    """
+    Build proper credential objects with display_options from pre-extracted credential names.
+    
+    n8n credentials should have structure:
+    {
+        "name": "shopifyApi",
+        "required": True,
+        "display_options": {
+            "show": {
+                "authentication": ["shopifyApi"]
+            }
+        }
+    }
+    
+    Returns:
+        (credentials, trace_entries)
+    """
+    credentials = []
+    traces = []
+    
+    for i, cred_name in enumerate(credential_names):
+        cred_obj = {
+            "name": cred_name,
+            "required": True,
+            "display_options": {
+                "show": {
+                    "authentication": [cred_name]
+                }
+            }
+        }
+        credentials.append(cred_obj)
+        traces.append({
+            "field_path": f"credentials[{i}]",
+            "source": "SOURCE_CODE" if source_type == "TYPE1" else "API_DOCS",
+            "evidence": f"Credential '{cred_name}' extracted from source",
+            "confidence": "high",
+        })
+    
+    return credentials, traces
+
+
+def _build_resource_operations(
+    resources: List[str], code_sections: List[Dict], source_type: str = "TYPE1"
+) -> Tuple[List[Dict], List[Dict], float]:
+    """
+    Build operations structure from pre-extracted resources.
+    
+    For n8n nodes with resources like ['order', 'product'], we need to:
+    1. Find operation definitions for each resource
+    2. Build operations with display_options linking to resources
+    
+    SOURCE-OF-TRUTH HIERARCHY (TYPE1):
+        - MUST extract operations from source code
+        - NEVER generate assumed CRUD operations
+        - FAIL if operations cannot be found
+    
+    TYPE2 (docs) can use assumed operations with low confidence.
+    
+    INLINE OPERATIONS FALLBACK:
+        When no separate description files exist (e.g., GitLab pattern),
+        extract operations from the main node file using _extract_n8n_operations.
+        This handles nodes that define all operations inline.
+    
+    Returns:
+        (operations, trace_entries, confidence)
+    """
+    operations = []
+    traces = []
+    failed_resources = []  # Track resources with no source evidence
+    
+    # Standard CRUD operations - ONLY for TYPE2 fallback, never TYPE1
+    standard_ops = [
+        {"name": "create", "display_name": "Create", "description_template": "Create {resource}"},
+        {"name": "delete", "display_name": "Delete", "description_template": "Delete {resource}"},
+        {"name": "get", "display_name": "Get", "description_template": "Get {resource}"},
+        {"name": "getAll", "display_name": "Get Many", "description_template": "Get many {resource}s"},
+        {"name": "update", "display_name": "Update", "description_template": "Update {resource}"},
+    ]
+    
+    # INLINE OPERATIONS FALLBACK (for nodes like GitLab with no separate description files):
+    # First check if ANY separate description files exist
+    has_separate_desc_files = False
+    for section in code_sections:
+        if isinstance(section, dict):
+            file_name = section.get("file", "")
+            if "description" in file_name.lower() and ".node." not in file_name.lower():
+                has_separate_desc_files = True
+                break
+    
+    # If no separate description files, extract from main node file
+    if not has_separate_desc_files and source_type == "TYPE1":
+        # Find main node file (e.g., Gitlab.node.ts)
+        main_node_file = None
+        for section in code_sections:
+            if isinstance(section, dict):
+                file_name = section.get("file", "")
+                if ".node.ts" in file_name.lower() and "trigger" not in file_name.lower():
+                    main_node_file = section
+                    break
+        
+        if main_node_file:
+            content = main_node_file.get("content", "")
+            file_name = main_node_file.get("file", "unknown")
+            
+            # Extract operations using n8n pattern
+            inline_ops, inline_traces = _extract_n8n_operations(content, file_name, 0)
+            
+            if inline_ops:
+                # Successfully extracted operations from main file
+                # Add resource association based on displayOptions if present
+                for op in inline_ops:
+                    # Default: no specific resource (applies to all)
+                    op.setdefault("display_options", {})
+                
+                return inline_ops, inline_traces, 0.95  # High confidence - from source
+    
+    # Look for operation definitions in code for each resource
+    for resource in resources:
+        resource_ops = []
+        
+        # Try to find resource-specific description file (e.g., OrderDescription.ts)
+        resource_file = None
+        for section in code_sections:
+            if isinstance(section, dict):
+                file_name = section.get("file", "")
+                if resource.lower() in file_name.lower() and "description" in file_name.lower():
+                    resource_file = section
+                    break
+        
+        if resource_file:
+            # Extract operations from the resource's description file
+            content = resource_file.get("content", "")
+            file_name = resource_file.get("file", "unknown")
+            
+            # Look for the specific operation block in this file
+            # n8n description files typically have:
+            # { name: 'operation', type: 'options', options: [...] }
+            operation_block_match = re.search(
+                r"name:\s*['\"]operation['\"].*?options:\s*\[(.*?)\](?=\s*,?\s*\})",
+                content, 
+                re.DOTALL | re.IGNORECASE
+            )
+            
+            if operation_block_match:
+                options_content = operation_block_match.group(1)
+                
+                # Extract individual options from the operation block only
+                # Pattern: { name: 'Create', value: 'create', description: '...' }
+                op_pattern = r"\{\s*name:\s*['\"]([^'\"]+)['\"].*?value:\s*['\"]([^'\"]+)['\"](?:.*?description:\s*['\"]([^'\"]*)['\"])?"
+                
+                for match in re.finditer(op_pattern, options_content, re.DOTALL):
+                    display_name = match.group(1)
+                    value = match.group(2)
+                    description = match.group(3) if match.group(3) else f"{display_name} {resource}"
+                    
+                    # Skip if it's a resource value, not an operation
+                    if value.lower() in [r.lower() for r in resources]:
+                        continue
+                    
+                    # Avoid duplicates
+                    if any(op["name"] == value and op.get("resource") == resource for op in operations):
+                        continue
+                    
+                    op = {
+                        "name": value,
+                        "display_name": display_name,
+                        "description": description,
+                        "resource": resource,
+                        "display_options": {"show": {"resource": [resource]}},
+                    }
+                    operations.append(op)
+                    traces.append({
+                        "field_path": f"operations[{len(operations)-1}]",
+                        "source": "SOURCE_CODE",
+                        "evidence": f"Operation '{value}' for resource '{resource}' in {file_name}",
+                        "confidence": "high",
+                        "source_file": file_name,
+                    })
+            else:
+                # No operation block found in description file
+                if source_type == "TYPE1":
+                    # TYPE1 HARD-FAIL: Never guess operations, require source evidence
+                    failed_resources.append(resource)
+                    traces.append({
+                        "field_path": f"_errors.{resource}",
+                        "source": "EXTRACTION_FAILED",
+                        "evidence": f"No operation block found for resource '{resource}' in {file_name}",
+                        "confidence": "none",
+                        "error": "TYPE1 requires source evidence, cannot assume CRUD operations",
+                    })
+                else:
+                    # TYPE2: Can assume CRUD with low confidence
+                    for std_op in standard_ops:
+                        op = {
+                            "name": std_op["name"],
+                            "display_name": std_op["display_name"],
+                            "description": std_op["description_template"].format(resource=resource),
+                            "resource": resource,
+                            "display_options": {"show": {"resource": [resource]}},
+                        }
+                        operations.append(op)
+                        traces.append({
+                            "field_path": f"operations[{len(operations)-1}]",
+                            "source": "ASSUMPTION",
+                            "evidence": f"Standard operation '{std_op['name']}' assumed for resource '{resource}'",
+                            "confidence": "low",
+                            "assumption_rationale": "No operation block found in description file (TYPE2 fallback)",
+                        })
+        else:
+            # No description file found for this resource
+            if source_type == "TYPE1":
+                # TYPE1 HARD-FAIL: Cannot proceed without source files
+                failed_resources.append(resource)
+                traces.append({
+                    "field_path": f"_errors.{resource}",
+                    "source": "EXTRACTION_FAILED",
+                    "evidence": f"No description file found for resource '{resource}'",
+                    "confidence": "none",
+                    "error": "TYPE1 requires source files, cannot assume CRUD operations",
+                })
+            else:
+                # TYPE2: Can assume CRUD with low confidence
+                for std_op in standard_ops:
+                    op = {
+                        "name": std_op["name"],
+                        "display_name": std_op["display_name"],
+                        "description": std_op["description_template"].format(resource=resource),
+                        "resource": resource,
+                        "display_options": {"show": {"resource": [resource]}},
+                    }
+                    operations.append(op)
+                    traces.append({
+                        "field_path": f"operations[{len(operations)-1}]",
+                        "source": "ASSUMPTION",
+                        "evidence": f"Standard operation '{std_op['name']}' assumed for resource '{resource}'",
+                        "confidence": "low",
+                        "assumption_rationale": "No description file found (TYPE2 fallback)",
+                    })
+    
+    # TYPE1: If any resources failed extraction, report the failure
+    if source_type == "TYPE1" and failed_resources:
+        # Return empty operations with error traces - caller will handle failure
+        traces.append({
+            "field_path": "_metadata.extraction_status",
+            "source": "EXTRACTION_FAILED",
+            "evidence": f"TYPE1 extraction failed for {len(failed_resources)} resources: {failed_resources}",
+            "confidence": "none",
+            "error": "SOURCE-OF-TRUTH HIERARCHY: Operations must come from source code, not assumptions",
+        })
+        return [], traces, 0.0
+    
+    # Calculate confidence based on how many operations we found in source vs assumed
+    source_count = sum(1 for t in traces if t.get("source") == "SOURCE_CODE")
+    assumption_count = sum(1 for t in traces if t.get("source") == "ASSUMPTION")
+    
+    if source_count > 0 and assumption_count == 0:
+        confidence = 0.95  # All from source
+    elif source_count > assumption_count:
+        confidence = 0.8  # Mostly from source
+    elif source_count > 0:
+        confidence = 0.6  # Some from source
+    else:
+        confidence = 0.4  # All assumptions (TYPE2 only)
+    
+    return operations, traces, confidence
 
 
 def _build_parameters(operations: List[Dict]) -> List[Dict]:

@@ -1,0 +1,314 @@
+{
+  "correlation_id": "shopify-convert-009",
+  "node_type": "Shopify",
+  "trace_entries": [
+    {
+      "field_path": "operations[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'create' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[1]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'delete' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[2]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'get' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[3]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'getAll' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[4]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'update' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[5]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'fixedAmount' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[6]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'percentage' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[7]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'shipping' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[8]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'fulfilled' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[9]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'null' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[10]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'partial' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[11]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'restocked' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[12]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'bypass' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[13]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'decrementIgnoringPolicy' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[14]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'decrementObeyingPolicy' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[15]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'any' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[16]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'authorized' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[17]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'paid' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[18]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'partiallyPaid' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[19]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'partiallyRefunded' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[20]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'pending' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[21]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'refunded' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[22]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'unpaid' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[23]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'voided' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[24]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'shipped' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[25]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'unfulfilled' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[26]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'unshipped' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[27]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'Cancelled' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[28]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'closed' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[29]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'open' for resource 'order' in OrderDescription.ts",
+      "confidence": "high",
+      "source_file": "OrderDescription.ts"
+    },
+    {
+      "field_path": "operations[30]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'create' for resource 'product' in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts"
+    },
+    {
+      "field_path": "operations[31]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'delete' for resource 'product' in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts"
+    },
+    {
+      "field_path": "operations[32]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'get' for resource 'product' in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts"
+    },
+    {
+      "field_path": "operations[33]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'getAll' for resource 'product' in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts"
+    },
+    {
+      "field_path": "operations[34]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'update' for resource 'product' in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts"
+    },
+    {
+      "field_path": "operations[35]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'global' for resource 'product' in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts"
+    },
+    {
+      "field_path": "operations[36]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'web' for resource 'product' in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts"
+    },
+    {
+      "field_path": "operations[37]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'any' for resource 'product' in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts"
+    },
+    {
+      "field_path": "operations[38]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'published' for resource 'product' in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts"
+    },
+    {
+      "field_path": "operations[39]",
+      "source": "SOURCE_CODE",
+      "evidence": "Operation 'unpublished' for resource 'product' in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts"
+    },
+    {
+      "field_path": "credentials[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Credential 'shopifyApi' extracted from source",
+      "confidence": "high"
+    },
+    {
+      "field_path": "credentials[1]",
+      "source": "SOURCE_CODE",
+      "evidence": "Credential 'shopifyAccessTokenApi' extracted from source",
+      "confidence": "high"
+    },
+    {
+      "field_path": "credentials[2]",
+      "source": "SOURCE_CODE",
+      "evidence": "Credential 'shopifyOAuth2Api' extracted from source",
+      "confidence": "high"
+    }
+  ],
+  "generated_at": "2026-02-02T10:49:00.499486",
+  "skill_version": "1.0.0",
+  "_hybrid_metadata": {
+    "source_type": "TYPE1",
+    "extraction_confidence": 0.9,
+    "advisor_used": false,
+    "assumption_ratio": 0.0,
+    "deterministic_operations": 43,
+    "assumption_operations": 0
+  }
+}

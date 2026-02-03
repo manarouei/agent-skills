@@ -1,0 +1,18 @@
+{
+  "node_name": "gitlabtrigger",
+  "allowed_paths": [
+    "nodes/gitlabtrigger*",
+    "nodes/gitlabtrigger*",
+    "tests/*gitlabtrigger*",
+    "tests/*gitlabtrigger*",
+    "credentials/*gitlabtrigger*",
+    "credentials/*gitlabtrigger*"
+  ],
+  "forbidden_paths": [
+    "**/base.py",
+    "**/Base*.py",
+    "**/__init__.py"
+  ],
+  "generated_at": "2026-02-03T06:53:49.095807",
+  "correlation_id": "gitlab-regression-test-001"
+}

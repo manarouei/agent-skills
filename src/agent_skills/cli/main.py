@@ -103,6 +103,7 @@ def pipeline_run(
     
     # Determine workspace root
     workspace_root = Path.cwd()
+    repo_root = workspace_root
     skills_dir = workspace_root / "skills"
     scripts_dir = workspace_root / "scripts"
     artifacts_dir = workspace_root / "artifacts"
@@ -135,9 +136,7 @@ def pipeline_run(
     
     # Create executor and runner (with skill implementations registered)
     executor = create_executor(
-        skills_dir=skills_dir,
-        scripts_dir=scripts_dir,
-        artifacts_dir=artifacts_dir,
+        repo_root=repo_root,
         register_implementations=True,
     )
     
@@ -151,11 +150,27 @@ def pipeline_run(
     source_path = Path(source).resolve()
     
     # Extract normalized_name from source path
-    # e.g., input_sources/github/ -> github
-    normalized_name = source_path.name
-    if not normalized_name or normalized_name in (".", ""):
-        # Try parent for paths like input_sources/github/
-        normalized_name = source_path.parent.name if source_path.parent.name != "input_sources" else source_path.name
+    # e.g., input_sources/github/Github.node.ts -> github
+    # e.g., input_sources/gitlab/ -> gitlab
+    if source_path.is_file():
+        # File path: use parent directory name (the node folder)
+        normalized_name = source_path.parent.name
+        if normalized_name == "input_sources":
+            # Edge case: file directly in input_sources
+            normalized_name = source_path.stem.lower()
+    elif source_path.is_dir():
+        # Directory path: use the directory name
+        normalized_name = source_path.name
+        if normalized_name == "input_sources" or not normalized_name:
+            normalized_name = source_path.stem.lower() if source_path.stem else "unknown"
+    else:
+        # Path doesn't exist yet - extract from path string
+        normalized_name = source_path.name
+        if normalized_name.endswith(".ts"):
+            normalized_name = source_path.parent.name
+    
+    # Fallback normalization
+    normalized_name = normalized_name.lower().replace("node", "").replace(".ts", "").strip("-_")
     
     # Auto-detect golden nodes from well-known locations
     golden_node_hints = []

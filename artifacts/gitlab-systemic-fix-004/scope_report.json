@@ -1,0 +1,93 @@
+{
+  "correlation_id": "gitlab-systemic-fix-004",
+  "total_files": 8,
+  "allowed_files": 0,
+  "violations": 8,
+  "passed": false,
+  "details": {
+    "files_checked": [
+      "runtime/executor.py",
+      "skills/schema-infer/impl.py",
+      "src/agent_skills/pipelines/runner.py",
+      "skills/code-convert/impl.py",
+      "artifacts/gitlab-pipeline-test-001/converted/gitlab.py",
+      "configs/pipelines.yaml",
+      "src/agent_skills/cli/main.py",
+      "scripts/agent_gate.py"
+    ],
+    "violations": [
+      {
+        "file": "runtime/executor.py",
+        "reason": "Path matches forbidden pattern: **/Base*.py",
+        "action": "BLOCKED"
+      },
+      {
+        "file": "skills/schema-infer/impl.py",
+        "reason": "Path matches forbidden pattern: **/Base*.py",
+        "action": "BLOCKED"
+      },
+      {
+        "file": "src/agent_skills/pipelines/runner.py",
+        "reason": "Path matches forbidden pattern: **/Base*.py",
+        "action": "BLOCKED"
+      },
+      {
+        "file": "skills/code-convert/impl.py",
+        "reason": "Path matches forbidden pattern: **/Base*.py",
+        "action": "BLOCKED"
+      },
+      {
+        "file": "artifacts/gitlab-pipeline-test-001/converted/gitlab.py",
+        "reason": "Path matches forbidden pattern: **/Base*.py",
+        "action": "BLOCKED"
+      },
+      {
+        "file": "configs/pipelines.yaml",
+        "reason": "Path not in allowlist",
+        "action": "BLOCKED"
+      },
+      {
+        "file": "src/agent_skills/cli/main.py",
+        "reason": "Path matches forbidden pattern: **/Base*.py",
+        "action": "BLOCKED"
+      },
+      {
+        "file": "scripts/agent_gate.py",
+        "reason": "Path matches forbidden pattern: **/Base*.py",
+        "action": "BLOCKED"
+      }
+    ]
+  },
+  "enforcement": {
+    "allowlist_source": "/home/toni/agent-skills/artifacts/gitlab-systemic-fix-004/allowlist.json",
+    "allowed_patterns": [
+      "nodes/gitlab*",
+      "nodes/gitlab*",
+      "tests/*gitlab*",
+      "tests/*gitlab*",
+      "credentials/*gitlab*",
+      "credentials/*gitlab*"
+    ],
+    "forbidden_patterns": [
+      "**/base.ts",
+      "**/Base*.ts",
+      "package.json",
+      "**/__init__.py",
+      "setup.cfg",
+      ".env",
+      "package-lock.json",
+      "migrations/**/*",
+      ".github/**/*",
+      "setup.py",
+      "alembic/**/*",
+      "**/base.py",
+      "pyproject.toml",
+      "config/*",
+      ".gitlab-ci.yml",
+      ".env.*",
+      "**/Base*.py",
+      "Dockerfile",
+      "docker-compose.yml"
+    ]
+  }
+}

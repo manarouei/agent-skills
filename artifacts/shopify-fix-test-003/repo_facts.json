@@ -1,0 +1,11 @@
+{
+  "basenode_contract_path": "contracts/BASENODE_CONTRACT.md",
+  "node_loader_paths": [
+    "runtime/kb/loader.py"
+  ],
+  "golden_node_paths": [
+    "nodepacks/core/nodes.py",
+    "src/node_sdk/basenode.py"
+  ],
+  "test_command": "pytest tests/"
+}

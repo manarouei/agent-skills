@@ -1,0 +1,18 @@
+{
+  "correlation_id": "shopify-convert-008",
+  "node_name": "shopify",
+  "source_type": "TYPE1",
+  "operations_converted": 0,
+  "files_generated": [
+    "/home/toni/agent-skills/artifacts/shopify-convert-008/converted_node/shopify.py",
+    "/home/toni/agent-skills/artifacts/shopify-convert-008/converted_node/__init__.py"
+  ],
+  "notes": [
+    "Found main node class for shopify",
+    "WARNING: Could not extract execute() body, using scaffold",
+    "Found 0 operation handlers",
+    "Converted GenericFunctions.ts to Python helpers",
+    "Using 5 parameters from inferred schema"
+  ],
+  "generated_at": "2026-02-02T10:16:06.283624"
+}

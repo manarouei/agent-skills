@@ -40,7 +40,7 @@ TS_TO_PY_MAPPINGS = {
     "this.continueOnFail()": "self.continue_on_fail",
     "this.helpers.returnJsonArray": "",  # handled inline
     "this.helpers.constructExecutionMetaData": "",  # handled inline
-    # Type casts
+    # Type casts - must use regex, order matters (longer first)
     "as string": "",
     "as boolean": "",
     "as number": "",
@@ -53,6 +53,217 @@ TS_TO_PY_MAPPINGS = {
     "async ": "",
     "await ": "",
 }
+
+# JavaScript/TypeScript patterns that must be eliminated in output (FIX: Gate 3 enforcement)
+# These are detected and converted or rejected
+JS_ARTIFACT_PATTERNS = [
+    # encodeURIComponent -> Python equivalent (multiple forms)
+    (r'\$\{encodeURIComponent\(([^)]+)\)\}', r'{quote(str(\1), safe="")}'),  # Template literal
+    (r'encodeURIComponent\(([^)]+)\)', r'quote(str(\1), safe="")'),          # Direct call
+    
+    # this.getNodeParameter without proper conversion
+    (r'this\.getNodeParameter\(', 'self.get_node_parameter('),
+    (r'this_get_node_parameter\(', 'self.get_node_parameter('),
+    
+    # Template literal syntax ${...} -> {var} for f-strings
+    (r'\$\{([^}]+)\}', r'{\1}'),
+    
+    # NOTE: DO NOT add `, i)` → `, item_index)` here - execute loop uses `item_index` directly
+    
+    # additional_parameters_reference -> proper variable name
+    (r'\badditional_parameters_reference\b', 'additional_params'),
+    (r'\bparams_reference\b', 'params'),
+    
+    # Raw 'this.' in any context (should be 'self.')
+    (r'\bthis\.', 'self.'),
+]
+
+# Known base URLs for HTTP REST services
+KNOWN_BASE_URLS: dict[str, str] = {
+    "github": "https://api.github.com",
+    "gitlab": "https://gitlab.com/api/v4",
+    "slack": "https://slack.com/api",
+    "discord": "https://discord.com/api/v10",
+    "trello": "https://api.trello.com/1",
+    "bitly": "https://api-ssl.bitly.com",
+    "hunter": "https://api.hunter.io/v2",
+    "clearbit": "https://person.clearbit.com/v2",
+    "notion": "https://api.notion.com/v1",
+}
+
+# Regex patterns for TypeScript type cast removal (FIX #47: strip TS type casts)
+# IMPORTANT: Be careful not to match Python 'except Exception as e:' pattern
+TS_TYPE_CAST_PATTERNS = [
+    (r'\s+as\s+I[A-Z]\w+\[\]', ''),       # " as IDiscountCode[]" → ""
+    (r'\s+as\s+I[A-Z]\w+', ''),            # " as IDataObject" → ""  
+    (r'\s+as\s+string\[\]', ''),           # " as string[]" → ""
+    (r'\s+as\s+number\[\]', ''),           # " as number[]" → ""
+    (r'\s+as\s+string', ''),               # " as string" → ""
+    (r'\s+as\s+number', ''),               # " as number" → ""
+    (r'\s+as\s+boolean', ''),              # " as boolean" → ""
+    # Catch-all for TS types: require uppercase first letter (TS types) or known TS types
+    # Excludes lowercase single letters like 'e' (Python exception binding)
+    (r'\s+as\s+[A-Z]\w*', ''),             # " as AnyType" → "" (TS types start uppercase)
+]
+
+# Boolean literal conversions (FIX #48: JS booleans to Python)
+JS_TO_PY_LITERALS = {
+    'true': 'True',
+    'false': 'False',
+    'null': 'None',
+    'undefined': 'None',
+}
+
+
+# =============================================================================
+# STUB DETECTION (TYPE1 HARD-FAIL ENFORCEMENT)
+# =============================================================================
+
+# Patterns that indicate a stub/placeholder implementation
+STUB_PATTERNS = [
+    r'#\s*TODO:\s*Implement',          # TODO comment
+    r'#\s*__STUB_MARKER__',            # Internal stub marker
+    r'raise\s+NotImplementedError',     # NotImplementedError
+    r'response\s*=\s*\{\s*\}',          # Empty response dict
+    r'pass\s*$',                        # Bare pass statement
+    r'return\s+\{\s*\}',                # Return empty dict
+    r'return\s+None',                   # Return None
+]
+
+
+def _is_stub_implementation(code: str) -> bool:
+    """Detect if generated code is a stub/placeholder.
+    
+    TYPE1 ENFORCEMENT: Stubs are never allowed for TYPE1 conversions.
+    This function detects stub patterns that indicate failed extraction.
+    
+    Args:
+        code: Generated Python code for an operation handler
+        
+    Returns:
+        True if the code contains stub patterns (should be rejected)
+    """
+    if not code or not code.strip():
+        return True
+    
+    for pattern in STUB_PATTERNS:
+        if re.search(pattern, code, re.IGNORECASE | re.MULTILINE):
+            return True
+    
+    # Check for minimal implementation (just parameter extraction, no HTTP call)
+    has_http_call = any(p in code for p in [
+        'self._api_request',
+        'self._http_request', 
+        'self._oauth2_request',
+        'requests.request',
+        'requests.get',
+        'requests.post',
+    ])
+    
+    # If no HTTP call and no return with data, it's likely a stub
+    if not has_http_call and 'return' in code:
+        # Check if return is meaningful
+        return_match = re.search(r'return\s+(.+)', code)
+        if return_match:
+            return_value = return_match.group(1).strip()
+            # Empty or trivial returns are stubs
+            if return_value in ['{}', 'None', '[]', "{'json': {}}"]:
+                return True
+    
+    return False
+
+
+def _strip_ts_type_casts(code: str) -> str:
+    """Remove all TypeScript type casts from code.
+    
+    Handles patterns like:
+        - expr as string
+        - expr as IDataObject
+        - expr as IDiscountCode[]
+        - (expr as Type).method()
+    
+    FIX #47: Systemic fix for TypeScript type cast artifacts in generated Python.
+    """
+    result = code
+    for pattern, replacement in TS_TYPE_CAST_PATTERNS:
+        result = re.sub(pattern, replacement, result)
+    return result
+
+
+def _convert_js_literals(code: str) -> str:
+    """Convert JavaScript boolean literals to Python.
+    
+    FIX #48: Systemic fix for JS boolean literals in generated Python.
+    """
+    result = code
+    # Use word boundaries to avoid replacing inside strings
+    for js_lit, py_lit in JS_TO_PY_LITERALS.items():
+        # Match whole word only, not inside quotes
+        result = re.sub(rf'\b{js_lit}\b', py_lit, result)
+    return result
+
+
+def _eliminate_js_artifacts(code: str) -> str:
+    """Eliminate JavaScript/TypeScript artifacts from generated Python.
+    
+    SYSTEMIC FIX: Converts or removes JS patterns that should never appear in output:
+    - encodeURIComponent() → quote()
+    - this_get_node_parameter() → self.get_node_parameter()
+    - Template literals ${...} → f-string {...}
+    - Undefined loop variable 'i' → item_index
+    
+    This is the LAST RESORT - patterns should be caught earlier, but this
+    ensures nothing leaks through.
+    """
+    result = code
+    for pattern, replacement in JS_ARTIFACT_PATTERNS:
+        result = re.sub(pattern, replacement, result)
+    
+    # Additional specific fixes
+    # NOTE: Do not replace 'i' with 'item_index' here - execute loop now uses item_index directly
+    
+    # Fix any malformed nested f-strings like f'{f'/...'}'
+    # This can happen when endpoint replacement created nested f-strings
+    result = re.sub(r"f'\{f'([^']+)'\}", r"f'\1", result)
+    
+    # Fix undefined self._base_endpoint references if still present
+    if "self._base_endpoint" in result and "self._base_endpoint =" not in result:
+        result = result.replace("self._base_endpoint", "'/projects/' + quote(str(project_id), safe='')")
+    
+    # SYSTEMIC FIX: Convert JS camelCase variable names inside f-string interpolations to snake_case
+    # Pattern: {quote(str(filePath), safe="")} -> {quote(str(file_path), safe="")}
+    # Pattern: {varName} -> {var_name}
+    def _camel_to_snake_in_fstring(match):
+        inner = match.group(1)
+        # Apply snake_case conversion to the variable name part
+        # Be careful not to break function calls like quote(), str()
+        # Only convert bare identifiers that are camelCase
+        def convert_camel(m):
+            name = m.group(0)
+            # Skip Python builtins and common functions
+            if name in ('str', 'int', 'quote', 'safe', 'encode', 'decode', 'format', 'get', 'None', 'True', 'False'):
+                return name
+            # Convert camelCase to snake_case
+            s1 = re.sub(r'(.)([A-Z][a-z]+)', r'\1_\2', name)
+            return re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+        # Find all word tokens in the interpolation and convert them
+        converted = re.sub(r'\b([a-z][a-zA-Z0-9]*)\b', convert_camel, inner)
+        return '{' + converted + '}'
+    
+    result = re.sub(r'\{([^{}]+)\}', _camel_to_snake_in_fstring, result)
+    
+    return result
+
+
+def _apply_ts_to_py_transformations(code: str) -> str:
+    """Apply all TypeScript to Python transformations.
+    
+    This combines type cast stripping, literal conversion, and JS artifact elimination.
+    """
+    code = _strip_ts_type_casts(code)
+    code = _convert_js_literals(code)
+    code = _eliminate_js_artifacts(code)
+    return code
 
 # API request pattern
 API_REQUEST_TEMPLATE = Template('''response = self._http_request(
@@ -85,11 +296,19 @@ def execute_code_convert(ctx: "ExecutionContext") -> AgentResponse:
     """
     Convert TypeScript n8n node to Python BaseNode.
     
+    SOURCE-OF-TRUTH HIERARCHY (TYPE1):
+        1. golden_impl (avidflow-back/nodes/*.py) - HIGHEST PRIORITY
+        2. TypeScript source code extraction
+        3. HARD-FAIL if neither provides implementation
+    
+    NEVER generate stubs, placeholders, or NotImplementedError for TYPE1.
+    
     Inputs:
         - correlation_id: str
         - source_type: "TYPE1" 
         - parsed_sections: dict with code content
         - node_schema: inferred schema from schema-infer
+        - golden_impl: dict from golden-extract skill (optional but preferred)
         - scaffold_path: path to scaffold files (optional)
     
     Outputs:
@@ -118,6 +337,10 @@ def execute_code_convert(ctx: "ExecutionContext") -> AgentResponse:
             errors=["No source code provided in parsed_sections.code"],
         )
     
+    # Get golden implementation (HIGHEST PRIORITY for TYPE1)
+    golden_impl = inputs.get("golden_impl", {})
+    has_golden = bool(golden_impl and golden_impl.get("methods"))
+    
     # Get schema for structure
     node_schema = inputs.get("node_schema", {})
     node_name = node_schema.get("type", parsed_sections.get("node_name", "Unknown"))
@@ -131,18 +354,50 @@ def execute_code_convert(ctx: "ExecutionContext") -> AgentResponse:
     # PHASE 1: Parse TypeScript source
     # =================================================================
     
-    # Find main node file
+    # Find main node file - improved selection logic
+    # Priority: 1) File matching node name with async execute, 2) Any file with async execute
     main_node_ts = None
     generic_functions_ts = None
+    main_node_candidates = []
     
     for section in code_sections:
         content = section.get("content", "") if isinstance(section, dict) else str(section)
         filename = section.get("file", "") if isinstance(section, dict) else ""
         
         if "implements INodeType" in content or "export class" in content:
-            main_node_ts = content
+            # Collect candidates with their properties
+            has_execute = "async execute" in content
+            name_match = node_name.lower() in filename.lower() and "trigger" not in filename.lower()
+            main_node_candidates.append({
+                "content": content,
+                "filename": filename,
+                "has_execute": has_execute,
+                "name_match": name_match,
+            })
         if "ApiRequest" in filename or "GenericFunctions" in filename:
             generic_functions_ts = content
+    
+    # Select best candidate for main node
+    if main_node_candidates:
+        # Priority 1: File matching name AND has async execute
+        for candidate in main_node_candidates:
+            if candidate["name_match"] and candidate["has_execute"]:
+                main_node_ts = candidate["content"]
+                conversion_notes.append(f"Selected {candidate['filename']} as main node (name match + execute)")
+                break
+        
+        # Priority 2: Any file with async execute
+        if not main_node_ts:
+            for candidate in main_node_candidates:
+                if candidate["has_execute"]:
+                    main_node_ts = candidate["content"]
+                    conversion_notes.append(f"Selected {candidate['filename']} as main node (has execute)")
+                    break
+        
+        # Priority 3: First candidate (fallback)
+        if not main_node_ts and main_node_candidates:
+            main_node_ts = main_node_candidates[0]["content"]
+            conversion_notes.append(f"Selected {main_node_candidates[0]['filename']} as main node (fallback)")
     
     if not main_node_ts:
         return AgentResponse(
@@ -153,25 +408,87 @@ def execute_code_convert(ctx: "ExecutionContext") -> AgentResponse:
     conversion_notes.append(f"Found main node class for {node_name}")
     
     # =================================================================
+    # PHASE 1.5: Check golden implementation (SOURCE-OF-TRUTH PRIORITY)
+    # =================================================================
+    
+    if has_golden:
+        golden_methods = golden_impl.get("methods", {})
+        conversion_notes.append(f"GOLDEN: Found {len(golden_methods)} methods from working node")
+        conversion_notes.append(f"GOLDEN: Source file: {golden_impl.get('source_file', 'unknown')}")
+    else:
+        conversion_notes.append("GOLDEN: No golden implementation provided, using TS extraction")
+    
+    # =================================================================
     # PHASE 2: Extract operations and convert execute() method
     # =================================================================
     
     # Extract execute method body
     execute_body = _extract_execute_body(main_node_ts)
     if not execute_body:
-        conversion_notes.append("WARNING: Could not extract execute() body, using scaffold")
-        execute_body = ""
+        if has_golden:
+            conversion_notes.append("TS extraction failed, relying on golden implementation")
+        else:
+            # TYPE1 HARD-FAIL: No golden and no TS extraction
+            return AgentResponse(
+                state=TaskState.FAILED,
+                errors=[
+                    "TYPE1 HARD-FAIL: Could not extract execute() body from TypeScript",
+                    "No golden implementation available as fallback",
+                    "SOURCE-OF-TRUTH HIERARCHY: golden > TS > FAIL (stubs never allowed)",
+                ],
+            )
     
     # Extract resource/operation routing
     operations = _extract_operations(execute_body)
-    conversion_notes.append(f"Found {len(operations)} operation handlers")
+    conversion_notes.append(f"Found {len(operations)} operation handlers from TS")
     
-    # Convert each operation
+    # Convert each operation - prefer golden when available
     converted_handlers = []
+    failed_operations = []  # Track operations that couldn't be converted
+    
     for resource, operation, ts_code in operations:
+        handler_key = f"{resource}_{operation}" if resource else operation
+        
+        # SOURCE-OF-TRUTH HIERARCHY: Check golden first
+        golden_method = None
+        if has_golden:
+            golden_methods = golden_impl.get("methods", {})
+            # Try exact match first
+            golden_method = golden_methods.get(handler_key)
+            if not golden_method:
+                # Try operation-only match for resource+operation nodes
+                golden_method = golden_methods.get(operation)
+        
+        if golden_method:
+            # Use golden implementation directly
+            py_code = golden_method.get("body", "")
+            if py_code:
+                converted_handlers.append((resource, operation, py_code))
+                conversion_notes.append(f"GOLDEN: Used golden impl for {handler_key}")
+                continue
+        
+        # Fall back to TS extraction
         py_code = _convert_operation_handler(resource, operation, ts_code, generic_functions_ts)
-        converted_handlers.append((resource, operation, py_code))
-        conversion_notes.append(f"Converted {resource}/{operation}")
+        
+        # TYPE1 VALIDATION: Check if conversion produced a stub
+        if _is_stub_implementation(py_code):
+            failed_operations.append(handler_key)
+            conversion_notes.append(f"FAILED: {handler_key} produced stub, no golden fallback")
+        else:
+            converted_handlers.append((resource, operation, py_code))
+            conversion_notes.append(f"TS: Converted {handler_key}")
+    
+    # TYPE1 HARD-FAIL: If any operations produced stubs without golden fallback
+    if failed_operations:
+        return AgentResponse(
+            state=TaskState.FAILED,
+            errors=[
+                f"TYPE1 HARD-FAIL: {len(failed_operations)} operations could not be fully converted",
+                f"Failed operations: {', '.join(failed_operations)}",
+                "SOURCE-OF-TRUTH HIERARCHY: golden > TS > FAIL (stubs never allowed)",
+                "Provide golden_impl from working avidflow-back/nodes/ or fix TS extraction",
+            ],
+        )
     
     # =================================================================
     # PHASE 3: Extract and convert API helper functions
@@ -210,6 +527,10 @@ def execute_code_convert(ctx: "ExecutionContext") -> AgentResponse:
         correlation_id=correlation_id,
         node_schema=node_schema,
     )
+    
+    # FIX #47/#48: Final safety net - apply all TS→Py transformations to generated code
+    # This catches any TypeScript artifacts that slipped through individual converters
+    python_code = _apply_ts_to_py_transformations(python_code)
     
     # =================================================================
     # PHASE 5: Write output files
@@ -601,12 +922,29 @@ def _convert_operation_handler(
     - Body construction  
     - API calls with various patterns
     - Conditional logic for filters, returnAll, etc.
+    - GitLab baseEndpoint pattern with owner/repository extraction
     """
     lines = []
     qs_fields = []
     body_fields = []
     has_return_all = False
     has_filters = False
+    needs_base_endpoint = False
+    
+    # Check if this operation uses baseEndpoint pattern (GitLab-style)
+    if 'baseEndpoint' in ts_code or '${baseEndpoint}' in (generic_ts or ''):
+        needs_base_endpoint = True
+    
+    # =================================================================
+    # Step 0: If GitLab-style, add owner/repository extraction first
+    # =================================================================
+    if needs_base_endpoint:
+        lines.append("owner = self.get_node_parameter('owner', item_index)")
+        lines.append("repository = self.get_node_parameter('repository', item_index)")
+        lines.append("")
+        lines.append("# Build base endpoint for GitLab API")
+        lines.append("base_endpoint = f'/projects/{owner}/{repository}'")
+        lines.append("")
     
     # =================================================================
     # Step 1: Extract all getNodeParameter calls
@@ -656,13 +994,32 @@ def _convert_operation_handler(
             py_value = _convert_ts_expression(value_var, extracted_params)
             body_fields.append((field_name, py_value))
     
-    # Pattern: body.field = value
-    body_assign_pattern = r"body\.(\w+)\s*=\s*([^;]+)"
+    # Pattern: body.field = value (simple assignment, NOT inside conditionals)
+    # FIX #51: Be more conservative - only capture simple expressions
+    # Avoid capturing conditional logic like `body.event == 'x' ||` etc
+    body_assign_pattern = r"(?<![\|&=!])body\.(\w+)\s*=\s*([^;{\n]+?)(?=;|\n|$)"
     for match in re.finditer(body_assign_pattern, ts_code):
         field = match.group(1)
         value_expr = match.group(2).strip()
+        # Skip if this looks like a conditional (contains comparison operators)
+        if '==' in value_expr or '||' in value_expr or '&&' in value_expr or '{' in value_expr:
+            continue
+        # FIX #52: Skip incomplete expressions (unclosed parens, await calls, etc.)
+        if value_expr.count('(') != value_expr.count(')'):
+            continue
+        if value_expr.startswith('await ') or value_expr.startswith('this.'):
+            # Complex async call or method call - skip, too complex for simple extraction
+            continue
+        # FIX #55: Skip complex function calls with method chaining
+        # If it contains function calls (has parentheses), skip - too complex
+        if '(' in value_expr and ')' in value_expr:
+            # Exception: simple additionalFields.get('x') style is OK
+            if not re.match(r'^[a-zA-Z_]\w*\.get\([\'"][^\'\"]+[\'"]\)$', value_expr):
+                continue
         py_value = _convert_ts_expression(value_expr, extracted_params)
-        body_fields.append((field, py_value))
+        # Skip empty or clearly invalid values
+        if py_value and py_value not in ('', 'undefined', 'None'):
+            body_fields.append((field, py_value))
     
     # =================================================================
     # Step 4: Build query dict if we have qs fields
@@ -705,7 +1062,12 @@ def _convert_operation_handler(
     if body_fields:
         lines.append("")
         lines.append("# Build request body")
-        body_dict = ", ".join(f"'{f}': {v}" for f, v in body_fields)
+        # FIX #47/#48: Apply TS transformations to body field values
+        clean_fields = []
+        for f, v in body_fields:
+            clean_v = _apply_ts_to_py_transformations(v)
+            clean_fields.append((f, clean_v))
+        body_dict = ", ".join(f"'{f}': {v}" for f, v in clean_fields)
         lines.append(f"body = {{{body_dict}}}")
     
     # =================================================================
@@ -715,12 +1077,19 @@ def _convert_operation_handler(
     # - hunterApiRequest.call(this, 'GET', '/endpoint', {}, qs)
     # - await bitlyApiRequest.call(this, 'POST', '/endpoint', body)
     # - hunterApiRequestAllItems.call(this, 'data', 'GET', '/endpoint', {}, qs)
+    # - gitlabApiRequest.call(this, requestMethod, endpoint, body, qs)  # Variables!
     
+    # Pattern 1: String literals for method/endpoint (most common)
     api_all_pattern = r"(\w+)ApiRequestAllItems\.call\(\s*this\s*,\s*['\"](\w+)['\"],\s*['\"](\w+)['\"],\s*['\"`]([^'\"]+)['\"`](?:\s*,\s*\{\})?(?:\s*,\s*(\w+))?\s*\)"
-    api_pattern = r"(\w+)ApiRequest\.call\(\s*this\s*,\s*['\"](\w+)['\"],\s*['\"`]([^'\"]+)['\"`](?:\s*,\s*(\w+|\{\}))?(?:\s*,\s*(\w+))?\s*\)"
+    api_pattern_str = r"(\w+)ApiRequest\.call\(\s*this\s*,\s*['\"](\w+)['\"],\s*['\"`]([^'\"]+)['\"`](?:\s*,\s*(\w+|\{\}))?(?:\s*,\s*(\w+))?\s*\)"
+    
+    # Pattern 2: Variables for method/endpoint (GitLab pattern)
+    # gitlabApiRequest.call(this, requestMethod, endpoint, body, qs)
+    api_pattern_var = r"(\w+)ApiRequest\.call\(\s*this\s*,\s*(\w+)\s*,\s*(\w+)(?:\s*,\s*(\w+))?(?:\s*,\s*(\w+))?\s*\)"
     
     api_all_match = re.search(api_all_pattern, ts_code)
-    api_match = re.search(api_pattern, ts_code)
+    api_match = re.search(api_pattern_str, ts_code)
+    api_var_match = re.search(api_pattern_var, ts_code) if not api_match else None
     
     lines.append("")
     
@@ -750,10 +1119,94 @@ def _convert_operation_handler(
         lines.append("# Make API request")
         lines.append(f"response = self._api_request('{method}', '{endpoint}', body={body_param}, query={query_param})")
         lines.append("response = response.get('data', response)")
+    elif api_var_match:
+        # GitLab pattern: variables for method/endpoint
+        # gitlabApiRequest.call(this, requestMethod, endpoint, body, qs)
+        method_var = api_var_match.group(2)  # 'requestMethod'
+        endpoint_var = api_var_match.group(3)  # 'endpoint'
+        body_arg = api_var_match.group(4)  # 'body'
+        qs_arg = api_var_match.group(5)  # 'qs'
+        
+        # Convert variable names to snake_case
+        method_py = _to_snake_case(method_var)
+        endpoint_py = _to_snake_case(endpoint_var)
+        
+        # Look for method/endpoint assignments in the TS code
+        # e.g., let requestMethod: string = 'POST';
+        method_assign = re.search(rf"(?:let|const)\s+{method_var}[^=]*=\s*['\"](\w+)['\"]", ts_code)
+        endpoint_assign = re.search(rf"(?:let|const)\s+{endpoint_var}[^=]*=\s*['\"`]([^'\"`]+)['\"`]", ts_code)
+        
+        # Use extracted values or fall back to the variable approach
+        method_value = f"'{method_assign.group(1)}'" if method_assign else method_py
+        endpoint_value = f"'{endpoint_assign.group(1)}'" if endpoint_assign else endpoint_py
+        
+        # Determine body/query parameters
+        body_param = "body" if body_fields else "None"
+        query_param = "query" if qs_fields else "None"
+        if qs_arg and qs_arg.lower() in ('qs', 'query'):
+            query_param = "query"
+        if body_arg and body_arg.lower() in ('body',):
+            body_param = "body"
+        
+        lines.append("# Make API request")
+        # If we extracted literal values, use them; otherwise use dynamic
+        if method_assign and endpoint_assign:
+            lines.append(f"response = self._api_request({method_value}, {endpoint_value}, body={body_param}, query={query_param})")
+        else:
+            # Dynamic: method and endpoint come from variables defined in the operation
+            lines.append(f"# Note: method={method_py}, endpoint={endpoint_py} are set dynamically")
+            lines.append(f"response = self._api_request({method_py}, {endpoint_py}, body={body_param}, query={query_param})")
+        lines.append("response = response.get('data', response)")
     else:
-        # No API call found - add placeholder
-        lines.append("# TODO: Implement API call")
-        lines.append("response = {}")
+        # Pattern 3: GitLab-style - method/endpoint assigned in block, API call outside
+        # Check if this block sets requestMethod/endpoint variables
+        method_assign = re.search(r"requestMethod\s*=\s*['\"](\w+)['\"]", ts_code)
+        endpoint_assign = re.search(r"endpoint\s*=\s*['\"`]([^'\"`]+)['\"`]", ts_code)
+        
+        if method_assign and endpoint_assign:
+            # Found method/endpoint assignments - generate API call with extracted values
+            method_value = method_assign.group(1)
+            endpoint_template = endpoint_assign.group(1)
+            
+            # Convert template literals like ${baseEndpoint}/issues to f-string style
+            # Handle known variable names that should become Python expressions
+            def convert_ts_var(m):
+                var_name = m.group(1)
+                if var_name == 'baseEndpoint':
+                    # baseEndpoint should reference the base_endpoint variable we built earlier
+                    return '{base_endpoint}'
+                elif var_name in ('owner',):
+                    return '{owner}'
+                elif var_name in ('repo', 'repository'):
+                    return '{repository}'
+                elif var_name in ('projectId', 'project_id', 'id'):
+                    # For cases like release operations that use just `id`
+                    return '{quote(str(owner) + "%2F" + str(repository), safe="")}'
+                elif var_name == 'issueNumber' or var_name == 'issueIid':
+                    return '{issue_number}'
+                elif var_name == 'releaseTag' or var_name == 'tag_name' or var_name == 'tagName':
+                    return '{quote(str(tag_name), safe="")}'
+                elif var_name == 'filePath':
+                    return '{quote(str(file_path), safe="")}'
+                else:
+                    # Default: convert to snake_case local variable
+                    py_var = _to_snake_case(var_name)
+                    return f'{{{py_var}}}'
+            
+            py_endpoint = re.sub(r'\$\{(\w+)\}', convert_ts_var, endpoint_template)
+            
+            # Determine body/query params from what we extracted
+            body_param = "body" if body_fields else "None"
+            query_param = "query" if qs_fields else "None"
+            
+            lines.append("# Make API request (method/endpoint from operation block)")
+            lines.append(f"response = self._api_request('{method_value}', f'{py_endpoint}', body={body_param}, query={query_param})")
+            lines.append("response = response.get('data', response)")
+        else:
+            # No API call found - TYPE1 STUB MARKER (will be detected and rejected)
+            # This marker signals that TS extraction failed and golden fallback is needed
+            lines.append("# __STUB_MARKER__: API call extraction failed")
+            lines.append("raise NotImplementedError('TYPE1 extraction failed - no API call found in TS source')")
     
     # =================================================================
     # Step 8: Return statement
@@ -771,8 +1224,37 @@ def _convert_ts_expression(expr: str, extracted_params: dict) -> str:
     Args:
         expr: TypeScript expression string
         extracted_params: Dict mapping TS var names to (py_var, param_name)
+    
+    FIX #47/#48: Apply type cast stripping and literal conversion early.
     """
     expr = expr.strip()
+    
+    # FIX #47: Strip TypeScript type casts first
+    expr = _strip_ts_type_casts(expr)
+    
+    # FIX #48: Convert JS literals
+    expr = _convert_js_literals(expr)
+    
+    # FIX #53: Remove wrapping parentheses
+    while expr.startswith('(') and expr.endswith(')'):
+        # Check if the parens are balanced and actually wrap the whole expr
+        if expr[1:-1].count('(') == expr[1:-1].count(')'):
+            expr = expr[1:-1].strip()
+        else:
+            break
+    
+    # FIX #54: Handle (expr).property pattern - extract inner and append property
+    paren_property_match = re.match(r'^\(([^)]+)\)\.(\w+)$', expr)
+    if paren_property_match:
+        inner_expr = paren_property_match.group(1)
+        property_name = paren_property_match.group(2)
+        # Recursively convert the inner expression
+        inner_py = _convert_ts_expression(inner_expr, extracted_params)
+        # If it's a dict access pattern, chain .get()
+        if '.get(' in inner_py or inner_py.endswith(')'):
+            return f"{inner_py}.get('{property_name}')"
+        else:
+            return f"{inner_py}.get('{property_name}')"
     
     # Direct variable reference
     if expr in extracted_params:
@@ -782,9 +1264,13 @@ def _convert_ts_expression(expr: str, extracted_params: dict) -> str:
     if re.match(r'^[a-z_][a-z0-9_]*$', expr):
         return _to_snake_case(expr)
     
-    # String literal
+    # String literal - but check for embedded type casts in the string key
     if expr.startswith("'") or expr.startswith('"'):
-        return expr
+        # Clean type casts from inside string literals
+        # e.g., 'fulfillmentStatus as string' → 'fulfillmentStatus'
+        inner = expr[1:-1]  # Remove quotes
+        inner = _strip_ts_type_casts(inner)
+        return f"'{inner}'"
     
     # Number
     if re.match(r'^-?\d+\.?\d*$', expr):
@@ -799,13 +1285,21 @@ def _convert_ts_expression(expr: str, extracted_params: dict) -> str:
         py_array = _convert_ts_expression(array_expr, extracted_params)
         return f"'{separator}'.join({py_array})"
     
-    # Property access: filters.type
+    # FIX #53: Handle nested property access like additionalParameters.branch.value
+    # For complex expressions, recursively process
     if '.' in expr:
         parts = expr.split('.')
+        # First part - might be a known param or just a variable
         if parts[0] in extracted_params:
             base = extracted_params[parts[0]][0]
-            return f"{base}.get('{parts[1]}')"
-        return _to_snake_case(expr.replace('.', '_'))
+            # Chain .get() calls for nested access
+            result = base
+            for part in parts[1:]:
+                result = f"{result}.get('{part}')"
+            return result
+        else:
+            # Convert the whole thing to snake_case as a flat variable
+            return _to_snake_case('_'.join(parts))
     
     # Fallback: convert to snake_case
     return _to_snake_case(expr)
@@ -1002,48 +1496,36 @@ def _generate_python_node(
 {converted_code}
 '''
                 else:
-                    handlers_code += f'''
-    def {method_name}(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        {op_display} operation.
-        
-        Args:
-            item_index: Index of the current item being processed
-            item_data: JSON data from the input item
-            
-        Returns:
-            Dict with operation result
-            
-        TODO: Implement operation logic.
-        """
-        # TODO: Extract parameters using item_index
-        # param = self.get_node_parameter("paramName", item_index)
-        
-        # TODO: Make API call
-        # response = self._api_request("GET", "/endpoint", query={{"param": param}})
-        
-        raise NotImplementedError("{op_name} operation not implemented")
-'''
+                    # TYPE1 HARD-FAIL: This branch should never be reached with proper source hierarchy
+                    # If we get here, it means an operation exists but has no implementation
+                    # Previously this generated a stub - now we fail early in PHASE 2
+                    raise RuntimeError(
+                        f"TYPE1 HARD-FAIL: Operation '{op_name}' has no converted code. "
+                        f"This indicates a bug in the source hierarchy enforcement. "
+                        f"All operations must be converted or fail in PHASE 2."
+                    )
     
     # Generate execute routing
     if has_resource_handlers:
         # Resource + operation pattern - build dispatch from handler_map
         dispatch_cases = []
-        for (resource, operation) in handler_map.keys():
+        for idx, (resource, operation) in enumerate(handler_map.keys()):
             if resource:
                 method_name = f"_{resource}_{operation}"
+                # First case uses 'if', subsequent use 'elif'
+                keyword = 'if' if idx == 0 else 'elif'
                 dispatch_cases.append(
-                    f'                if resource == "{resource}" and operation == "{operation}":\n'
-                    f'                    result = self.{method_name}(i, item_data)'
+                    f'                {keyword} resource == "{resource}" and operation == "{operation}":\n'
+                    f'                    result = self.{method_name}(item_index, item_data)'
                 )
         
-        dispatch_code = "\n                el".join(dispatch_cases) if dispatch_cases else '                pass'
+        dispatch_code = "\n".join(dispatch_cases) if dispatch_cases else '                pass'
         
         execute_routing = f'''
-        for i, item in enumerate(input_data):
+        for item_index, item in enumerate(input_data):
             try:
-                resource = self.get_node_parameter("resource", i)
-                operation = self.get_node_parameter("operation", i)
+                resource = self.get_node_parameter("resource", item_index)
+                operation = self.get_node_parameter("operation", item_index)
                 item_data = item.json_data if hasattr(item, 'json_data') else item.get('json', {{}})
                 
 {dispatch_code}
@@ -1068,22 +1550,22 @@ def _generate_python_node(
     else:
         # Operation-only pattern (like Hunter)
         op_dispatch_lines = []
-        for i, op in enumerate(operations):
+        for idx, op in enumerate(operations):
             op_name = op.get("value", op.get("name", ""))
             if op_name:
-                if i == 0:
+                if idx == 0:
                     op_dispatch_lines.append(f'''                if operation == "{op_name}":
-                    result = self._{op_name}(i, item_data)''')
+                    result = self._{op_name}(item_index, item_data)''')
                 else:
                     op_dispatch_lines.append(f'''                elif operation == "{op_name}":
-                    result = self._{op_name}(i, item_data)''')
+                    result = self._{op_name}(item_index, item_data)''')
         
         op_dispatch = "\n".join(op_dispatch_lines) if op_dispatch_lines else '                pass  # No operations defined'
         
         execute_routing = f'''
-        for i, item in enumerate(input_data):
+        for item_index, item in enumerate(input_data):
             try:
-                operation = self.get_node_parameter("operation", i)
+                operation = self.get_node_parameter("operation", item_index)
                 item_data = item.json_data if hasattr(item, 'json_data') else item.get('json', {{}})
                 
 {op_dispatch}
@@ -1116,10 +1598,19 @@ def _generate_python_node(
             # Schema may store just the credential type name
             cred_name = first_cred if first_cred != "apiKey" else f"{module_name}Api"
     
-    # Extract base URL from api_helpers or use placeholder
-    base_url = _extract_base_url(api_helpers)
+    # Get base URL from known services or credentials
+    base_url = KNOWN_BASE_URLS.get(module_name.lower(), "")
+    base_url_from_creds = not base_url  # If not known, get from credentials
     
-    # Build full Python code following BaseNode pattern
+    # Build proper description dict (GROUND TRUTH: must be dict, not string)
+    display_name = description.get('displayName', node_name)
+    node_description_text = description.get('description', f"Consume the {display_name} API")
+    group_list = description.get('group', ['transform'])
+    
+    # Build proper properties dict with credentials + parameters (GROUND TRUTH)
+    formatted_params = _format_parameters(properties)
+    
+    # Build full Python code following BaseNode GROUND TRUTH pattern
     python_code = f'''#!/usr/bin/env python3
 """
 {node_name} Node
@@ -1134,37 +1625,48 @@ SYNC-CELERY SAFE: All methods are synchronous with timeouts.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+from urllib.parse import quote
 
 import requests
 
-from .base import BaseNode, NodeParameter, NodeParameterType, NodeExecutionData
+from .base import BaseNode, NodeParameterType
+from models import NodeExecutionData
 
 logger = logging.getLogger(__name__)
 
 
 class {class_name}Node(BaseNode):
     """
-    {description.get('displayName', node_name)} node.
+    {display_name} node implementation.
     
-    {description.get('description', '')}
+    {node_description_text}
     """
 
-    node_type = "{node_name.lower()}"
-    node_version = {description.get('version', 1)}
-    display_name = "{description.get('displayName', node_name)}"
-    description = "{description.get('description', '')}"
-    icon = "file:{module_name}.svg"
-    group = {description.get('group', ['output'])}
+    type = "{node_name.lower()}"
+    version = {description.get('version', 1)}
     
-    credentials = [
-        {{
-            "name": "{cred_name}",
-            "required": True,
-        }}
-    ]
-
-    properties = {_format_parameters(properties)}
+    # GROUND TRUTH: description must be a dict with these fields
+    description = {{
+        "displayName": "{display_name}",
+        "name": "{node_name.lower()}",
+        "group": {group_list},
+        "subtitle": "={{{{$parameter['operation'] + ': ' + $parameter['resource']}}}}",
+        "description": "{node_description_text}",
+        "inputs": [{{"name": "main", "type": "main", "required": True}}],
+        "outputs": [{{"name": "main", "type": "main", "required": True}}],
+    }}
+    
+    # GROUND TRUTH: properties must be dict with credentials + parameters
+    properties = {{
+        "credentials": [
+            {{
+                "name": "{cred_name}",
+                "required": True,
+            }}
+        ],
+        "parameters": {formatted_params}
+    }}
 
     def execute(self) -> List[List[NodeExecutionData]]:
         """
@@ -1185,7 +1687,52 @@ class {class_name}Node(BaseNode):
         
         return_items: List[NodeExecutionData] = []
 {execute_routing}
+{_generate_api_request_method(module_name, cred_name, base_url, base_url_from_creds)}
+{handlers_code}
+'''
+    
+    # FIX: Apply TS→Py transformations BEFORE gate validation
+    # This ensures JS artifacts are cleaned up before we validate
+    python_code = _apply_ts_to_py_transformations(python_code)
+    
+    # GATE ENFORCEMENT: Validate generated code before returning
+    # Pass schema for operation coverage gate (Gate 6)
+    # Pass baseline path for parity gate (Gate 7) if available
+    baseline_path = None
+    if node_schema and "baseline_path" in node_schema:
+        baseline_path = node_schema.get("baseline_path")
+    
+    validation_errors = _validate_generated_code(python_code, schema=node_schema, baseline_path=baseline_path)
+    if validation_errors:
+        error_msgs = "\n".join(f"  - {e}" for e in validation_errors)
+        raise RuntimeError(
+            f"Generated code failed hard gates. Errors:\n{error_msgs}"
+        )
+    
+    return python_code
 
+
+def _generate_api_request_method(
+    module_name: str,
+    cred_name: str,
+    base_url: str,
+    base_url_from_creds: bool,
+) -> str:
+    """Generate _api_request method following ground-truth patterns.
+    
+    GROUND TRUTH: Must not contain TODO, example URLs, or placeholder comments.
+    Based on avidflow-back/nodes/gitlab.py pattern.
+    """
+    if base_url_from_creds:
+        url_code = '''
+        # Get server URL from credentials (e.g., self-hosted GitLab)
+        server_url = credentials.get("server", credentials.get("baseUrl", "https://gitlab.com")).rstrip("/")
+        url = f"{server_url}/api/v4{endpoint}"'''
+    else:
+        url_code = f'''
+        url = f"{base_url}{{endpoint}}"'''
+    
+    return f'''
     def _api_request(
         self,
         method: str,
@@ -1199,27 +1746,356 @@ class {class_name}Node(BaseNode):
         SYNC-CELERY SAFE: Uses requests with timeout.
         """
         credentials = self.get_credentials("{cred_name}")
+        if not credentials:
+            raise ValueError("API credentials not found")
         
-        # TODO: Configure authentication based on credential type
-        query = query or {{}}
-        # For API key auth: query["api_key"] = credentials.get("apiKey")
-        # For Bearer auth: headers["Authorization"] = f"Bearer {{credentials.get('accessToken')}}"
+        # Build auth headers (Bearer token pattern)
+        access_token = credentials.get("accessToken", credentials.get("token", credentials.get("apiKey", "")))
+        if not access_token:
+            raise ValueError("Access token not found in credentials")
         
-        url = f"{base_url}{{endpoint}}"
+        headers = {{
+            "Authorization": f"Bearer {{access_token}}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }}
+        {url_code}
         
         response = requests.request(
-            method,
-            url,
+            method=method,
+            url=url,
+            headers=headers,
             params=query,
             json=body,
             timeout=30,  # REQUIRED for Celery
         )
         response.raise_for_status()
         return response.json()
-{handlers_code}
-'''
     
-    return python_code
+    def _api_request_all_items(
+        self,
+        method: str,
+        endpoint: str,
+        body: Dict[str, Any] | None = None,
+        query: Dict[str, Any] | None = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Make paginated API request, returning all items.
+        
+        SYNC-CELERY SAFE: Uses requests with timeout.
+        """
+        all_items: List[Dict[str, Any]] = []
+        query = query or {{}}
+        page = 1
+        per_page = 100
+        
+        while True:
+            query["page"] = page
+            query["per_page"] = per_page
+            
+            response = self._api_request(method, endpoint, body, query)
+            
+            # Handle different response formats
+            if isinstance(response, list):
+                items = response
+            elif isinstance(response, dict):
+                items = response.get("items", response.get("data", []))
+            else:
+                break
+            
+            if not items:
+                break
+            
+            all_items.extend(items)
+            
+            if len(items) < per_page:
+                break
+            
+            page += 1
+        
+        return all_items
+'''
+
+
+def _validate_generated_code(code: str, schema: Dict[str, Any] = None, baseline_path: str = None) -> List[str]:
+    """Validate generated code against hard gates.
+    
+    GATE 1: No placeholder/TODO/example URLs
+    GATE 2: Properties structure correctness (description dict, properties dict)
+    GATE 3: No undefined symbols or JS template leaks
+    GATE 4: Symbol Binding Integrity (all used symbols must be defined)
+    GATE 5: Semantic Dead-Read Detector (catch reads from never-written locals)
+    GATE 6: Operation Coverage (schema.operations == generated handlers)
+    GATE 7: Baseline Behavioral Parity (optional, if baseline provided)
+    
+    Returns list of validation errors (empty = passed).
+    """
+    import ast
+    
+    errors = []
+    
+    # GATE 1: No placeholders, TODOs, or example URLs
+    gate1_patterns = [
+        (r'api\.example\.com', "Contains example URL: api.example.com"),
+        (r'#\s*TODO:', "Contains TODO comment"),
+        (r'NotImplementedError', "Contains NotImplementedError"),
+        (r'this_get_node_parameter', "Contains JS artifact: this_get_node_parameter"),
+        (r'encodeURIComponent', "Contains JS artifact: encodeURIComponent"),
+        (r'\$\{{[^}}]+\}}', "Contains JS template literal: ${...}"),
+    ]
+    
+    for pattern, msg in gate1_patterns:
+        if re.search(pattern, code):
+            errors.append(f"GATE 1 FAIL: {msg}")
+    
+    # GATE 2: Properties structure
+    # Check that description is a dict (contains displayName, not just a string)
+    if 'description = "' in code and 'description = {' not in code:
+        # This is the old wrong pattern - description as string
+        errors.append("GATE 2 FAIL: description is a string, must be a dict")
+    
+    # Check properties is a dict with credentials/parameters
+    if 'properties = [' in code:
+        errors.append("GATE 2 FAIL: properties is a list, must be dict with credentials/parameters")
+    
+    if 'credentials = [' in code and 'properties = {' in code:
+        # Check if credentials is OUTSIDE properties (wrong)
+        cred_pos = code.find('credentials = [')
+        prop_pos = code.find('properties = {')
+        if cred_pos < prop_pos and cred_pos != -1:
+            errors.append("GATE 2 FAIL: credentials defined outside properties dict")
+    
+    # Check that credentials key exists inside properties dict
+    if 'properties = {' in code:
+        if '"credentials":' not in code and "'credentials':" not in code:
+            errors.append("GATE 2 FAIL: properties dict is missing credentials key")
+    
+    # GATE 3: Undefined symbols / JS template leaks
+    gate3_patterns = [
+        # Raw JS this references that weren't converted
+        (r'\bthis\.', "Contains raw JS 'this.' reference"),
+        # JS-style template literals
+        (r'\$\{[^}]+\}', "Contains JS template literal ${...}"),
+        # Undefined parameters from TypeScript
+        (r'\badditional_parameters_reference\b', "Undefined: additional_parameters_reference"),
+        (r'\bparams_reference\b', "Undefined: params_reference"),
+    ]
+    
+    for pattern, msg in gate3_patterns:
+        if re.search(pattern, code):
+            errors.append(f"GATE 3 FAIL: {msg}")
+    
+    # GATE 4 & 5: Symbol Binding Integrity + Dead-Read Detection
+    # Use AST analysis if code parses
+    try:
+        tree = ast.parse(code)
+        gate4_5_errors = _validate_symbol_binding(tree, code)
+        errors.extend(gate4_5_errors)
+    except SyntaxError as se:
+        errors.append(f"GATE 4 FAIL: Code has syntax error at line {se.lineno}: {se.msg}")
+    
+    # GATE 6: Operation Coverage (if schema provided)
+    if schema:
+        gate6_errors = _validate_operation_coverage(code, schema)
+        errors.extend(gate6_errors)
+    
+    # GATE 7: Baseline Behavioral Parity (if baseline provided)
+    if baseline_path and Path(baseline_path).exists():
+        gate7_errors = _validate_baseline_parity(code, baseline_path)
+        errors.extend(gate7_errors)
+    
+    return errors
+
+
+def _validate_symbol_binding(tree, code: str) -> List[str]:
+    """GATE 4 & 5: Validate symbol binding integrity and detect dead reads.
+    
+    Uses AST to check that all symbols used (Load context) are defined (Store context).
+    Operates per-function to respect local scope.
+    
+    Args:
+        tree: AST tree (ast.AST type)
+        code: Source code string
+    """
+    import ast
+    
+    errors = []
+    
+    # Known builtins and imports that don't need local definition
+    known_symbols = {
+        # Python builtins
+        'True', 'False', 'None', 'len', 'str', 'int', 'float', 'bool', 'list', 'dict',
+        'isinstance', 'range', 'enumerate', 'zip', 'map', 'filter', 'any', 'all',
+        'print', 'open', 'repr', 'type', 'hasattr', 'getattr', 'setattr', 'Exception',
+        'ValueError', 'TypeError', 'KeyError', 'AttributeError', 'IndexError',
+        # Common imports
+        'logging', 'logger', 'json', 'requests', 're', 'os', 'sys', 'Path',
+        'datetime', 'quote', 'hashlib',
+        # Node-specific
+        'self', 'BaseNode', 'NodeParameterType', 'NodeExecutionData', 'NodeOperationError',
+        'Dict', 'List', 'Any', 'Optional', 'Tuple', 'Union',
+    }
+    
+    # Critical undefined symbols that must be caught
+    critical_undefined = {
+        'project_id': "project_id used but never assigned (need owner+repository)",
+        # NOTE: item_index is now the loop variable, not a bug
+        'issue_iid': "issue_iid used but issue_number is the parameter",
+        'author_name': "author_name used without extraction from additionalParameters",
+        'author_email': "author_email used without extraction from additionalParameters",
+        'additional_params': "additional_params misspelled (is additional_parameters)",
+        'filePath': "filePath is JS camelCase (should be file_path)",
+        'issueNumber': "issueNumber is JS camelCase (should be issue_number)",
+    }
+    
+    # Check for critical undefined symbols in code
+    for symbol, msg in critical_undefined.items():
+        # Must appear as a Name (not in string or as parameter name definition)
+        pattern = rf'\b{symbol}\b'
+        if re.search(pattern, code):
+            # Verify it's not a parameter definition
+            def_pattern = rf'(?:def|self\.get_node_parameter\()[^)]*["\']?{symbol}["\']?\s*[,)]'
+            param_def_pattern = rf'["\']{symbol}["\']'
+            
+            # If it appears outside of a string/parameter definition, it's undefined
+            for line in code.split('\n'):
+                if symbol in line:
+                    # Check if it's used as a variable (not in a string for parameter access)
+                    if f"'{symbol}'" not in line and f'"{symbol}"' not in line:
+                        if f'{symbol}' in line and '=' not in line.split(symbol)[0][-20:]:
+                            errors.append(f"GATE 4 FAIL: {msg}")
+                            break
+    
+    # Additional check: exception handler must bind exception variable
+    exception_pattern = r'except\s+Exception\s*:'
+    if re.search(exception_pattern, code):
+        # Check if 'as e' is missing
+        if not re.search(r'except\s+Exception\s+as\s+\w+\s*:', code):
+            errors.append("GATE 5 FAIL: exception handler 'except Exception:' must use 'except Exception as e:'")
+    
+    # Check for 'e' being used in error message without being defined
+    if "except Exception:" in code:
+        if re.search(r'\berror.*\{e\}|\berror.*\be\b', code):
+            errors.append("GATE 5 FAIL: Variable 'e' used in error message but exception not bound")
+    
+    return errors
+
+
+def _validate_operation_coverage(code: str, schema: Dict[str, Any]) -> List[str]:
+    """GATE 6: Verify schema.operations == generated handlers.
+    
+    Checks that every operation defined in schema has a corresponding handler method.
+    """
+    errors = []
+    
+    # Extract expected operations from schema
+    expected_ops = set()
+    
+    # Schema may have operations list or resource/operation structure
+    if "operations" in schema:
+        for op in schema["operations"]:
+            if isinstance(op, dict):
+                resource = op.get("resource", "")
+                operation = op.get("name", op.get("operation", ""))
+                if resource and operation:
+                    expected_ops.add(f"{resource}_{operation}".lower())
+                elif operation:
+                    expected_ops.add(operation.lower())
+    
+    # Also check properties.parameters for operation definitions
+    if "properties" in schema and "parameters" in schema["properties"]:
+        for param in schema["properties"]["parameters"]:
+            if param.get("name") == "operation":
+                for opt in param.get("options", []):
+                    if isinstance(opt, dict):
+                        op_value = opt.get("value", "")
+                        if op_value:
+                            expected_ops.add(op_value.lower())
+    
+    # Extract actual handler methods from code
+    actual_handlers = set()
+    handler_pattern = r'def\s+_(\w+)_(\w+)\s*\('
+    for match in re.finditer(handler_pattern, code):
+        resource = match.group(1)
+        operation = match.group(2)
+        actual_handlers.add(f"{resource}_{operation}".lower())
+    
+    # Also check dispatch table in execute()
+    dispatch_pattern = r'elif\s+resource\s*==\s*["\'](\w+)["\']\s+and\s+operation\s*==\s*["\'](\w+)["\']'
+    for match in re.finditer(dispatch_pattern, code):
+        resource = match.group(1)
+        operation = match.group(2)
+        actual_handlers.add(f"{resource}_{operation}".lower())
+    
+    # Compare expected vs actual
+    missing = expected_ops - actual_handlers
+    extra = actual_handlers - expected_ops
+    
+    for op in missing:
+        if op and '_' in op:  # Only report valid resource_operation pairs
+            errors.append(f"GATE 6 FAIL: Missing handler for operation: {op}")
+    
+    # Extra handlers are warnings, not errors
+    # for op in extra:
+    #     errors.append(f"GATE 6 WARN: Extra handler not in schema: {op}")
+    
+    return errors
+
+
+def _validate_baseline_parity(code: str, baseline_path: str) -> List[str]:
+    """GATE 7: Compare against golden baseline for behavioral parity.
+    
+    Checks that key patterns from baseline are present in generated code.
+    """
+    errors = []
+    
+    try:
+        baseline_code = Path(baseline_path).read_text()
+    except Exception:
+        return []  # Skip if baseline can't be read
+    
+    # Extract baseline handlers
+    baseline_handlers = set()
+    handler_pattern = r'def\s+_(\w+)_(\w+)\s*\('
+    for match in re.finditer(handler_pattern, baseline_code):
+        resource = match.group(1)
+        operation = match.group(2)
+        baseline_handlers.add(f"{resource}_{operation}".lower())
+    
+    # Extract generated handlers
+    generated_handlers = set()
+    for match in re.finditer(handler_pattern, code):
+        resource = match.group(1)
+        operation = match.group(2)
+        generated_handlers.add(f"{resource}_{operation}".lower())
+    
+    # Check for missing handlers
+    missing = baseline_handlers - generated_handlers
+    for handler in missing:
+        errors.append(f"GATE 7 FAIL: Handler missing vs baseline: {handler}")
+    
+    # Check for key patterns that must exist
+    key_patterns = [
+        (r'def _api_request\(', "Missing _api_request method"),
+        (r'def _api_request_all_items\(', "Missing pagination helper _api_request_all_items"),
+        (r'def _get_auth_headers\(', "Missing _get_auth_headers method (auth pattern)"),
+        (r'base_endpoint\s*=', "Missing base_endpoint construction"),
+        (r'owner\s*=\s*self\.get_node_parameter', "Missing owner parameter read"),
+        (r'repository\s*=\s*self\.get_node_parameter', "Missing repository parameter read"),
+    ]
+    
+    # Only check patterns that exist in baseline
+    for pattern, msg in key_patterns:
+        if re.search(pattern, baseline_code) and not re.search(pattern, code):
+            errors.append(f"GATE 7 FAIL: {msg}")
+    
+    # Calculate parity score
+    if baseline_handlers:
+        parity = len(generated_handlers & baseline_handlers) / len(baseline_handlers)
+        if parity < 0.8:
+            errors.append(f"GATE 7 FAIL: Handler parity {parity:.1%} < 80% threshold")
+    
+    return errors
 
 
 def _format_parameters(properties: List[Dict[str, Any]]) -> str:

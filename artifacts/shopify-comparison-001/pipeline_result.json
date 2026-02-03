@@ -1,0 +1,122 @@
+{
+  "pipeline_name": "type1-convert",
+  "correlation_id": "shopify-comparison-001",
+  "status": "failed",
+  "started_at": "2026-02-02T09:08:57.149711",
+  "completed_at": "2026-02-02T09:08:57.159848",
+  "duration_ms": 10,
+  "steps": [
+    {
+      "step_name": "ingest",
+      "skill_name": "source-ingest",
+      "status": "completed",
+      "started_at": "2026-02-02T09:08:57.149948",
+      "completed_at": "2026-02-02T09:08:57.155744",
+      "duration_ms": 5,
+      "outputs": {
+        "stub": true,
+        "message": "Skill source-ingest has no implementation registered"
+      },
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required output: raw_content",
+        "Missing required output: parsed_sections",
+        "Missing required output: metadata"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "infer-schema",
+      "skill_name": "schema-infer",
+      "status": "blocked",
+      "started_at": "2026-02-02T09:08:57.155782",
+      "completed_at": "2026-02-02T09:08:57.155814",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required artifacts: ['source_bundle/']"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "scaffold",
+      "skill_name": "node-scaffold",
+      "status": "blocked",
+      "started_at": "2026-02-02T09:08:57.155834",
+      "completed_at": "2026-02-02T09:08:57.155851",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required artifacts: ['inferred_schema.json']"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "ground",
+      "skill_name": "repo-ground",
+      "status": "failed",
+      "started_at": "2026-02-02T09:08:57.155859",
+      "completed_at": "2026-02-02T09:08:57.159816",
+      "duration_ms": 3,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Unknown keys in repo-ground/SKILL.md frontmatter: {'fs_scope'}. Add to SkillContract model or remove from SKILL.md."
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "convert",
+      "skill_name": "code-convert",
+      "status": "skipped",
+      "started_at": "2026-02-02T09:08:57.159836",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "generate-tests",
+      "skill_name": "test-generate",
+      "status": "skipped",
+      "started_at": "2026-02-02T09:08:57.159841",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "validate",
+      "skill_name": "code-validate",
+      "status": "skipped",
+      "started_at": "2026-02-02T09:08:57.159845",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    }
+  ],
+  "outputs": {
+    "ingest": {
+      "stub": true,
+      "message": "Skill source-ingest has no implementation registered"
+    },
+    "infer-schema": {},
+    "scaffold": {},
+    "ground": {}
+  },
+  "artifacts_dir": "/home/toni/agent-skills/artifacts/shopify-comparison-001",
+  "errors": [
+    "Step 'infer-schema' blocked by gate",
+    "Step 'scaffold' blocked by gate",
+    "Step 'ground' failed"
+  ]
+}

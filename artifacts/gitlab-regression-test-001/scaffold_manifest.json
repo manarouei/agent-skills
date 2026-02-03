@@ -1,0 +1,18 @@
+{
+  "correlation_id": "gitlab-regression-test-001",
+  "node_name": "gitlabtrigger",
+  "class_name": "Gitlabtrigger",
+  "module_name": "gitlabtrigger",
+  "files_created": [
+    "/home/toni/agent-skills/artifacts/gitlab-regression-test-001/generated_node/gitlabtrigger.py",
+    "/home/toni/agent-skills/artifacts/gitlab-regression-test-001/generated_node/__init__.py"
+  ],
+  "generated_at": "2026-02-03T06:53:49.095825",
+  "schema_summary": {
+    "type": "GitlabTrigger",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 80,
+    "credential_count": 0
+  }
+}

@@ -386,12 +386,19 @@ class PipelineRunner:
         
         # Apply input mappings (step_name.output_key -> input_key)
         for input_key, mapping in step.input_mappings.items():
-            if "." in mapping:
+            # Handle string mappings like "ingest.parsed_sections"
+            if isinstance(mapping, str) and "." in mapping:
                 source_step, output_key = mapping.split(".", 1)
                 if source_step in step_outputs:
                     source_outputs = step_outputs[source_step]
                     if output_key in source_outputs:
                         inputs[input_key] = source_outputs[output_key]
+            elif isinstance(mapping, dict):
+                # Handle dict mappings (direct value assignment)
+                inputs[input_key] = mapping
+            else:
+                # Handle simple value mappings
+                inputs[input_key] = mapping
         
         return inputs
     

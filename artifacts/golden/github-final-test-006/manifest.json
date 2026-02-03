@@ -1,0 +1,2712 @@
+{
+  "correlation_id": "github-final-test-006",
+  "node_type": null,
+  "skill_name": "code-convert",
+  "created_at": "2026-02-02T14:47:58.588627",
+  "generated_code": {
+    "github.py": "#!/usr/bin/env python3\n\"\"\"\nGithub Node\n\nConverted from TypeScript by agent-skills/code-convert\nCorrelation ID: github-final-test-006\nGenerated: 2026-02-02T14:47:58.538015\n\nSYNC-CELERY SAFE: All methods are synchronous with timeouts.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport logging\nfrom typing import Any, Dict, List\n\nimport requests\n\nfrom .base import BaseNode, NodeParameter, NodeParameterType, NodeExecutionData\n\nlogger = logging.getLogger(__name__)\n\n\nclass GithubNode(BaseNode):\n    \"\"\"\n    Github node.\n    \n    \n    \"\"\"\n\n    node_type = \"github\"\n    node_version = 1\n    display_name = \"Github\"\n    description = \"\"\n    icon = \"file:github.svg\"\n    group = ['output']\n    \n    credentials = [\n        {\n            \"name\": \"githubApi\",\n            \"required\": True,\n        }\n    ]\n\n    properties = [\n            {\"name\": \"authentication\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Authentication\", \"options\": [\n                {\"name\": \"Githubapi\", \"value\": \"githubApi\"},\n                {\"name\": \"Githuboauth2api\", \"value\": \"githubOAuth2Api\"}\n            ], \"default\": \"githubApi\", \"description\": \"Authentication method to use\"},\n            {\"name\": \"resource\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Resource\", \"options\": [\n                {\"name\": \"Organization\", \"value\": \"organization\"},\n                {\"name\": \"Issue\", \"value\": \"issue\"},\n                {\"name\": \"File\", \"value\": \"file\"},\n                {\"name\": \"Repository\", \"value\": \"repository\"},\n                {\"name\": \"User\", \"value\": \"user\"},\n                {\"name\": \"Release\", \"value\": \"release\"},\n                {\"name\": \"Review\", \"value\": \"review\"},\n                {\"name\": \"Workflow\", \"value\": \"workflow\"}\n            ], \"default\": \"organization\", \"description\": \"The resource to operate on\"},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Create\", \"value\": \"create\", \"description\": \"Create workflow\"},\n                {\"name\": \"Delete\", \"value\": \"delete\", \"description\": \"Delete workflow\"},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get workflow\"},\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Get many workflows\"},\n                {\"name\": \"Update\", \"value\": \"update\", \"description\": \"Update workflow\"}\n            ], \"default\": \"create\", \"description\": \"Operation to perform on workflow\", \"display_options\": {'show': {'resource': ['workflow']}}},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Create\", \"value\": \"create\", \"description\": \"Create review\"},\n                {\"name\": \"Delete\", \"value\": \"delete\", \"description\": \"Delete review\"},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get review\"},\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Get many reviews\"},\n                {\"name\": \"Update\", \"value\": \"update\", \"description\": \"Update review\"}\n            ], \"default\": \"create\", \"description\": \"Operation to perform on review\", \"display_options\": {'show': {'resource': ['review']}}},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Create\", \"value\": \"create\", \"description\": \"Create release\"},\n                {\"name\": \"Delete\", \"value\": \"delete\", \"description\": \"Delete release\"},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get release\"},\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Get many releases\"},\n                {\"name\": \"Update\", \"value\": \"update\", \"description\": \"Update release\"}\n            ], \"default\": \"create\", \"description\": \"Operation to perform on release\", \"display_options\": {'show': {'resource': ['release']}}},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Create\", \"value\": \"create\", \"description\": \"Create user\"},\n                {\"name\": \"Delete\", \"value\": \"delete\", \"description\": \"Delete user\"},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get user\"},\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Get many users\"},\n                {\"name\": \"Update\", \"value\": \"update\", \"description\": \"Update user\"}\n            ], \"default\": \"create\", \"description\": \"Operation to perform on user\", \"display_options\": {'show': {'resource': ['user']}}},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Create\", \"value\": \"create\", \"description\": \"Create repository\"},\n                {\"name\": \"Delete\", \"value\": \"delete\", \"description\": \"Delete repository\"},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get repository\"},\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Get many repositorys\"},\n                {\"name\": \"Update\", \"value\": \"update\", \"description\": \"Update repository\"}\n            ], \"default\": \"create\", \"description\": \"Operation to perform on repository\", \"display_options\": {'show': {'resource': ['repository']}}},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Create\", \"value\": \"create\", \"description\": \"Create file\"},\n                {\"name\": \"Delete\", \"value\": \"delete\", \"description\": \"Delete file\"},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get file\"},\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Get many files\"},\n                {\"name\": \"Update\", \"value\": \"update\", \"description\": \"Update file\"}\n            ], \"default\": \"create\", \"description\": \"Operation to perform on file\", \"display_options\": {'show': {'resource': ['file']}}},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Create\", \"value\": \"create\", \"description\": \"Create issue\"},\n                {\"name\": \"Delete\", \"value\": \"delete\", \"description\": \"Delete issue\"},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get issue\"},\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Get many issues\"},\n                {\"name\": \"Update\", \"value\": \"update\", \"description\": \"Update issue\"}\n            ], \"default\": \"create\", \"description\": \"Operation to perform on issue\", \"display_options\": {'show': {'resource': ['issue']}}},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Create\", \"value\": \"create\", \"description\": \"Create organization\"},\n                {\"name\": \"Delete\", \"value\": \"delete\", \"description\": \"Delete organization\"},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get organization\"},\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Get many organizations\"},\n                {\"name\": \"Update\", \"value\": \"update\", \"description\": \"Update organization\"}\n            ], \"default\": \"create\", \"description\": \"Operation to perform on organization\", \"display_options\": {'show': {'resource': ['organization']}}},\n            {\"name\": \"Issue\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"File\"},\n            {\"name\": \"Create Comment\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Create\", \"description\": \"Create a new issue\"},\n            {\"name\": \"Delete\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Create\", \"description\": \"Create a new file in repository\"},\n            {\"name\": \"Get Issues\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Get\", \"description\": \"Get the data of a single repository\"},\n            {\"name\": \"Invite\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Get Repositories\", \"description\": \"Returns the repositories of a user\"},\n            {\"name\": \"Delete\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Create\", \"description\": \"Creates a new release\"},\n            {\"name\": \"Get\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Create\", \"description\": \"Creates a new review\"},\n            {\"name\": \"Dispatch\", \"type\": NodeParameterType.STRING, \"display_name\": \"Disable\", \"description\": \"Disable a workflow\"},\n            {\"name\": \"owner\", \"type\": NodeParameterType.STRING, \"display_name\": \"Repository Owner\", \"default\": \"{ mode: 'list\", \"required\": True},\n            {\"name\": \"list\", \"type\": NodeParameterType.STRING, \"display_name\": \"Repository Owner\"},\n            {\"name\": \"url\", \"type\": NodeParameterType.STRING, \"display_name\": \"Link\"},\n            {\"name\": \"name\", \"type\": NodeParameterType.STRING, \"display_name\": \"By Name\"},\n            {\"name\": \"repository\", \"type\": NodeParameterType.STRING, \"display_name\": \"Repository Name\", \"default\": \"{\", \"required\": True},\n            {\"name\": \"list\", \"type\": NodeParameterType.STRING, \"display_name\": \"Repository Name\"},\n            {\"name\": \"url\", \"type\": NodeParameterType.STRING, \"display_name\": \"Link\"},\n            {\"name\": \"name\", \"type\": NodeParameterType.STRING, \"display_name\": \"By Name\"},\n            {\"name\": \"workflowId\", \"type\": NodeParameterType.STRING, \"display_name\": \"Workflow\", \"default\": \"{\", \"required\": True, \"description\": \"The workflow to dispatch\", \"display_options\": {'show': {'operation': ['disable', 'dispatch', 'dispatchAndWait', 'get', 'getUsage', 'enable']}}},\n            {\"name\": \"list\", \"type\": NodeParameterType.STRING, \"display_name\": \"Workflow\"},\n            {\"name\": \"filename\", \"type\": NodeParameterType.STRING, \"display_name\": \"By File Name\"},\n            {\"name\": \"name\", \"type\": NodeParameterType.STRING, \"display_name\": \"By ID\"},\n            {\"name\": \"ref\", \"type\": NodeParameterType.STRING, \"display_name\": \"Ref\", \"default\": \"main\", \"required\": True, \"description\": \"The git reference for the workflow dispatch (branch or tag name)\", \"display_options\": {'show': {'operation': ['dispatch', 'dispatchAndWait']}}},\n            {\"name\": \"ref\", \"type\": NodeParameterType.STRING, \"display_name\": \"Ref\", \"default\": \"{\", \"required\": True, \"description\": \"The git reference for the workflow dispatch (branch, tag, or commit SHA)\", \"display_options\": {'show': {'operation': ['dispatch', 'dispatchAndWait']}}},\n            {\"name\": \"list\", \"type\": NodeParameterType.STRING, \"display_name\": \"From List\"},\n            {\"name\": \"name\", \"type\": NodeParameterType.STRING, \"display_name\": \"By Name\"},\n            {\"name\": \"inputs\", \"type\": NodeParameterType.JSON, \"display_name\": \"Inputs\", \"default\": \"{\", \"description\": \"JSON object with input parameters for the workflow\", \"display_options\": {'show': {'operation': ['dispatch', 'dispatchAndWait']}}},\n            {\"name\": \"filePath\", \"type\": NodeParameterType.STRING, \"display_name\": \"File Path\", \"default\": \"\", \"required\": True, \"description\": \"The file path of the file. Has to contain the full path.\"},\n            {\"name\": \"filePath\", \"type\": NodeParameterType.STRING, \"display_name\": \"Path\", \"default\": \"\", \"description\": \"The path of the folder to list\", \"display_options\": {'show': {'operation': ['list']}}},\n            {\"name\": \"binaryData\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Binary File\", \"default\": False, \"required\": True, \"description\": \"Whether the data to upload should be taken from binary field\", \"display_options\": {'show': {'operation': ['create', 'edit']}}},\n            {\"name\": \"fileContent\", \"type\": NodeParameterType.STRING, \"display_name\": \"File Content\", \"default\": \"\", \"required\": True, \"description\": \"The text content of the file\", \"display_options\": {'show': {'operation': ['create', 'edit']}}},\n            {\"name\": \"binaryPropertyName\", \"type\": NodeParameterType.STRING, \"display_name\": \"Input Binary Field\", \"default\": \"data\", \"required\": True, \"display_options\": {'show': {'operation': ['create', 'edit']}}},\n            {\"name\": \"commitMessage\", \"type\": NodeParameterType.STRING, \"display_name\": \"Commit Message\", \"default\": \"\", \"required\": True, \"display_options\": {'show': {'operation': ['create', 'delete', 'edit']}}},\n            {\"name\": \"additionalParameters\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Additional Parameters\", \"default\": \"{\", \"description\": \"Additional fields to add\", \"display_options\": {'show': {'operation': ['create', 'delete', 'edit']}}},\n            {\"name\": \"name\", \"type\": NodeParameterType.STRING, \"display_name\": \"author\", \"default\": \"\", \"description\": \"The name of the author of the commit\"},\n            {\"name\": \"email\", \"type\": NodeParameterType.STRING, \"display_name\": \"Email\", \"default\": \"\", \"description\": \"The email of the author of the commit\"},\n            {\"name\": \"branch\", \"type\": NodeParameterType.STRING, \"display_name\": \"branch\", \"default\": \"\", \"description\": \"The branch to commit to. If not set the repository\u2019s default branch (usually master) is used.\"},\n            {\"name\": \"name\", \"type\": NodeParameterType.STRING, \"display_name\": \"committer\", \"default\": \"\", \"description\": \"The name of the committer of the commit\"},\n            {\"name\": \"email\", \"type\": NodeParameterType.STRING, \"display_name\": \"Email\", \"default\": \"\", \"description\": \"The email of the committer of the commit\"},\n            {\"name\": \"asBinaryProperty\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"As Binary Property\", \"default\": True, \"description\": \"Whether to set the data of the file property instead of returning the raw API response\", \"display_options\": {'show': {'operation': ['get']}}},\n            {\"name\": \"binaryPropertyName\", \"type\": NodeParameterType.STRING, \"display_name\": \"Put Output File in Field\", \"default\": \"data\", \"required\": True, \"display_options\": {'show': {'operation': ['get']}}},\n            {\"name\": \"additionalParameters\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Additional Parameters\", \"default\": \"{\", \"description\": \"Additional fields to add\", \"display_options\": {'show': {'operation': ['get']}}},\n            {\"name\": \"reference\", \"type\": NodeParameterType.STRING, \"display_name\": \"Reference\", \"default\": \"\", \"description\": \"The name of the commit/branch/tag. Default: the repository\u2019s default branch (usually master).\"},\n            {\"name\": \"title\", \"type\": NodeParameterType.STRING, \"display_name\": \"Title\", \"default\": \"\", \"required\": True, \"description\": \"The title of the issue\", \"display_options\": {'show': {'operation': ['create']}}},\n            {\"name\": \"body\", \"type\": NodeParameterType.STRING, \"display_name\": \"Body\", \"default\": \"\", \"description\": \"The body of the issue\", \"display_options\": {'show': {'operation': ['create']}}},\n            {\"name\": \"labels\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Labels\", \"default\": \"{ label: \", \"description\": \"Label to add to issue\", \"display_options\": {'show': {'operation': ['create']}}},\n            {\"name\": \"label\", \"type\": NodeParameterType.STRING, \"display_name\": \"Label\", \"default\": \"\", \"description\": \"Label to add to issue\"},\n            {\"name\": \"assignees\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Assignees\", \"default\": \"{ assignee: \", \"description\": \"User to assign issue too\", \"display_options\": {'show': {'operation': ['create']}}},\n            {\"name\": \"assignee\", \"type\": NodeParameterType.STRING, \"display_name\": \"Assignee\", \"default\": \"\", \"description\": \"User to assign issue too\"},\n            {\"name\": \"issueNumber\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Issue Number\", \"default\": 0, \"required\": True, \"description\": \"The number of the issue on which to create the comment on\", \"display_options\": {'show': {'operation': ['createComment']}}},\n            {\"name\": \"body\", \"type\": NodeParameterType.STRING, \"display_name\": \"Body\", \"default\": \"\", \"description\": \"The body of the comment\", \"display_options\": {'show': {'operation': ['createComment']}}},\n            {\"name\": \"issueNumber\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Issue Number\", \"default\": 0, \"required\": True, \"description\": \"The number of the issue edit\", \"display_options\": {'show': {'operation': ['edit']}}},\n            {\"name\": \"editFields\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Edit Fields\", \"default\": \"{\", \"description\": \"User to assign issue to\", \"display_options\": {'show': {'operation': ['edit']}}},\n            {\"name\": \"assignees\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Assignees\", \"default\": \"{ assignee: \", \"description\": \"User to assign issue to\"},\n            {\"name\": \"assignee\", \"type\": NodeParameterType.STRING, \"display_name\": \"Assignees\", \"default\": \"\", \"description\": \"User to assign issue to\"},\n            {\"name\": \"body\", \"type\": NodeParameterType.STRING, \"display_name\": \"Body\", \"default\": \"\", \"description\": \"The body of the issue\"},\n            {\"name\": \"labels\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Labels\", \"default\": \"{ label: \", \"description\": \"Label to add to issue\"},\n            {\"name\": \"label\", \"type\": NodeParameterType.STRING, \"display_name\": \"Label\", \"default\": \"\", \"description\": \"Label to add to issue\"},\n            {\"name\": \"state\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"State\", \"options\": [\n                {\"name\": \"Closed\", \"value\": \"closed\"},\n                {\"name\": \"Open\", \"value\": \"open\"}\n            ], \"default\": \"open\", \"description\": \"Set the state to \"},\n            {\"name\": \"Open\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Closed\", \"description\": \"Set the state to \"},\n            {\"name\": \"Not Planned\", \"type\": NodeParameterType.STRING, \"display_name\": \"Completed\", \"description\": \"Issue is completed\"},\n            {\"name\": \"issueNumber\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Issue Number\", \"default\": 0, \"required\": True, \"description\": \"The issue number to get data for\", \"display_options\": {'show': {'operation': ['get']}}},\n            {\"name\": \"issueNumber\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Issue Number\", \"default\": 0, \"required\": True, \"description\": \"The issue number to lock\", \"display_options\": {'show': {'operation': ['lock']}}},\n            {\"name\": \"lockReason\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Lock Reason\", \"options\": [\n                {\"name\": \"Off-Topic\", \"value\": \"off-topic\"},\n                {\"name\": \"Too Heated\", \"value\": \"too heated\"},\n                {\"name\": \"Resolved\", \"value\": \"resolved\"},\n                {\"name\": \"Spam\", \"value\": \"spam\"}\n            ], \"default\": \"resolved\", \"description\": \"The issue is Off-Topic\", \"display_options\": {'show': {'operation': ['lock']}}},\n            {\"name\": \"Too Heated\", \"type\": NodeParameterType.STRING, \"display_name\": \"Off-Topic\", \"description\": \"The issue is Off-Topic\"},\n            {\"name\": \"additionalFields\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Additional Fields\", \"default\": \"{\", \"description\": \"The name of the issue\", \"display_options\": {'show': {'operation': ['create']}}},\n            {\"name\": \"name\", \"type\": NodeParameterType.STRING, \"display_name\": \"Name\", \"default\": \"\", \"description\": \"The name of the issue\"},\n            {\"name\": \"body\", \"type\": NodeParameterType.STRING, \"display_name\": \"Body\", \"default\": \"\", \"description\": \"The body of the release\"},\n            {\"name\": \"draft\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Draft\", \"default\": False, \"description\": \"Whether to create a draft (unpublished) release, \"},\n            {\"name\": \"prerelease\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Prerelease\", \"default\": False, \"description\": \"Whether to point out that the release is non-production ready\"},\n            {\"name\": \"target_commitish\", \"type\": NodeParameterType.STRING, \"display_name\": \"Target Commitish\", \"default\": \"\", \"description\": \"Specifies the commitish value that determines where the Git tag is created from. Can be any branch or commit SHA. Unused if the Git tag already exists. Default: the repository\"},\n            {\"name\": \"release_id\", \"type\": NodeParameterType.STRING, \"display_name\": \"Release ID\", \"default\": \"\", \"required\": True, \"display_options\": {'show': {'operation': ['get', 'delete', 'update']}}},\n            {\"name\": \"additionalFields\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Additional Fields\", \"default\": \"{\", \"description\": \"The body of the release\", \"display_options\": {'show': {'operation': ['update']}}},\n            {\"name\": \"body\", \"type\": NodeParameterType.STRING, \"display_name\": \"Body\", \"default\": \"\", \"description\": \"The body of the release\"},\n            {\"name\": \"draft\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Draft\", \"default\": False, \"description\": \"Whether to create a draft (unpublished) release, \"},\n            {\"name\": \"name\", \"type\": NodeParameterType.STRING, \"display_name\": \"Name\", \"default\": \"\", \"description\": \"The name of the release\"},\n            {\"name\": \"prerelease\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Prerelease\", \"default\": False, \"description\": \"Whether to point out that the release is non-production ready\"},\n            {\"name\": \"tag_name\", \"type\": NodeParameterType.STRING, \"display_name\": \"Tag Name\", \"default\": \"\", \"description\": \"The name of the tag\"},\n            {\"name\": \"target_commitish\", \"type\": NodeParameterType.STRING, \"display_name\": \"Target Commitish\", \"default\": \"\", \"description\": \"Specifies the commitish value that determines where the Git tag is created from. Can be any branch or commit SHA. Unused if the Git tag already exists. Default: the repository\"},\n            {\"name\": \"returnAll\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Return All\", \"default\": False, \"description\": \"Whether to return all results or only up to a given limit\", \"display_options\": {'show': {'operation': ['getAll']}}},\n            {\"name\": \"limit\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Limit\", \"default\": 50, \"description\": \"Max number of results to return\", \"display_options\": {'show': {'operation': ['getAll']}}},\n            {\"name\": \"returnAll\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Return All\", \"default\": False, \"description\": \"Whether to return all results or only up to a given limit\", \"display_options\": {'show': {'operation': ['getIssues']}}},\n            {\"name\": \"limit\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Limit\", \"default\": 50, \"description\": \"Max number of results to return\", \"display_options\": {'show': {'operation': ['getIssues']}}},\n            {\"name\": \"getRepositoryIssuesFilters\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Filters\", \"default\": \"{\", \"description\": \"Return only issues which are assigned to a specific user\", \"display_options\": {'show': {'operation': ['getIssues']}}},\n            {\"name\": \"assignee\", \"type\": NodeParameterType.STRING, \"display_name\": \"Assignee\", \"default\": \"\", \"description\": \"Return only issues which are assigned to a specific user\"},\n            {\"name\": \"creator\", \"type\": NodeParameterType.STRING, \"display_name\": \"Creator\", \"default\": \"\", \"description\": \"Return only issues which were created by a specific user\"},\n            {\"name\": \"mentioned\", \"type\": NodeParameterType.STRING, \"display_name\": \"Mentioned\", \"default\": \"\", \"description\": \"Return only issues in which a specific user was mentioned\"},\n            {\"name\": \"labels\", \"type\": NodeParameterType.STRING, \"display_name\": \"Labels\", \"default\": \"\", \"description\": \"Return only issues with the given labels. Multiple labels can be separated by comma.\"},\n            {\"name\": \"since\", \"type\": NodeParameterType.STRING, \"display_name\": \"Updated Since\", \"default\": \"\", \"description\": \"Return only issues updated at or after this time\"},\n            {\"name\": \"state\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"State\", \"options\": [\n                {\"name\": \"All\", \"value\": \"all\"},\n                {\"name\": \"Closed\", \"value\": \"closed\"},\n                {\"name\": \"Open\", \"value\": \"open\"}\n            ], \"default\": \"open\", \"description\": \"Returns issues with any state\"},\n            {\"name\": \"Closed\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"All\", \"description\": \"Returns issues with any state\"},\n            {\"name\": \"Updated\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Created\", \"description\": \"Sort by created date\"},\n            {\"name\": \"Descending\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Ascending\", \"description\": \"Sort in ascending order\"},\n            {\"name\": \"limit\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Limit\", \"default\": 50, \"description\": \"Max number of results to return. Maximum value is <a href=\", \"display_options\": {'show': {'operation': ['getPullRequests']}}},\n            {\"name\": \"getRepositoryPullRequestsFilters\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Filters\", \"default\": \"{\", \"description\": \"Returns pull requests with any state\", \"display_options\": {'show': {'operation': ['getPullRequests']}}},\n            {\"name\": \"state\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"State\", \"options\": [\n                {\"name\": \"All\", \"value\": \"all\"},\n                {\"name\": \"Closed\", \"value\": \"closed\"},\n                {\"name\": \"Open\", \"value\": \"open\"}\n            ], \"default\": \"open\", \"description\": \"Returns pull requests with any state\"},\n            {\"name\": \"Closed\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"All\", \"description\": \"Returns pull requests with any state\"},\n            {\"name\": \"Updated\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Created\", \"description\": \"Sort by created date\"},\n            {\"name\": \"Descending\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Ascending\", \"description\": \"Sort in ascending order\"},\n            {\"name\": \"reviewId\", \"type\": NodeParameterType.STRING, \"display_name\": \"Review ID\", \"default\": \"\", \"required\": True, \"description\": \"ID of the review\", \"display_options\": {'show': {'operation': ['get', 'update']}}},\n            {\"name\": \"pullRequestNumber\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"PR Number\", \"default\": 0, \"required\": True, \"description\": \"The number of the pull request\", \"display_options\": {'show': {'operation': ['getAll']}}},\n            {\"name\": \"returnAll\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Return All\", \"default\": False, \"description\": \"Whether to return all results or only up to a given limit\", \"display_options\": {'show': {'operation': ['getAll']}}},\n            {\"name\": \"limit\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Limit\", \"default\": 50, \"description\": \"Max number of results to return\", \"display_options\": {'show': {'operation': ['getAll']}}},\n            {\"name\": \"pullRequestNumber\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"PR Number\", \"default\": 0, \"required\": True, \"description\": \"The number of the pull request to review\", \"display_options\": {'show': {'operation': ['create']}}},\n            {\"name\": \"event\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Event\", \"options\": [\n                {\"name\": \"Approve\", \"value\": \"approve\"},\n                {\"name\": \"Request Change\", \"value\": \"requestChanges\"},\n                {\"name\": \"Comment\", \"value\": \"comment\"},\n                {\"name\": \"Pending\", \"value\": \"pending\"}\n            ], \"default\": \"approve\", \"description\": \"Approve the pull request\", \"display_options\": {'show': {'operation': ['create']}}},\n            {\"name\": \"Request Change\", \"type\": NodeParameterType.STRING, \"display_name\": \"Approve\", \"description\": \"Approve the pull request\"},\n            {\"name\": \"additionalFields\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"Additional Fields\", \"default\": \"{\", \"description\": \"The SHA of the commit that needs a review, if different from the latest\", \"display_options\": {'show': {'operation': ['create']}}},\n            {\"name\": \"commitId\", \"type\": NodeParameterType.STRING, \"display_name\": \"Commit ID\", \"default\": \"\", \"description\": \"The SHA of the commit that needs a review, if different from the latest\"},\n            {\"name\": \"body\", \"type\": NodeParameterType.STRING, \"display_name\": \"Body\", \"default\": \"\", \"description\": \"The body of the review\", \"display_options\": {'show': {'operation': ['update']}}},\n            {\"name\": \"returnAll\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Return All\", \"default\": False, \"description\": \"Whether to return all results or only up to a given limit\", \"display_options\": {'show': {'operation': ['getRepositories']}}},\n            {\"name\": \"limit\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Limit\", \"default\": 50, \"description\": \"Max number of results to return\", \"display_options\": {'show': {'operation': ['getRepositories']}}},\n            {\"name\": \"organization\", \"type\": NodeParameterType.STRING, \"display_name\": \"Organization\", \"default\": \"\", \"required\": True, \"description\": \"The GitHub organization that the user is being invited to\", \"display_options\": {'show': {'operation': ['invite']}}},\n            {\"name\": \"email\", \"type\": NodeParameterType.STRING, \"display_name\": \"Email\", \"default\": \"\", \"required\": True, \"description\": \"The email address of the invited user\", \"display_options\": {'show': {'operation': ['invite']}}},\n            {\"name\": \"returnAll\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Return All\", \"default\": False, \"description\": \"Whether to return all results or only up to a given limit\", \"display_options\": {'show': {'operation': ['getRepositories']}}},\n            {\"name\": \"limit\", \"type\": NodeParameterType.NUMBER, \"display_name\": \"Limit\", \"default\": 50, \"description\": \"Max number of results to return\", \"display_options\": {'show': {'operation': ['getRepositories']}}},\n            {\"name\": \"notice\", \"type\": NodeParameterType.STRING, \"display_name\": \"Only members with owner privileges for an organization or admin privileges for a repository can set up the webhooks this node requires.\", \"default\": \"\"},\n            {\"name\": \"list\", \"type\": NodeParameterType.STRING, \"display_name\": \"Repository Owner\", \"required\": True},\n            {\"name\": \"url\", \"type\": NodeParameterType.STRING, \"display_name\": \"Link\"},\n            {\"name\": \"name\", \"type\": NodeParameterType.STRING, \"display_name\": \"By Name\"},\n            {\"name\": \"repository\", \"type\": NodeParameterType.STRING, \"display_name\": \"Repository Name\", \"default\": \"{ mode: 'list\", \"required\": True},\n            {\"name\": \"list\", \"type\": NodeParameterType.STRING, \"display_name\": \"Repository Name\"},\n            {\"name\": \"url\", \"type\": NodeParameterType.STRING, \"display_name\": \"Link\"},\n            {\"name\": \"name\", \"type\": NodeParameterType.STRING, \"display_name\": \"By Name\"},\n            {\"name\": \"events\", \"type\": NodeParameterType.MULTI_OPTIONS, \"display_name\": \"Events\", \"options\": [\n                {\"name\": \"*\", \"value\": \"*\"},\n                {\"name\": \"Check Run\", \"value\": \"check_run\"},\n                {\"name\": \"Check Suite\", \"value\": \"check_suite\"},\n                {\"name\": \"Commit Comment\", \"value\": \"commit_comment\"},\n                {\"name\": \"Create\", \"value\": \"create\"},\n                {\"name\": \"Delete\", \"value\": \"delete\"},\n                {\"name\": \"Deploy Key\", \"value\": \"deploy_key\"},\n                {\"name\": \"Deployment\", \"value\": \"deployment\"},\n                {\"name\": \"Deployment Status\", \"value\": \"deployment_status\"},\n                {\"name\": \"Fork\", \"value\": \"fork\"},\n                {\"name\": \"Github App Authorization\", \"value\": \"github_app_authorization\"},\n                {\"name\": \"Gollum\", \"value\": \"gollum\"},\n                {\"name\": \"Installation\", \"value\": \"installation\"},\n                {\"name\": \"Installation Repositories\", \"value\": \"installation_repositories\"},\n                {\"name\": \"Issue Comment\", \"value\": \"issue_comment\"},\n                {\"name\": \"Issues\", \"value\": \"issues\"},\n                {\"name\": \"Label\", \"value\": \"label\"},\n                {\"name\": \"Marketplace Purchase\", \"value\": \"marketplace_purchase\"},\n                {\"name\": \"Member\", \"value\": \"member\"},\n                {\"name\": \"Membership\", \"value\": \"membership\"},\n                {\"name\": \"Meta\", \"value\": \"meta\"},\n                {\"name\": \"Milestone\", \"value\": \"milestone\"},\n                {\"name\": \"Org Block\", \"value\": \"org_block\"},\n                {\"name\": \"Organization\", \"value\": \"organization\"},\n                {\"name\": \"Page Build\", \"value\": \"page_build\"},\n                {\"name\": \"Project\", \"value\": \"project\"},\n                {\"name\": \"Project Card\", \"value\": \"project_card\"},\n                {\"name\": \"Project Column\", \"value\": \"project_column\"},\n                {\"name\": \"Public\", \"value\": \"public\"},\n                {\"name\": \"Pull Request\", \"value\": \"pull_request\"},\n                {\"name\": \"Pull Request Review\", \"value\": \"pull_request_review\"},\n                {\"name\": \"Pull Request Review Comment\", \"value\": \"pull_request_review_comment\"},\n                {\"name\": \"Push\", \"value\": \"push\"},\n                {\"name\": \"Release\", \"value\": \"release\"},\n                {\"name\": \"Repository\", \"value\": \"repository\"},\n                {\"name\": \"Repository Import\", \"value\": \"repository_import\"},\n                {\"name\": \"Repository Vulnerability Alert\", \"value\": \"repository_vulnerability_alert\"},\n                {\"name\": \"Security Advisory\", \"value\": \"security_advisory\"},\n                {\"name\": \"Star\", \"value\": \"star\"},\n                {\"name\": \"Status\", \"value\": \"status\"},\n                {\"name\": \"Team\", \"value\": \"team\"},\n                {\"name\": \"Team Add\", \"value\": \"team_add\"},\n                {\"name\": \"Watch\", \"value\": \"watch\"}\n            ], \"default\": \"[]\", \"required\": True, \"description\": \"Any time any event is triggered (Wildcard Event)\"},\n            {\"name\": \"Check Run\", \"type\": NodeParameterType.COLLECTION, \"display_name\": \"*\", \"description\": \"Any time any event is triggered (Wildcard Event)\"},\n            {\"name\": \"insecureSSL\", \"type\": NodeParameterType.BOOLEAN, \"display_name\": \"Insecure SSL\", \"default\": False, \"description\": \"Whether the SSL certificate of the n8n host be verified by GitHub when delivering payloads\"}\n        ]\n\n    def execute(self) -> List[List[NodeExecutionData]]:\n        \"\"\"\n        Execute the node operations.\n        \n        SYNC-CELERY SAFE: All HTTP calls use timeout parameter.\n        \n        Returns:\n            List[List[NodeExecutionData]]: Nested list where outer list is output branches,\n            inner list is items in that branch.\n        \"\"\"\n        # Get input data from previous node\n        input_data = self.get_input_data()\n        \n        # Handle empty input\n        if not input_data:\n            return [[]]\n        \n        return_items: List[NodeExecutionData] = []\n\n        for i, item in enumerate(input_data):\n            try:\n                resource = self.get_node_parameter(\"resource\", i)\n                operation = self.get_node_parameter(\"operation\", i)\n                item_data = item.json_data if hasattr(item, 'json_data') else item.get('json', {})\n                \n                if resource == \"file\" and operation == \"edit\":\n                    result = self._file_edit(i, item_data)\n                elif resource == \"file\" and operation == \"delete\":\n                    result = self._file_delete(i, item_data)\n                elif resource == \"file\" and operation == \"get\":\n                    result = self._file_get(i, item_data)\n                elif resource == \"file\" and operation == \"list\":\n                    result = self._file_list(i, item_data)\n                elif resource == \"issue\" and operation == \"create\":\n                    result = self._issue_create(i, item_data)\n                elif resource == \"issue\" and operation == \"createComment\":\n                    result = self._issue_createComment(i, item_data)\n                elif resource == \"issue\" and operation == \"edit\":\n                    result = self._issue_edit(i, item_data)\n                elif resource == \"issue\" and operation == \"get\":\n                    result = self._issue_get(i, item_data)\n                elif resource == \"issue\" and operation == \"lock\":\n                    result = self._issue_lock(i, item_data)\n                elif resource == \"release\" and operation == \"create\":\n                    result = self._release_create(i, item_data)\n                elif resource == \"release\" and operation == \"delete\":\n                    result = self._release_delete(i, item_data)\n                elif resource == \"release\" and operation == \"get\":\n                    result = self._release_get(i, item_data)\n                elif resource == \"release\" and operation == \"getAll\":\n                    result = self._release_getAll(i, item_data)\n                elif resource == \"release\" and operation == \"update\":\n                    result = self._release_update(i, item_data)\n                elif resource == \"repository\" and operation == \"listPopularPaths\":\n                    result = self._repository_listPopularPaths(i, item_data)\n                elif resource == \"repository\" and operation == \"listReferrers\":\n                    result = self._repository_listReferrers(i, item_data)\n                elif resource == \"repository\" and operation == \"get\":\n                    result = self._repository_get(i, item_data)\n                elif resource == \"repository\" and operation == \"getLicense\":\n                    result = self._repository_getLicense(i, item_data)\n                elif resource == \"repository\" and operation == \"getIssues\":\n                    result = self._repository_getIssues(i, item_data)\n                elif resource == \"repository\" and operation == \"getPullRequests\":\n                    result = self._repository_getPullRequests(i, item_data)\n                elif resource == \"review\" and operation == \"get\":\n                    result = self._review_get(i, item_data)\n                elif resource == \"review\" and operation == \"getAll\":\n                    result = self._review_getAll(i, item_data)\n                elif resource == \"review\" and operation == \"create\":\n                    result = self._review_create(i, item_data)\n                elif resource == \"review\" and operation == \"update\":\n                    result = self._review_update(i, item_data)\n                elif resource == \"user\" and operation == \"getRepositories\":\n                    result = self._user_getRepositories(i, item_data)\n                elif resource == \"user\" and operation == \"invite\":\n                    result = self._user_invite(i, item_data)\n                elif resource == \"organization\" and operation == \"getRepositories\":\n                    result = self._organization_getRepositories(i, item_data)\n                elif resource == \"workflow\" and operation == \"disable\":\n                    result = self._workflow_disable(i, item_data)\n                elif resource == \"workflow\" and operation == \"dispatch\":\n                    result = self._workflow_dispatch(i, item_data)\n                elif resource == \"workflow\" and operation == \"enable\":\n                    result = self._workflow_enable(i, item_data)\n                elif resource == \"workflow\" and operation == \"get\":\n                    result = self._workflow_get(i, item_data)\n                elif resource == \"workflow\" and operation == \"getUsage\":\n                    result = self._workflow_getUsage(i, item_data)\n                elif resource == \"workflow\" and operation == \"list\":\n                    result = self._workflow_list(i, item_data)\n                else:\n                    raise ValueError(f\"Unknown resource/operation: {resource}/{operation}\")\n                \n                # Handle array results\n                if isinstance(result, list):\n                    for r in result:\n                        return_items.append(NodeExecutionData(json_data=r))\n                else:\n                    return_items.append(NodeExecutionData(json_data=result))\n                \n            except Exception:\n                logger.error(f\"Error in {resource}/{operation}: {e}\")\n                if self.continue_on_fail:\n                    return_items.append(NodeExecutionData(json_data={\"error\": str(e)}))\n                else:\n                    raise\n        \n        return [return_items]\n\n    def _api_request(\n        self,\n        method: str,\n        endpoint: str,\n        body: Dict[str, Any] | None = None,\n        query: Dict[str, Any] | None = None,\n    ) -> Dict[str, Any]:\n        \"\"\"\n        Make authenticated API request.\n        \n        SYNC-CELERY SAFE: Uses requests with timeout.\n        \"\"\"\n        credentials = self.get_credentials(\"githubApi\")\n        \n        # TODO: Configure authentication based on credential type\n        query = query or {}\n        # For API key auth: query[\"api_key\"] = credentials.get(\"apiKey\")\n        # For Bearer auth: headers[\"Authorization\"] = f\"Bearer {credentials.get('accessToken')}\"\n        \n        url = f\"https://api.github.com/repos/test-owner/test-repo{endpoint}\"\n        \n        response = requests.request(\n            method,\n            url,\n            params=query,\n            json=body,\n            timeout=30,  # REQUIRED for Celery\n        )\n        response.raise_for_status()\n        return response.json()\n\n    def _file_edit(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        File Edit operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _file_delete(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        File Delete operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        message = self.get_node_parameter('commitMessage', item_index)\n        \n        # Build request body\n        body = {'author': additional_parameters_author, 'committer': additional_parameters_committer}\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _file_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        File Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        \n        # Build query parameters\n        query = {}\n        query['ref'] = additional_parameters_reference\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _file_list(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        File List operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _issue_create(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Issue Create operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        title = self.get_node_parameter('title', item_index)\n        body = self.get_node_parameter('body', item_index)\n        labels = self.get_node_parameter('labels', item_index)\n        assignees = self.get_node_parameter('assignees', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _issue_createComment(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Issue Createcomment operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        issue_number = self.get_node_parameter('issueNumber', item_index)\n        body = self.get_node_parameter('body', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _issue_edit(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Issue Edit operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        issue_number = self.get_node_parameter('issueNumber', item_index)\n        body = self.get_node_parameter('editFields', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _issue_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Issue Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        issue_number = self.get_node_parameter('issueNumber', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _issue_lock(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Issue Lock operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        issue_number = self.get_node_parameter('issueNumber', item_index)\n        lock_reason = self.get_node_parameter('lockReason', item_index)\n        \n        # Build query parameters\n        query = {}\n        query['lock_reason'] = this_get_node_parameter('lock_reason', i)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _release_create(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Release Create operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        body = self.get_node_parameter('additionalFields', item_index)\n        tag_name = self.get_node_parameter('releaseTag', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _release_delete(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Release Delete operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        release_id = self.get_node_parameter('release_id', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _release_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Release Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        release_id = self.get_node_parameter('release_id', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _release_getAll(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Release Getall operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        return_all = self.get_node_parameter('returnAll', item_index)\n        per_page = self.get_node_parameter('limit', item_index)\n        \n        # Build query parameters\n        query = {}\n        query['per_page'] = this_get_node_parameter('limit', 0)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _release_update(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Release Update operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        release_id = self.get_node_parameter('release_id', item_index)\n        body = self.get_node_parameter('additionalFields', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _repository_listPopularPaths(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Repository Listpopularpaths operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _repository_listReferrers(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Repository Listreferrers operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _repository_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Repository Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _repository_getLicense(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Repository Getlicense operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _repository_getIssues(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Repository Getissues operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        qs = self.get_node_parameter('getRepositoryIssuesFilters', item_index)\n        return_all = self.get_node_parameter('returnAll', item_index)\n        per_page = self.get_node_parameter('limit', item_index)\n        \n        # Build query parameters\n        query = {}\n        query['per_page'] = this_get_node_parameter('limit', 0)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _repository_getPullRequests(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Repository Getpullrequests operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        qs = self.get_node_parameter('getRepositoryPullRequestsFilters', item_index)\n        return_all = self.get_node_parameter('returnAll', item_index)\n        per_page = self.get_node_parameter('limit', item_index)\n        \n        # Build query parameters\n        query = {}\n        query['per_page'] = this_get_node_parameter('limit', 0)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _review_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Review Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        review_id = self.get_node_parameter('reviewId', item_index)\n        pull_request_number = self.get_node_parameter('pullRequestNumber', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _review_getAll(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Review Getall operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        return_all = self.get_node_parameter('returnAll', item_index)\n        pull_request_number = self.get_node_parameter('pullRequestNumber', item_index)\n        per_page = self.get_node_parameter('limit', item_index)\n        \n        # Build query parameters\n        query = {}\n        query['per_page'] = this_get_node_parameter('limit', 0)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _review_create(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Review Create operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        pull_request_number = self.get_node_parameter('pullRequestNumber', item_index)\n        additional_fields = self.get_node_parameter('additionalFields', item_index)\n        body = self.get_node_parameter('body', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _review_update(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Review Update operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        pull_request_number = self.get_node_parameter('pullRequestNumber', item_index)\n        review_id = self.get_node_parameter('reviewId', item_index)\n        body = self.get_node_parameter('body', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _user_getRepositories(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        User Getrepositories operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        return_all = self.get_node_parameter('returnAll', item_index)\n        per_page = self.get_node_parameter('limit', item_index)\n        \n        # Build query parameters\n        query = {}\n        query['per_page'] = this_get_node_parameter('limit', 0)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _user_invite(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        User Invite operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        org = self.get_node_parameter('organization', item_index)\n        email = self.get_node_parameter('email', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _organization_getRepositories(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Organization Getrepositories operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        return_all = self.get_node_parameter('returnAll', item_index)\n        per_page = self.get_node_parameter('limit', item_index)\n        \n        # Build query parameters\n        query = {}\n        query['per_page'] = this_get_node_parameter('limit', 0)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _workflow_disable(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Workflow Disable operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        workflow_id = self.get_node_parameter('workflowId', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _workflow_dispatch(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Workflow Dispatch operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        workflow_id = self.get_node_parameter('workflowId', item_index)\n        ref = self.get_node_parameter('ref', item_index)\n        \n        # Build request body\n        body = {'ref': ref, 'inputs': inputs}\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _workflow_enable(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Workflow Enable operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        workflow_id = self.get_node_parameter('workflowId', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _workflow_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Workflow Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        workflow_id = self.get_node_parameter('workflowId', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _workflow_getUsage(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Workflow Getusage operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        workflow_id = self.get_node_parameter('workflowId', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _workflow_list(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Workflow List operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n",
+    "__init__.py": "\"\"\"\nGithub Node Package\nConverted from TypeScript by agent-skills/code-convert\n\"\"\"\n\nfrom .github import GithubNode\n\n__all__ = [\"GithubNode\"]\n"
+  },
+  "node_schema": {
+    "type": "Github",
+    "version": 1,
+    "description": {
+      "displayName": "Github",
+      "name": "github",
+      "inputs": [
+        {
+          "name": "main",
+          "type": "main"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "main",
+          "type": "main"
+        }
+      ]
+    },
+    "properties": {
+      "parameters": [
+        {
+          "name": "authentication",
+          "type": "OPTIONS",
+          "display_name": "Authentication",
+          "options": [
+            {
+              "name": "Githubapi",
+              "value": "githubApi"
+            },
+            {
+              "name": "Githuboauth2api",
+              "value": "githubOAuth2Api"
+            }
+          ],
+          "default": "githubApi",
+          "description": "Authentication method to use"
+        },
+        {
+          "name": "resource",
+          "type": "OPTIONS",
+          "display_name": "Resource",
+          "options": [
+            {
+              "name": "Organization",
+              "value": "organization"
+            },
+            {
+              "name": "Issue",
+              "value": "issue"
+            },
+            {
+              "name": "File",
+              "value": "file"
+            },
+            {
+              "name": "Repository",
+              "value": "repository"
+            },
+            {
+              "name": "User",
+              "value": "user"
+            },
+            {
+              "name": "Release",
+              "value": "release"
+            },
+            {
+              "name": "Review",
+              "value": "review"
+            },
+            {
+              "name": "Workflow",
+              "value": "workflow"
+            }
+          ],
+          "default": "organization",
+          "description": "The resource to operate on"
+        },
+        {
+          "name": "operation",
+          "type": "OPTIONS",
+          "display_name": "Operation",
+          "options": [
+            {
+              "name": "Create",
+              "value": "create",
+              "description": "Create workflow"
+            },
+            {
+              "name": "Delete",
+              "value": "delete",
+              "description": "Delete workflow"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get workflow"
+            },
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Get many workflows"
+            },
+            {
+              "name": "Update",
+              "value": "update",
+              "description": "Update workflow"
+            }
+          ],
+          "default": "create",
+          "description": "Operation to perform on workflow",
+          "display_options": {
+            "show": {
+              "resource": [
+                "workflow"
+              ]
+            }
+          }
+        },
+        {
+          "name": "operation",
+          "type": "OPTIONS",
+          "display_name": "Operation",
+          "options": [
+            {
+              "name": "Create",
+              "value": "create",
+              "description": "Create review"
+            },
+            {
+              "name": "Delete",
+              "value": "delete",
+              "description": "Delete review"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get review"
+            },
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Get many reviews"
+            },
+            {
+              "name": "Update",
+              "value": "update",
+              "description": "Update review"
+            }
+          ],
+          "default": "create",
+          "description": "Operation to perform on review",
+          "display_options": {
+            "show": {
+              "resource": [
+                "review"
+              ]
+            }
+          }
+        },
+        {
+          "name": "operation",
+          "type": "OPTIONS",
+          "display_name": "Operation",
+          "options": [
+            {
+              "name": "Create",
+              "value": "create",
+              "description": "Create release"
+            },
+            {
+              "name": "Delete",
+              "value": "delete",
+              "description": "Delete release"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get release"
+            },
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Get many releases"
+            },
+            {
+              "name": "Update",
+              "value": "update",
+              "description": "Update release"
+            }
+          ],
+          "default": "create",
+          "description": "Operation to perform on release",
+          "display_options": {
+            "show": {
+              "resource": [
+                "release"
+              ]
+            }
+          }
+        },
+        {
+          "name": "operation",
+          "type": "OPTIONS",
+          "display_name": "Operation",
+          "options": [
+            {
+              "name": "Create",
+              "value": "create",
+              "description": "Create user"
+            },
+            {
+              "name": "Delete",
+              "value": "delete",
+              "description": "Delete user"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get user"
+            },
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Get many users"
+            },
+            {
+              "name": "Update",
+              "value": "update",
+              "description": "Update user"
+            }
+          ],
+          "default": "create",
+          "description": "Operation to perform on user",
+          "display_options": {
+            "show": {
+              "resource": [
+                "user"
+              ]
+            }
+          }
+        },
+        {
+          "name": "operation",
+          "type": "OPTIONS",
+          "display_name": "Operation",
+          "options": [
+            {
+              "name": "Create",
+              "value": "create",
+              "description": "Create repository"
+            },
+            {
+              "name": "Delete",
+              "value": "delete",
+              "description": "Delete repository"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get repository"
+            },
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Get many repositorys"
+            },
+            {
+              "name": "Update",
+              "value": "update",
+              "description": "Update repository"
+            }
+          ],
+          "default": "create",
+          "description": "Operation to perform on repository",
+          "display_options": {
+            "show": {
+              "resource": [
+                "repository"
+              ]
+            }
+          }
+        },
+        {
+          "name": "operation",
+          "type": "OPTIONS",
+          "display_name": "Operation",
+          "options": [
+            {
+              "name": "Create",
+              "value": "create",
+              "description": "Create file"
+            },
+            {
+              "name": "Delete",
+              "value": "delete",
+              "description": "Delete file"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get file"
+            },
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Get many files"
+            },
+            {
+              "name": "Update",
+              "value": "update",
+              "description": "Update file"
+            }
+          ],
+          "default": "create",
+          "description": "Operation to perform on file",
+          "display_options": {
+            "show": {
+              "resource": [
+                "file"
+              ]
+            }
+          }
+        },
+        {
+          "name": "operation",
+          "type": "OPTIONS",
+          "display_name": "Operation",
+          "options": [
+            {
+              "name": "Create",
+              "value": "create",
+              "description": "Create issue"
+            },
+            {
+              "name": "Delete",
+              "value": "delete",
+              "description": "Delete issue"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get issue"
+            },
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Get many issues"
+            },
+            {
+              "name": "Update",
+              "value": "update",
+              "description": "Update issue"
+            }
+          ],
+          "default": "create",
+          "description": "Operation to perform on issue",
+          "display_options": {
+            "show": {
+              "resource": [
+                "issue"
+              ]
+            }
+          }
+        },
+        {
+          "name": "operation",
+          "type": "OPTIONS",
+          "display_name": "Operation",
+          "options": [
+            {
+              "name": "Create",
+              "value": "create",
+              "description": "Create organization"
+            },
+            {
+              "name": "Delete",
+              "value": "delete",
+              "description": "Delete organization"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get organization"
+            },
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Get many organizations"
+            },
+            {
+              "name": "Update",
+              "value": "update",
+              "description": "Update organization"
+            }
+          ],
+          "default": "create",
+          "description": "Operation to perform on organization",
+          "display_options": {
+            "show": {
+              "resource": [
+                "organization"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Issue",
+          "display_name": "File",
+          "type": "OPTIONS"
+        },
+        {
+          "name": "Create Comment",
+          "display_name": "Create",
+          "type": "OPTIONS",
+          "description": "Create a new issue"
+        },
+        {
+          "name": "Delete",
+          "display_name": "Create",
+          "type": "OPTIONS",
+          "description": "Create a new file in repository"
+        },
+        {
+          "name": "Get Issues",
+          "display_name": "Get",
+          "type": "OPTIONS",
+          "description": "Get the data of a single repository"
+        },
+        {
+          "name": "Invite",
+          "display_name": "Get Repositories",
+          "type": "OPTIONS",
+          "description": "Returns the repositories of a user"
+        },
+        {
+          "name": "Delete",
+          "display_name": "Create",
+          "type": "OPTIONS",
+          "description": "Creates a new release"
+        },
+        {
+          "name": "Get",
+          "display_name": "Create",
+          "type": "OPTIONS",
+          "description": "Creates a new review"
+        },
+        {
+          "name": "Dispatch",
+          "display_name": "Disable",
+          "type": "NOTICE",
+          "description": "Disable a workflow"
+        },
+        {
+          "name": "owner",
+          "display_name": "Repository Owner",
+          "type": "RESOURCELOCATOR",
+          "default": "{ mode: 'list",
+          "required": true
+        },
+        {
+          "name": "list",
+          "display_name": "Repository Owner",
+          "type": "LIST"
+        },
+        {
+          "name": "url",
+          "display_name": "Link",
+          "type": "STRING"
+        },
+        {
+          "name": "name",
+          "display_name": "By Name",
+          "type": "STRING"
+        },
+        {
+          "name": "repository",
+          "display_name": "Repository Name",
+          "type": "RESOURCELOCATOR",
+          "default": "{",
+          "required": true
+        },
+        {
+          "name": "list",
+          "display_name": "Repository Name",
+          "type": "LIST"
+        },
+        {
+          "name": "url",
+          "display_name": "Link",
+          "type": "STRING"
+        },
+        {
+          "name": "name",
+          "display_name": "By Name",
+          "type": "STRING"
+        },
+        {
+          "name": "workflowId",
+          "display_name": "Workflow",
+          "type": "RESOURCELOCATOR",
+          "default": "{",
+          "required": true,
+          "description": "The workflow to dispatch",
+          "display_options": {
+            "show": {
+              "operation": [
+                "disable",
+                "dispatch",
+                "dispatchAndWait",
+                "get",
+                "getUsage",
+                "enable"
+              ]
+            }
+          }
+        },
+        {
+          "name": "list",
+          "display_name": "Workflow",
+          "type": "LIST"
+        },
+        {
+          "name": "filename",
+          "display_name": "By File Name",
+          "type": "STRING"
+        },
+        {
+          "name": "name",
+          "display_name": "By ID",
+          "type": "STRING"
+        },
+        {
+          "name": "ref",
+          "display_name": "Ref",
+          "type": "STRING",
+          "default": "main",
+          "required": true,
+          "description": "The git reference for the workflow dispatch (branch or tag name)",
+          "display_options": {
+            "show": {
+              "operation": [
+                "dispatch",
+                "dispatchAndWait"
+              ]
+            }
+          }
+        },
+        {
+          "name": "ref",
+          "display_name": "Ref",
+          "type": "RESOURCELOCATOR",
+          "default": "{",
+          "required": true,
+          "description": "The git reference for the workflow dispatch (branch, tag, or commit SHA)",
+          "display_options": {
+            "show": {
+              "operation": [
+                "dispatch",
+                "dispatchAndWait"
+              ]
+            }
+          }
+        },
+        {
+          "name": "list",
+          "display_name": "From List",
+          "type": "LIST"
+        },
+        {
+          "name": "name",
+          "display_name": "By Name",
+          "type": "STRING"
+        },
+        {
+          "name": "inputs",
+          "display_name": "Inputs",
+          "type": "JSON",
+          "default": "{",
+          "description": "JSON object with input parameters for the workflow",
+          "display_options": {
+            "show": {
+              "operation": [
+                "dispatch",
+                "dispatchAndWait"
+              ]
+            }
+          }
+        },
+        {
+          "name": "filePath",
+          "display_name": "File Path",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "The file path of the file. Has to contain the full path."
+        },
+        {
+          "name": "filePath",
+          "display_name": "Path",
+          "type": "STRING",
+          "default": "",
+          "description": "The path of the folder to list",
+          "display_options": {
+            "show": {
+              "operation": [
+                "list"
+              ]
+            }
+          }
+        },
+        {
+          "name": "binaryData",
+          "display_name": "Binary File",
+          "type": "BOOLEAN",
+          "default": false,
+          "required": true,
+          "description": "Whether the data to upload should be taken from binary field",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create",
+                "edit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "fileContent",
+          "display_name": "File Content",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "The text content of the file",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create",
+                "edit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "binaryPropertyName",
+          "display_name": "Input Binary Field",
+          "type": "STRING",
+          "default": "data",
+          "required": true,
+          "display_options": {
+            "show": {
+              "operation": [
+                "create",
+                "edit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "commitMessage",
+          "display_name": "Commit Message",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "display_options": {
+            "show": {
+              "operation": [
+                "create",
+                "delete",
+                "edit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "additionalParameters",
+          "display_name": "Additional Parameters",
+          "type": "COLLECTION",
+          "default": "{",
+          "description": "Additional fields to add",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create",
+                "delete",
+                "edit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "name",
+          "display_name": "author",
+          "type": "STRING",
+          "default": "",
+          "description": "The name of the author of the commit"
+        },
+        {
+          "name": "email",
+          "display_name": "Email",
+          "type": "STRING",
+          "default": "",
+          "description": "The email of the author of the commit"
+        },
+        {
+          "name": "branch",
+          "display_name": "branch",
+          "type": "STRING",
+          "default": "",
+          "description": "The branch to commit to. If not set the repository\u2019s default branch (usually master) is used."
+        },
+        {
+          "name": "name",
+          "display_name": "committer",
+          "type": "STRING",
+          "default": "",
+          "description": "The name of the committer of the commit"
+        },
+        {
+          "name": "email",
+          "display_name": "Email",
+          "type": "STRING",
+          "default": "",
+          "description": "The email of the committer of the commit"
+        },
+        {
+          "name": "asBinaryProperty",
+          "display_name": "As Binary Property",
+          "type": "BOOLEAN",
+          "default": true,
+          "description": "Whether to set the data of the file as binary property instead of returning the raw API response",
+          "display_options": {
+            "show": {
+              "operation": [
+                "get"
+              ]
+            }
+          }
+        },
+        {
+          "name": "binaryPropertyName",
+          "display_name": "Put Output File in Field",
+          "type": "STRING",
+          "default": "data",
+          "required": true,
+          "display_options": {
+            "show": {
+              "operation": [
+                "get"
+              ]
+            }
+          }
+        },
+        {
+          "name": "additionalParameters",
+          "display_name": "Additional Parameters",
+          "type": "COLLECTION",
+          "default": "{",
+          "description": "Additional fields to add",
+          "display_options": {
+            "show": {
+              "operation": [
+                "get"
+              ]
+            }
+          }
+        },
+        {
+          "name": "reference",
+          "display_name": "Reference",
+          "type": "STRING",
+          "default": "",
+          "description": "The name of the commit/branch/tag. Default: the repository\u2019s default branch (usually master)."
+        },
+        {
+          "name": "title",
+          "display_name": "Title",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "The title of the issue",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ]
+            }
+          }
+        },
+        {
+          "name": "body",
+          "display_name": "Body",
+          "type": "STRING",
+          "default": "",
+          "description": "The body of the issue",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ]
+            }
+          }
+        },
+        {
+          "name": "labels",
+          "display_name": "Labels",
+          "type": "COLLECTION",
+          "default": "{ label: ",
+          "description": "Label to add to issue",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ]
+            }
+          }
+        },
+        {
+          "name": "label",
+          "display_name": "Label",
+          "type": "STRING",
+          "default": "",
+          "description": "Label to add to issue"
+        },
+        {
+          "name": "assignees",
+          "display_name": "Assignees",
+          "type": "COLLECTION",
+          "default": "{ assignee: ",
+          "description": "User to assign issue too",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ]
+            }
+          }
+        },
+        {
+          "name": "assignee",
+          "display_name": "Assignee",
+          "type": "STRING",
+          "default": "",
+          "description": "User to assign issue too"
+        },
+        {
+          "name": "issueNumber",
+          "display_name": "Issue Number",
+          "type": "NUMBER",
+          "default": 0,
+          "required": true,
+          "description": "The number of the issue on which to create the comment on",
+          "display_options": {
+            "show": {
+              "operation": [
+                "createComment"
+              ]
+            }
+          }
+        },
+        {
+          "name": "body",
+          "display_name": "Body",
+          "type": "STRING",
+          "default": "",
+          "description": "The body of the comment",
+          "display_options": {
+            "show": {
+              "operation": [
+                "createComment"
+              ]
+            }
+          }
+        },
+        {
+          "name": "issueNumber",
+          "display_name": "Issue Number",
+          "type": "NUMBER",
+          "default": 0,
+          "required": true,
+          "description": "The number of the issue edit",
+          "display_options": {
+            "show": {
+              "operation": [
+                "edit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "editFields",
+          "display_name": "Edit Fields",
+          "type": "COLLECTION",
+          "default": "{",
+          "description": "User to assign issue to",
+          "display_options": {
+            "show": {
+              "operation": [
+                "edit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "assignees",
+          "display_name": "Assignees",
+          "type": "COLLECTION",
+          "default": "{ assignee: ",
+          "description": "User to assign issue to"
+        },
+        {
+          "name": "assignee",
+          "display_name": "Assignees",
+          "type": "STRING",
+          "default": "",
+          "description": "User to assign issue to"
+        },
+        {
+          "name": "body",
+          "display_name": "Body",
+          "type": "STRING",
+          "default": "",
+          "description": "The body of the issue"
+        },
+        {
+          "name": "labels",
+          "display_name": "Labels",
+          "type": "COLLECTION",
+          "default": "{ label: ",
+          "description": "Label to add to issue"
+        },
+        {
+          "name": "label",
+          "display_name": "Label",
+          "type": "STRING",
+          "default": "",
+          "description": "Label to add to issue"
+        },
+        {
+          "name": "state",
+          "display_name": "State",
+          "type": "OPTIONS",
+          "default": "open",
+          "description": "Set the state to ",
+          "options": [
+            {
+              "name": "Closed",
+              "value": "closed"
+            },
+            {
+              "name": "Open",
+              "value": "open"
+            }
+          ]
+        },
+        {
+          "name": "Open",
+          "display_name": "Closed",
+          "type": "OPTIONS",
+          "description": "Set the state to "
+        },
+        {
+          "name": "Not Planned",
+          "display_name": "Completed",
+          "type": "STRING",
+          "description": "Issue is completed"
+        },
+        {
+          "name": "issueNumber",
+          "display_name": "Issue Number",
+          "type": "NUMBER",
+          "default": 0,
+          "required": true,
+          "description": "The issue number to get data for",
+          "display_options": {
+            "show": {
+              "operation": [
+                "get"
+              ]
+            }
+          }
+        },
+        {
+          "name": "issueNumber",
+          "display_name": "Issue Number",
+          "type": "NUMBER",
+          "default": 0,
+          "required": true,
+          "description": "The issue number to lock",
+          "display_options": {
+            "show": {
+              "operation": [
+                "lock"
+              ]
+            }
+          }
+        },
+        {
+          "name": "lockReason",
+          "display_name": "Lock Reason",
+          "type": "OPTIONS",
+          "default": "resolved",
+          "description": "The issue is Off-Topic",
+          "display_options": {
+            "show": {
+              "operation": [
+                "lock"
+              ]
+            }
+          },
+          "options": [
+            {
+              "name": "Off-Topic",
+              "value": "off-topic"
+            },
+            {
+              "name": "Too Heated",
+              "value": "too heated"
+            },
+            {
+              "name": "Resolved",
+              "value": "resolved"
+            },
+            {
+              "name": "Spam",
+              "value": "spam"
+            }
+          ]
+        },
+        {
+          "name": "Too Heated",
+          "display_name": "Off-Topic",
+          "type": "STRING",
+          "description": "The issue is Off-Topic"
+        },
+        {
+          "name": "additionalFields",
+          "display_name": "Additional Fields",
+          "type": "COLLECTION",
+          "default": "{",
+          "description": "The name of the issue",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ]
+            }
+          }
+        },
+        {
+          "name": "name",
+          "display_name": "Name",
+          "type": "STRING",
+          "default": "",
+          "description": "The name of the issue"
+        },
+        {
+          "name": "body",
+          "display_name": "Body",
+          "type": "STRING",
+          "default": "",
+          "description": "The body of the release"
+        },
+        {
+          "name": "draft",
+          "display_name": "Draft",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether to create a draft (unpublished) release, "
+        },
+        {
+          "name": "prerelease",
+          "display_name": "Prerelease",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether to point out that the release is non-production ready"
+        },
+        {
+          "name": "target_commitish",
+          "display_name": "Target Commitish",
+          "type": "STRING",
+          "default": "",
+          "description": "Specifies the commitish value that determines where the Git tag is created from. Can be any branch or commit SHA. Unused if the Git tag already exists. Default: the repository"
+        },
+        {
+          "name": "release_id",
+          "display_name": "Release ID",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "display_options": {
+            "show": {
+              "operation": [
+                "get",
+                "delete",
+                "update"
+              ]
+            }
+          }
+        },
+        {
+          "name": "additionalFields",
+          "display_name": "Additional Fields",
+          "type": "COLLECTION",
+          "default": "{",
+          "description": "The body of the release",
+          "display_options": {
+            "show": {
+              "operation": [
+                "update"
+              ]
+            }
+          }
+        },
+        {
+          "name": "body",
+          "display_name": "Body",
+          "type": "STRING",
+          "default": "",
+          "description": "The body of the release"
+        },
+        {
+          "name": "draft",
+          "display_name": "Draft",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether to create a draft (unpublished) release, "
+        },
+        {
+          "name": "name",
+          "display_name": "Name",
+          "type": "STRING",
+          "default": "",
+          "description": "The name of the release"
+        },
+        {
+          "name": "prerelease",
+          "display_name": "Prerelease",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether to point out that the release is non-production ready"
+        },
+        {
+          "name": "tag_name",
+          "display_name": "Tag Name",
+          "type": "STRING",
+          "default": "",
+          "description": "The name of the tag"
+        },
+        {
+          "name": "target_commitish",
+          "display_name": "Target Commitish",
+          "type": "STRING",
+          "default": "",
+          "description": "Specifies the commitish value that determines where the Git tag is created from. Can be any branch or commit SHA. Unused if the Git tag already exists. Default: the repository"
+        },
+        {
+          "name": "returnAll",
+          "display_name": "Return All",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether to return all results or only up to a given limit",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getAll"
+              ]
+            }
+          }
+        },
+        {
+          "name": "limit",
+          "display_name": "Limit",
+          "type": "NUMBER",
+          "default": 50,
+          "description": "Max number of results to return",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getAll"
+              ]
+            }
+          }
+        },
+        {
+          "name": "returnAll",
+          "display_name": "Return All",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether to return all results or only up to a given limit",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getIssues"
+              ]
+            }
+          }
+        },
+        {
+          "name": "limit",
+          "display_name": "Limit",
+          "type": "NUMBER",
+          "default": 50,
+          "description": "Max number of results to return",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getIssues"
+              ]
+            }
+          }
+        },
+        {
+          "name": "getRepositoryIssuesFilters",
+          "display_name": "Filters",
+          "type": "COLLECTION",
+          "default": "{",
+          "description": "Return only issues which are assigned to a specific user",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getIssues"
+              ]
+            }
+          }
+        },
+        {
+          "name": "assignee",
+          "display_name": "Assignee",
+          "type": "STRING",
+          "default": "",
+          "description": "Return only issues which are assigned to a specific user"
+        },
+        {
+          "name": "creator",
+          "display_name": "Creator",
+          "type": "STRING",
+          "default": "",
+          "description": "Return only issues which were created by a specific user"
+        },
+        {
+          "name": "mentioned",
+          "display_name": "Mentioned",
+          "type": "STRING",
+          "default": "",
+          "description": "Return only issues in which a specific user was mentioned"
+        },
+        {
+          "name": "labels",
+          "display_name": "Labels",
+          "type": "STRING",
+          "default": "",
+          "description": "Return only issues with the given labels. Multiple labels can be separated by comma."
+        },
+        {
+          "name": "since",
+          "display_name": "Updated Since",
+          "type": "DATETIME",
+          "default": "",
+          "description": "Return only issues updated at or after this time"
+        },
+        {
+          "name": "state",
+          "display_name": "State",
+          "type": "OPTIONS",
+          "default": "open",
+          "description": "Returns issues with any state",
+          "options": [
+            {
+              "name": "All",
+              "value": "all"
+            },
+            {
+              "name": "Closed",
+              "value": "closed"
+            },
+            {
+              "name": "Open",
+              "value": "open"
+            }
+          ]
+        },
+        {
+          "name": "Closed",
+          "display_name": "All",
+          "type": "OPTIONS",
+          "description": "Returns issues with any state"
+        },
+        {
+          "name": "Updated",
+          "display_name": "Created",
+          "type": "OPTIONS",
+          "description": "Sort by created date"
+        },
+        {
+          "name": "Descending",
+          "display_name": "Ascending",
+          "type": "BOOLEAN",
+          "description": "Sort in ascending order"
+        },
+        {
+          "name": "limit",
+          "display_name": "Limit",
+          "type": "NUMBER",
+          "default": 50,
+          "description": "Max number of results to return. Maximum value is <a href=",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getPullRequests"
+              ]
+            }
+          }
+        },
+        {
+          "name": "getRepositoryPullRequestsFilters",
+          "display_name": "Filters",
+          "type": "COLLECTION",
+          "default": "{",
+          "description": "Returns pull requests with any state",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getPullRequests"
+              ]
+            }
+          }
+        },
+        {
+          "name": "state",
+          "display_name": "State",
+          "type": "OPTIONS",
+          "default": "open",
+          "description": "Returns pull requests with any state",
+          "options": [
+            {
+              "name": "All",
+              "value": "all"
+            },
+            {
+              "name": "Closed",
+              "value": "closed"
+            },
+            {
+              "name": "Open",
+              "value": "open"
+            }
+          ]
+        },
+        {
+          "name": "Closed",
+          "display_name": "All",
+          "type": "OPTIONS",
+          "description": "Returns pull requests with any state"
+        },
+        {
+          "name": "Updated",
+          "display_name": "Created",
+          "type": "OPTIONS",
+          "description": "Sort by created date"
+        },
+        {
+          "name": "Descending",
+          "display_name": "Ascending",
+          "type": "NUMBER",
+          "description": "Sort in ascending order"
+        },
+        {
+          "name": "reviewId",
+          "display_name": "Review ID",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "ID of the review",
+          "display_options": {
+            "show": {
+              "operation": [
+                "get",
+                "update"
+              ]
+            }
+          }
+        },
+        {
+          "name": "pullRequestNumber",
+          "display_name": "PR Number",
+          "type": "NUMBER",
+          "default": 0,
+          "required": true,
+          "description": "The number of the pull request",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getAll"
+              ]
+            }
+          }
+        },
+        {
+          "name": "returnAll",
+          "display_name": "Return All",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether to return all results or only up to a given limit",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getAll"
+              ]
+            }
+          }
+        },
+        {
+          "name": "limit",
+          "display_name": "Limit",
+          "type": "NUMBER",
+          "default": 50,
+          "description": "Max number of results to return",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getAll"
+              ]
+            }
+          }
+        },
+        {
+          "name": "pullRequestNumber",
+          "display_name": "PR Number",
+          "type": "NUMBER",
+          "default": 0,
+          "required": true,
+          "description": "The number of the pull request to review",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ]
+            }
+          }
+        },
+        {
+          "name": "event",
+          "display_name": "Event",
+          "type": "OPTIONS",
+          "default": "approve",
+          "description": "Approve the pull request",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ]
+            }
+          },
+          "options": [
+            {
+              "name": "Approve",
+              "value": "approve"
+            },
+            {
+              "name": "Request Change",
+              "value": "requestChanges"
+            },
+            {
+              "name": "Comment",
+              "value": "comment"
+            },
+            {
+              "name": "Pending",
+              "value": "pending"
+            }
+          ]
+        },
+        {
+          "name": "Request Change",
+          "display_name": "Approve",
+          "type": "STRING",
+          "description": "Approve the pull request"
+        },
+        {
+          "name": "additionalFields",
+          "display_name": "Additional Fields",
+          "type": "COLLECTION",
+          "default": "{",
+          "description": "The SHA of the commit that needs a review, if different from the latest",
+          "display_options": {
+            "show": {
+              "operation": [
+                "create"
+              ]
+            }
+          }
+        },
+        {
+          "name": "commitId",
+          "display_name": "Commit ID",
+          "type": "STRING",
+          "default": "",
+          "description": "The SHA of the commit that needs a review, if different from the latest"
+        },
+        {
+          "name": "body",
+          "display_name": "Body",
+          "type": "STRING",
+          "default": "",
+          "description": "The body of the review",
+          "display_options": {
+            "show": {
+              "operation": [
+                "update"
+              ]
+            }
+          }
+        },
+        {
+          "name": "returnAll",
+          "display_name": "Return All",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether to return all results or only up to a given limit",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getRepositories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "limit",
+          "display_name": "Limit",
+          "type": "NUMBER",
+          "default": 50,
+          "description": "Max number of results to return",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getRepositories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "organization",
+          "display_name": "Organization",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "The GitHub organization that the user is being invited to",
+          "display_options": {
+            "show": {
+              "operation": [
+                "invite"
+              ]
+            }
+          }
+        },
+        {
+          "name": "email",
+          "display_name": "Email",
+          "type": "STRING",
+          "default": "",
+          "required": true,
+          "description": "The email address of the invited user",
+          "display_options": {
+            "show": {
+              "operation": [
+                "invite"
+              ]
+            }
+          }
+        },
+        {
+          "name": "returnAll",
+          "display_name": "Return All",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether to return all results or only up to a given limit",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getRepositories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "limit",
+          "display_name": "Limit",
+          "type": "NUMBER",
+          "default": 50,
+          "description": "Max number of results to return",
+          "display_options": {
+            "show": {
+              "operation": [
+                "getRepositories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "notice",
+          "display_name": "Only members with owner privileges for an organization or admin privileges for a repository can set up the webhooks this node requires.",
+          "type": "NOTICE",
+          "default": ""
+        },
+        {
+          "name": "list",
+          "display_name": "Repository Owner",
+          "type": "LIST",
+          "required": true
+        },
+        {
+          "name": "url",
+          "display_name": "Link",
+          "type": "STRING"
+        },
+        {
+          "name": "name",
+          "display_name": "By Name",
+          "type": "STRING"
+        },
+        {
+          "name": "repository",
+          "display_name": "Repository Name",
+          "type": "RESOURCELOCATOR",
+          "default": "{ mode: 'list",
+          "required": true
+        },
+        {
+          "name": "list",
+          "display_name": "Repository Name",
+          "type": "LIST"
+        },
+        {
+          "name": "url",
+          "display_name": "Link",
+          "type": "STRING"
+        },
+        {
+          "name": "name",
+          "display_name": "By Name",
+          "type": "STRING"
+        },
+        {
+          "name": "events",
+          "display_name": "Events",
+          "type": "MULTIOPTIONS",
+          "default": "[]",
+          "required": true,
+          "description": "Any time any event is triggered (Wildcard Event)",
+          "options": [
+            {
+              "name": "*",
+              "value": "*"
+            },
+            {
+              "name": "Check Run",
+              "value": "check_run"
+            },
+            {
+              "name": "Check Suite",
+              "value": "check_suite"
+            },
+            {
+              "name": "Commit Comment",
+              "value": "commit_comment"
+            },
+            {
+              "name": "Create",
+              "value": "create"
+            },
+            {
+              "name": "Delete",
+              "value": "delete"
+            },
+            {
+              "name": "Deploy Key",
+              "value": "deploy_key"
+            },
+            {
+              "name": "Deployment",
+              "value": "deployment"
+            },
+            {
+              "name": "Deployment Status",
+              "value": "deployment_status"
+            },
+            {
+              "name": "Fork",
+              "value": "fork"
+            },
+            {
+              "name": "Github App Authorization",
+              "value": "github_app_authorization"
+            },
+            {
+              "name": "Gollum",
+              "value": "gollum"
+            },
+            {
+              "name": "Installation",
+              "value": "installation"
+            },
+            {
+              "name": "Installation Repositories",
+              "value": "installation_repositories"
+            },
+            {
+              "name": "Issue Comment",
+              "value": "issue_comment"
+            },
+            {
+              "name": "Issues",
+              "value": "issues"
+            },
+            {
+              "name": "Label",
+              "value": "label"
+            },
+            {
+              "name": "Marketplace Purchase",
+              "value": "marketplace_purchase"
+            },
+            {
+              "name": "Member",
+              "value": "member"
+            },
+            {
+              "name": "Membership",
+              "value": "membership"
+            },
+            {
+              "name": "Meta",
+              "value": "meta"
+            },
+            {
+              "name": "Milestone",
+              "value": "milestone"
+            },
+            {
+              "name": "Org Block",
+              "value": "org_block"
+            },
+            {
+              "name": "Organization",
+              "value": "organization"
+            },
+            {
+              "name": "Page Build",
+              "value": "page_build"
+            },
+            {
+              "name": "Project",
+              "value": "project"
+            },
+            {
+              "name": "Project Card",
+              "value": "project_card"
+            },
+            {
+              "name": "Project Column",
+              "value": "project_column"
+            },
+            {
+              "name": "Public",
+              "value": "public"
+            },
+            {
+              "name": "Pull Request",
+              "value": "pull_request"
+            },
+            {
+              "name": "Pull Request Review",
+              "value": "pull_request_review"
+            },
+            {
+              "name": "Pull Request Review Comment",
+              "value": "pull_request_review_comment"
+            },
+            {
+              "name": "Push",
+              "value": "push"
+            },
+            {
+              "name": "Release",
+              "value": "release"
+            },
+            {
+              "name": "Repository",
+              "value": "repository"
+            },
+            {
+              "name": "Repository Import",
+              "value": "repository_import"
+            },
+            {
+              "name": "Repository Vulnerability Alert",
+              "value": "repository_vulnerability_alert"
+            },
+            {
+              "name": "Security Advisory",
+              "value": "security_advisory"
+            },
+            {
+              "name": "Star",
+              "value": "star"
+            },
+            {
+              "name": "Status",
+              "value": "status"
+            },
+            {
+              "name": "Team",
+              "value": "team"
+            },
+            {
+              "name": "Team Add",
+              "value": "team_add"
+            },
+            {
+              "name": "Watch",
+              "value": "watch"
+            }
+          ]
+        },
+        {
+          "name": "Check Run",
+          "display_name": "*",
+          "type": "COLLECTION",
+          "description": "Any time any event is triggered (Wildcard Event)"
+        },
+        {
+          "name": "insecureSSL",
+          "display_name": "Insecure SSL",
+          "type": "BOOLEAN",
+          "default": false,
+          "description": "Whether the SSL certificate of the n8n host be verified by GitHub when delivering payloads"
+        }
+      ]
+    },
+    "operations": [
+      {
+        "name": "create",
+        "display_name": "Create",
+        "description": "Create organization",
+        "resource": "organization",
+        "display_options": {
+          "show": {
+            "resource": [
+              "organization"
+            ]
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "display_name": "Delete",
+        "description": "Delete organization",
+        "resource": "organization",
+        "display_options": {
+          "show": {
+            "resource": [
+              "organization"
+            ]
+          }
+        }
+      },
+      {
+        "name": "get",
+        "display_name": "Get",
+        "description": "Get organization",
+        "resource": "organization",
+        "display_options": {
+          "show": {
+            "resource": [
+              "organization"
+            ]
+          }
+        }
+      },
+      {
+        "name": "getAll",
+        "display_name": "Get Many",
+        "description": "Get many organizations",
+        "resource": "organization",
+        "display_options": {
+          "show": {
+            "resource": [
+              "organization"
+            ]
+          }
+        }
+      },
+      {
+        "name": "update",
+        "display_name": "Update",
+        "description": "Update organization",
+        "resource": "organization",
+        "display_options": {
+          "show": {
+            "resource": [
+              "organization"
+            ]
+          }
+        }
+      },
+      {
+        "name": "create",
+        "display_name": "Create",
+        "description": "Create issue",
+        "resource": "issue",
+        "display_options": {
+          "show": {
+            "resource": [
+              "issue"
+            ]
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "display_name": "Delete",
+        "description": "Delete issue",
+        "resource": "issue",
+        "display_options": {
+          "show": {
+            "resource": [
+              "issue"
+            ]
+          }
+        }
+      },
+      {
+        "name": "get",
+        "display_name": "Get",
+        "description": "Get issue",
+        "resource": "issue",
+        "display_options": {
+          "show": {
+            "resource": [
+              "issue"
+            ]
+          }
+        }
+      },
+      {
+        "name": "getAll",
+        "display_name": "Get Many",
+        "description": "Get many issues",
+        "resource": "issue",
+        "display_options": {
+          "show": {
+            "resource": [
+              "issue"
+            ]
+          }
+        }
+      },
+      {
+        "name": "update",
+        "display_name": "Update",
+        "description": "Update issue",
+        "resource": "issue",
+        "display_options": {
+          "show": {
+            "resource": [
+              "issue"
+            ]
+          }
+        }
+      },
+      {
+        "name": "create",
+        "display_name": "Create",
+        "description": "Create file",
+        "resource": "file",
+        "display_options": {
+          "show": {
+            "resource": [
+              "file"
+            ]
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "display_name": "Delete",
+        "description": "Delete file",
+        "resource": "file",
+        "display_options": {
+          "show": {
+            "resource": [
+              "file"
+            ]
+          }
+        }
+      },
+      {
+        "name": "get",
+        "display_name": "Get",
+        "description": "Get file",
+        "resource": "file",
+        "display_options": {
+          "show": {
+            "resource": [
+              "file"
+            ]
+          }
+        }
+      },
+      {
+        "name": "getAll",
+        "display_name": "Get Many",
+        "description": "Get many files",
+        "resource": "file",
+        "display_options": {
+          "show": {
+            "resource": [
+              "file"
+            ]
+          }
+        }
+      },
+      {
+        "name": "update",
+        "display_name": "Update",
+        "description": "Update file",
+        "resource": "file",
+        "display_options": {
+          "show": {
+            "resource": [
+              "file"
+            ]
+          }
+        }
+      },
+      {
+        "name": "create",
+        "display_name": "Create",
+        "description": "Create repository",
+        "resource": "repository",
+        "display_options": {
+          "show": {
+            "resource": [
+              "repository"
+            ]
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "display_name": "Delete",
+        "description": "Delete repository",
+        "resource": "repository",
+        "display_options": {
+          "show": {
+            "resource": [
+              "repository"
+            ]
+          }
+        }
+      },
+      {
+        "name": "get",
+        "display_name": "Get",
+        "description": "Get repository",
+        "resource": "repository",
+        "display_options": {
+          "show": {
+            "resource": [
+              "repository"
+            ]
+          }
+        }
+      },
+      {
+        "name": "getAll",
+        "display_name": "Get Many",
+        "description": "Get many repositorys",
+        "resource": "repository",
+        "display_options": {
+          "show": {
+            "resource": [
+              "repository"
+            ]
+          }
+        }
+      },
+      {
+        "name": "update",
+        "display_name": "Update",
+        "description": "Update repository",
+        "resource": "repository",
+        "display_options": {
+          "show": {
+            "resource": [
+              "repository"
+            ]
+          }
+        }
+      },
+      {
+        "name": "create",
+        "display_name": "Create",
+        "description": "Create user",
+        "resource": "user",
+        "display_options": {
+          "show": {
+            "resource": [
+              "user"
+            ]
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "display_name": "Delete",
+        "description": "Delete user",
+        "resource": "user",
+        "display_options": {
+          "show": {
+            "resource": [
+              "user"
+            ]
+          }
+        }
+      },
+      {
+        "name": "get",
+        "display_name": "Get",
+        "description": "Get user",
+        "resource": "user",
+        "display_options": {
+          "show": {
+            "resource": [
+              "user"
+            ]
+          }
+        }
+      },
+      {
+        "name": "getAll",
+        "display_name": "Get Many",
+        "description": "Get many users",
+        "resource": "user",
+        "display_options": {
+          "show": {
+            "resource": [
+              "user"
+            ]
+          }
+        }
+      },
+      {
+        "name": "update",
+        "display_name": "Update",
+        "description": "Update user",
+        "resource": "user",
+        "display_options": {
+          "show": {
+            "resource": [
+              "user"
+            ]
+          }
+        }
+      },
+      {
+        "name": "create",
+        "display_name": "Create",
+        "description": "Create release",
+        "resource": "release",
+        "display_options": {
+          "show": {
+            "resource": [
+              "release"
+            ]
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "display_name": "Delete",
+        "description": "Delete release",
+        "resource": "release",
+        "display_options": {
+          "show": {
+            "resource": [
+              "release"
+            ]
+          }
+        }
+      },
+      {
+        "name": "get",
+        "display_name": "Get",
+        "description": "Get release",
+        "resource": "release",
+        "display_options": {
+          "show": {
+            "resource": [
+              "release"
+            ]
+          }
+        }
+      },
+      {
+        "name": "getAll",
+        "display_name": "Get Many",
+        "description": "Get many releases",
+        "resource": "release",
+        "display_options": {
+          "show": {
+            "resource": [
+              "release"
+            ]
+          }
+        }
+      },
+      {
+        "name": "update",
+        "display_name": "Update",
+        "description": "Update release",
+        "resource": "release",
+        "display_options": {
+          "show": {
+            "resource": [
+              "release"
+            ]
+          }
+        }
+      },
+      {
+        "name": "create",
+        "display_name": "Create",
+        "description": "Create review",
+        "resource": "review",
+        "display_options": {
+          "show": {
+            "resource": [
+              "review"
+            ]
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "display_name": "Delete",
+        "description": "Delete review",
+        "resource": "review",
+        "display_options": {
+          "show": {
+            "resource": [
+              "review"
+            ]
+          }
+        }
+      },
+      {
+        "name": "get",
+        "display_name": "Get",
+        "description": "Get review",
+        "resource": "review",
+        "display_options": {
+          "show": {
+            "resource": [
+              "review"
+            ]
+          }
+        }
+      },
+      {
+        "name": "getAll",
+        "display_name": "Get Many",
+        "description": "Get many reviews",
+        "resource": "review",
+        "display_options": {
+          "show": {
+            "resource": [
+              "review"
+            ]
+          }
+        }
+      },
+      {
+        "name": "update",
+        "display_name": "Update",
+        "description": "Update review",
+        "resource": "review",
+        "display_options": {
+          "show": {
+            "resource": [
+              "review"
+            ]
+          }
+        }
+      },
+      {
+        "name": "create",
+        "display_name": "Create",
+        "description": "Create workflow",
+        "resource": "workflow",
+        "display_options": {
+          "show": {
+            "resource": [
+              "workflow"
+            ]
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "display_name": "Delete",
+        "description": "Delete workflow",
+        "resource": "workflow",
+        "display_options": {
+          "show": {
+            "resource": [
+              "workflow"
+            ]
+          }
+        }
+      },
+      {
+        "name": "get",
+        "display_name": "Get",
+        "description": "Get workflow",
+        "resource": "workflow",
+        "display_options": {
+          "show": {
+            "resource": [
+              "workflow"
+            ]
+          }
+        }
+      },
+      {
+        "name": "getAll",
+        "display_name": "Get Many",
+        "description": "Get many workflows",
+        "resource": "workflow",
+        "display_options": {
+          "show": {
+            "resource": [
+              "workflow"
+            ]
+          }
+        }
+      },
+      {
+        "name": "update",
+        "display_name": "Update",
+        "description": "Update workflow",
+        "resource": "workflow",
+        "display_options": {
+          "show": {
+            "resource": [
+              "workflow"
+            ]
+          }
+        }
+      }
+    ],
+    "credentials": [
+      {
+        "name": "githubApi",
+        "required": true,
+        "display_options": {
+          "show": {
+            "authentication": [
+              "githubApi"
+            ]
+          }
+        }
+      },
+      {
+        "name": "githubOAuth2Api",
+        "required": true,
+        "display_options": {
+          "show": {
+            "authentication": [
+              "githubOAuth2Api"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "trace_map": {
+    "correlation_id": "github-final-test-006",
+    "node_type": "Github",
+    "trace_entries": [
+      {
+        "field_path": "operations[0]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'create' assumed for resource 'organization'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[1]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'delete' assumed for resource 'organization'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[2]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'get' assumed for resource 'organization'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[3]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'getAll' assumed for resource 'organization'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[4]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'update' assumed for resource 'organization'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[5]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'create' assumed for resource 'issue'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[6]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'delete' assumed for resource 'issue'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[7]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'get' assumed for resource 'issue'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[8]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'getAll' assumed for resource 'issue'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[9]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'update' assumed for resource 'issue'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[10]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'create' assumed for resource 'file'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[11]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'delete' assumed for resource 'file'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[12]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'get' assumed for resource 'file'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[13]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'getAll' assumed for resource 'file'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[14]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'update' assumed for resource 'file'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[15]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'create' assumed for resource 'repository'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[16]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'delete' assumed for resource 'repository'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[17]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'get' assumed for resource 'repository'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[18]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'getAll' assumed for resource 'repository'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[19]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'update' assumed for resource 'repository'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[20]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'create' assumed for resource 'user'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[21]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'delete' assumed for resource 'user'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[22]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'get' assumed for resource 'user'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[23]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'getAll' assumed for resource 'user'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[24]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'update' assumed for resource 'user'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[25]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'create' assumed for resource 'release'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[26]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'delete' assumed for resource 'release'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[27]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'get' assumed for resource 'release'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[28]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'getAll' assumed for resource 'release'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[29]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'update' assumed for resource 'release'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[30]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'create' assumed for resource 'review'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[31]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'delete' assumed for resource 'review'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[32]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'get' assumed for resource 'review'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[33]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'getAll' assumed for resource 'review'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[34]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'update' assumed for resource 'review'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[35]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'create' assumed for resource 'workflow'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[36]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'delete' assumed for resource 'workflow'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[37]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'get' assumed for resource 'workflow'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[38]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'getAll' assumed for resource 'workflow'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "operations[39]",
+        "source": "ASSUMPTION",
+        "evidence": "Standard operation 'update' assumed for resource 'workflow'",
+        "confidence": "medium",
+        "assumption_rationale": "Standard CRUD operations for n8n resource"
+      },
+      {
+        "field_path": "credentials[0]",
+        "source": "SOURCE_CODE",
+        "evidence": "Credential 'githubApi' extracted from source",
+        "confidence": "high"
+      },
+      {
+        "field_path": "credentials[1]",
+        "source": "SOURCE_CODE",
+        "evidence": "Credential 'githubOAuth2Api' extracted from source",
+        "confidence": "high"
+      }
+    ],
+    "generated_at": "2026-02-02T14:47:58.158703",
+    "skill_version": "1.0.0",
+    "_hybrid_metadata": {
+      "source_type": "TYPE1",
+      "extraction_confidence": 0.6,
+      "advisor_used": false,
+      "assumption_ratio": 0.9523809523809523,
+      "deterministic_operations": 2,
+      "assumption_operations": 40
+    }
+  },
+  "tests_passed": false,
+  "validation_passed": true,
+  "fix_iterations": 0,
+  "source_files": [],
+  "source_hash": null
+}

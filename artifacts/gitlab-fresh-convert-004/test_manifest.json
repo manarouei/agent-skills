@@ -1,0 +1,14 @@
+{
+  "correlation_id": "gitlab-fresh-convert-004",
+  "node_name": "UnknownNode",
+  "test_files": [
+    {
+      "path": "/home/toni/agent-skills/artifacts/gitlab-fresh-convert-004/generated_tests/test_unknown.py",
+      "type": "unit",
+      "operations_covered": [],
+      "test_count": 3
+    }
+  ],
+  "total_tests": 3,
+  "coverage_note": "Generated tests provide basic coverage. Manual review recommended."
+}

@@ -1,0 +1,18 @@
+{
+  "node_name": "gitlab",
+  "allowed_paths": [
+    "nodes/gitlab*",
+    "nodes/gitlab*",
+    "tests/*gitlab*",
+    "tests/*gitlab*",
+    "credentials/*gitlab*",
+    "credentials/*gitlab*"
+  ],
+  "forbidden_paths": [
+    "**/base.py",
+    "**/Base*.py",
+    "**/__init__.py"
+  ],
+  "generated_at": "2026-02-03T09:34:44.427624",
+  "correlation_id": "gitlab-fresh-convert-005"
+}

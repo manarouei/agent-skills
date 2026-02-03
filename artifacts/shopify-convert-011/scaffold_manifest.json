@@ -1,0 +1,18 @@
+{
+  "correlation_id": "shopify-convert-011",
+  "node_name": "shopify-n8n",
+  "class_name": "ShopifyN8n",
+  "module_name": "shopify_n8n",
+  "files_created": [
+    "/home/toni/agent-skills/artifacts/shopify-convert-011/generated_node/shopify_n8n.py",
+    "/home/toni/agent-skills/artifacts/shopify-convert-011/generated_node/__init__.py"
+  ],
+  "generated_at": "2026-02-02T10:59:24.410188",
+  "schema_summary": {
+    "type": "Shopify",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 6,
+    "credential_count": 0
+  }
+}

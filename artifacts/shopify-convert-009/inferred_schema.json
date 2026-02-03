@@ -1,0 +1,844 @@
+{
+  "type": "Shopify",
+  "version": 1,
+  "description": {
+    "displayName": "Shopify",
+    "name": "shopify",
+    "inputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ]
+  },
+  "properties": {
+    "parameters": [
+      {
+        "name": "operation",
+        "type": "OPTIONS",
+        "display_name": "Operation",
+        "options": [
+          {
+            "name": "operation",
+            "value": "create",
+            "description": "Create an order"
+          },
+          {
+            "name": "Delete",
+            "value": "delete",
+            "description": "Delete an order"
+          },
+          {
+            "name": "Get",
+            "value": "get",
+            "description": "Get an order"
+          },
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "description": "Get many orders"
+          },
+          {
+            "name": "Update",
+            "value": "update",
+            "description": "Update an order"
+          },
+          {
+            "name": "additionalFields",
+            "value": "fixedAmount",
+            "description": "Applies amount as a unit of the store"
+          },
+          {
+            "name": "Percentage",
+            "value": "percentage",
+            "description": "Applies a discount of amount as a percentage of the order total"
+          },
+          {
+            "name": "Shipping",
+            "value": "shipping",
+            "description": "Applies a free shipping discount on orders that have a shipping rate less than or equal to amount"
+          },
+          {
+            "name": "email",
+            "value": "fulfilled",
+            "description": "Every line item in the order has been fulfilled"
+          },
+          {
+            "name": "Null",
+            "value": "null",
+            "description": "None of the line items in the order have been fulfilled"
+          },
+          {
+            "name": "Partial",
+            "value": "partial",
+            "description": "At least one line item in the order has been fulfilled"
+          },
+          {
+            "name": "Restocked",
+            "value": "restocked",
+            "description": "Every line item in the order has been restocked and the order canceled"
+          },
+          {
+            "name": "inventoryBehaviour",
+            "value": "bypass",
+            "description": "Do not claim inventory"
+          },
+          {
+            "name": "Decrement Ignoring Policy",
+            "value": "decrementIgnoringPolicy",
+            "description": "Ignore the product"
+          },
+          {
+            "name": "Decrement Obeying Policy",
+            "value": "decrementObeyingPolicy",
+            "description": "Follow the product"
+          },
+          {
+            "name": "locationId",
+            "value": "any",
+            "description": "Show orders of any financial status"
+          },
+          {
+            "name": "Authorized",
+            "value": "authorized",
+            "description": "Show only authorized orders"
+          },
+          {
+            "name": "Paid",
+            "value": "paid",
+            "description": "Show only paid orders"
+          },
+          {
+            "name": "Partially Paid",
+            "value": "partiallyPaid",
+            "description": "Show only partially paid orders"
+          },
+          {
+            "name": "Partially Refunded",
+            "value": "partiallyRefunded",
+            "description": "Show only partially refunded orders"
+          },
+          {
+            "name": "Pending",
+            "value": "pending",
+            "description": "Show only pending orders"
+          },
+          {
+            "name": "Refunded",
+            "value": "refunded",
+            "description": "Show only refunded orders"
+          },
+          {
+            "name": "Unpaid",
+            "value": "unpaid",
+            "description": "Show authorized and partially paid orders"
+          },
+          {
+            "name": "Voided",
+            "value": "voided",
+            "description": "Show only voided orders"
+          },
+          {
+            "name": "Shipped",
+            "value": "shipped",
+            "description": "Show orders that have been shipped. Returns orders with fulfillment_status of fulfilled."
+          },
+          {
+            "name": "Unfulfilled",
+            "value": "unfulfilled",
+            "description": "Returns orders with fulfillment_status of null or partial"
+          },
+          {
+            "name": "Unshipped",
+            "value": "unshipped",
+            "description": "Show orders that have not yet been shipped. Returns orders with fulfillment_status of null."
+          },
+          {
+            "name": "Cancelled",
+            "value": "Cancelled",
+            "description": "Show only canceled orders"
+          },
+          {
+            "name": "Closed",
+            "value": "closed",
+            "description": "Show only closed orders"
+          },
+          {
+            "name": "Open",
+            "value": "open",
+            "description": "Show only open orders"
+          },
+          {
+            "name": "operation",
+            "value": "create",
+            "description": "Create a product"
+          },
+          {
+            "name": "Delete",
+            "value": "delete",
+            "description": "Delete a product"
+          },
+          {
+            "name": "Get",
+            "value": "get",
+            "description": "Get a product"
+          },
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "description": "Get many products"
+          },
+          {
+            "name": "Update",
+            "value": "update",
+            "description": "Update a product"
+          },
+          {
+            "name": "title",
+            "value": "global",
+            "description": "The product is published to both the Online Store channel and the Point of Sale channel"
+          },
+          {
+            "name": "Web",
+            "value": "web",
+            "description": "The product is published to the Online Store channel but not published to the Point of Sale channel"
+          },
+          {
+            "name": "tags",
+            "value": "any",
+            "description": "Show all products"
+          },
+          {
+            "name": "Published",
+            "value": "published",
+            "description": "Show only published products"
+          },
+          {
+            "name": "Unpublished",
+            "value": "unpublished",
+            "description": "Show only unpublished products"
+          }
+        ],
+        "default": "create",
+        "description": "Operation to perform"
+      },
+      {
+        "name": "authentication",
+        "type": "OPTIONS",
+        "display_name": "Authentication",
+        "options": [
+          {
+            "name": "Shopifyapi",
+            "value": "shopifyApi"
+          },
+          {
+            "name": "Shopifyaccesstokenapi",
+            "value": "shopifyAccessTokenApi"
+          },
+          {
+            "name": "Shopifyoauth2api",
+            "value": "shopifyOAuth2Api"
+          }
+        ],
+        "default": "shopifyApi",
+        "description": "Authentication method to use"
+      },
+      {
+        "name": "resource",
+        "type": "OPTIONS",
+        "display_name": "Resource",
+        "options": [
+          {
+            "name": "Order",
+            "value": "order"
+          },
+          {
+            "name": "Product",
+            "value": "product"
+          }
+        ],
+        "default": "order",
+        "description": "The resource to operate on"
+      },
+      {
+        "name": "apiVersion",
+        "display_name": "Shopify API Version: 2024-07",
+        "type": "OPTIONS",
+        "default": ""
+      },
+      {
+        "name": "OAuth2",
+        "display_name": "Access Token",
+        "type": "OPTIONS"
+      },
+      {
+        "name": "OAuth2",
+        "display_name": "Access Token",
+        "type": "OPTIONS"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "name": "create",
+      "display_name": "operation",
+      "description": "Create an order",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "delete",
+      "display_name": "Delete",
+      "description": "Delete an order",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "get",
+      "display_name": "Get",
+      "description": "Get an order",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "getAll",
+      "display_name": "Get Many",
+      "description": "Get many orders",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "update",
+      "display_name": "Update",
+      "description": "Update an order",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "fixedAmount",
+      "display_name": "additionalFields",
+      "description": "Applies amount as a unit of the store",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "percentage",
+      "display_name": "Percentage",
+      "description": "Applies a discount of amount as a percentage of the order total",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "shipping",
+      "display_name": "Shipping",
+      "description": "Applies a free shipping discount on orders that have a shipping rate less than or equal to amount",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "fulfilled",
+      "display_name": "email",
+      "description": "Every line item in the order has been fulfilled",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "null",
+      "display_name": "Null",
+      "description": "None of the line items in the order have been fulfilled",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "partial",
+      "display_name": "Partial",
+      "description": "At least one line item in the order has been fulfilled",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "restocked",
+      "display_name": "Restocked",
+      "description": "Every line item in the order has been restocked and the order canceled",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "bypass",
+      "display_name": "inventoryBehaviour",
+      "description": "Do not claim inventory",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "decrementIgnoringPolicy",
+      "display_name": "Decrement Ignoring Policy",
+      "description": "Ignore the product",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "decrementObeyingPolicy",
+      "display_name": "Decrement Obeying Policy",
+      "description": "Follow the product",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "any",
+      "display_name": "locationId",
+      "description": "Show orders of any financial status",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "authorized",
+      "display_name": "Authorized",
+      "description": "Show only authorized orders",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "paid",
+      "display_name": "Paid",
+      "description": "Show only paid orders",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "partiallyPaid",
+      "display_name": "Partially Paid",
+      "description": "Show only partially paid orders",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "partiallyRefunded",
+      "display_name": "Partially Refunded",
+      "description": "Show only partially refunded orders",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "pending",
+      "display_name": "Pending",
+      "description": "Show only pending orders",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "refunded",
+      "display_name": "Refunded",
+      "description": "Show only refunded orders",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "unpaid",
+      "display_name": "Unpaid",
+      "description": "Show authorized and partially paid orders",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "voided",
+      "display_name": "Voided",
+      "description": "Show only voided orders",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "shipped",
+      "display_name": "Shipped",
+      "description": "Show orders that have been shipped. Returns orders with fulfillment_status of fulfilled.",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "unfulfilled",
+      "display_name": "Unfulfilled",
+      "description": "Returns orders with fulfillment_status of null or partial",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "unshipped",
+      "display_name": "Unshipped",
+      "description": "Show orders that have not yet been shipped. Returns orders with fulfillment_status of null.",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cancelled",
+      "display_name": "Cancelled",
+      "description": "Show only canceled orders",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "closed",
+      "display_name": "Closed",
+      "description": "Show only closed orders",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "open",
+      "display_name": "Open",
+      "description": "Show only open orders",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "create",
+      "display_name": "operation",
+      "description": "Create a product",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    },
+    {
+      "name": "delete",
+      "display_name": "Delete",
+      "description": "Delete a product",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    },
+    {
+      "name": "get",
+      "display_name": "Get",
+      "description": "Get a product",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    },
+    {
+      "name": "getAll",
+      "display_name": "Get Many",
+      "description": "Get many products",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    },
+    {
+      "name": "update",
+      "display_name": "Update",
+      "description": "Update a product",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    },
+    {
+      "name": "global",
+      "display_name": "title",
+      "description": "The product is published to both the Online Store channel and the Point of Sale channel",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    },
+    {
+      "name": "web",
+      "display_name": "Web",
+      "description": "The product is published to the Online Store channel but not published to the Point of Sale channel",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    },
+    {
+      "name": "any",
+      "display_name": "tags",
+      "description": "Show all products",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    },
+    {
+      "name": "published",
+      "display_name": "Published",
+      "description": "Show only published products",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    },
+    {
+      "name": "unpublished",
+      "display_name": "Unpublished",
+      "description": "Show only unpublished products",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    }
+  ],
+  "credentials": [
+    {
+      "name": "shopifyApi",
+      "required": true,
+      "display_options": {
+        "show": {
+          "authentication": [
+            "shopifyApi"
+          ]
+        }
+      }
+    },
+    {
+      "name": "shopifyAccessTokenApi",
+      "required": true,
+      "display_options": {
+        "show": {
+          "authentication": [
+            "shopifyAccessTokenApi"
+          ]
+        }
+      }
+    },
+    {
+      "name": "shopifyOAuth2Api",
+      "required": true,
+      "display_options": {
+        "show": {
+          "authentication": [
+            "shopifyOAuth2Api"
+          ]
+        }
+      }
+    }
+  ]
+}

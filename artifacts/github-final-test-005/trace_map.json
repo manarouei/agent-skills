@@ -1,0 +1,308 @@
+{
+  "correlation_id": "github-final-test-005",
+  "node_type": "Github",
+  "trace_entries": [
+    {
+      "field_path": "operations[0]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'create' assumed for resource 'organization'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[1]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'delete' assumed for resource 'organization'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[2]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'get' assumed for resource 'organization'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[3]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'getAll' assumed for resource 'organization'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[4]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'update' assumed for resource 'organization'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[5]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'create' assumed for resource 'issue'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[6]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'delete' assumed for resource 'issue'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[7]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'get' assumed for resource 'issue'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[8]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'getAll' assumed for resource 'issue'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[9]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'update' assumed for resource 'issue'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[10]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'create' assumed for resource 'file'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[11]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'delete' assumed for resource 'file'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[12]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'get' assumed for resource 'file'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[13]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'getAll' assumed for resource 'file'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[14]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'update' assumed for resource 'file'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[15]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'create' assumed for resource 'repository'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[16]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'delete' assumed for resource 'repository'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[17]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'get' assumed for resource 'repository'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[18]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'getAll' assumed for resource 'repository'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[19]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'update' assumed for resource 'repository'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[20]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'create' assumed for resource 'user'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[21]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'delete' assumed for resource 'user'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[22]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'get' assumed for resource 'user'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[23]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'getAll' assumed for resource 'user'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[24]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'update' assumed for resource 'user'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[25]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'create' assumed for resource 'release'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[26]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'delete' assumed for resource 'release'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[27]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'get' assumed for resource 'release'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[28]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'getAll' assumed for resource 'release'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[29]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'update' assumed for resource 'release'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[30]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'create' assumed for resource 'review'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[31]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'delete' assumed for resource 'review'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[32]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'get' assumed for resource 'review'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[33]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'getAll' assumed for resource 'review'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[34]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'update' assumed for resource 'review'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[35]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'create' assumed for resource 'workflow'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[36]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'delete' assumed for resource 'workflow'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[37]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'get' assumed for resource 'workflow'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[38]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'getAll' assumed for resource 'workflow'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "operations[39]",
+      "source": "ASSUMPTION",
+      "evidence": "Standard operation 'update' assumed for resource 'workflow'",
+      "confidence": "medium",
+      "assumption_rationale": "Standard CRUD operations for n8n resource"
+    },
+    {
+      "field_path": "credentials[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Credential 'githubApi' extracted from source",
+      "confidence": "high"
+    },
+    {
+      "field_path": "credentials[1]",
+      "source": "SOURCE_CODE",
+      "evidence": "Credential 'githubOAuth2Api' extracted from source",
+      "confidence": "high"
+    }
+  ],
+  "generated_at": "2026-02-02T14:46:30.273087",
+  "skill_version": "1.0.0",
+  "_hybrid_metadata": {
+    "source_type": "TYPE1",
+    "extraction_confidence": 0.6,
+    "advisor_used": false,
+    "assumption_ratio": 0.9523809523809523,
+    "deterministic_operations": 2,
+    "assumption_operations": 40
+  }
+}

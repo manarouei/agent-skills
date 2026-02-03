@@ -1,0 +1,2857 @@
+// === File: GenericFunctions.ts ===
+import { snakeCase } from 'change-case';
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	IHookFunctions,
+	ILoadOptionsFunctions,
+	IOAuth2Options,
+	IHttpRequestMethods,
+	IRequestOptions,
+} from 'n8n-workflow';
+
+export async function shopifyApiRequest(
+	this: IHookFunctions | IExecuteFunctions | ILoadOptionsFunctions,
+	method: IHttpRequestMethods,
+	resource: string,
+
+	body: any = {},
+	query: IDataObject = {},
+	uri?: string,
+	option: IDataObject = {},
+): Promise<any> {
+	const authenticationMethod = this.getNodeParameter('authentication', 0, 'oAuth2') as string;
+
+	let credentials;
+	let credentialType = 'shopifyOAuth2Api';
+
+	if (authenticationMethod === 'apiKey') {
+		credentials = await this.getCredentials('shopifyApi');
+		credentialType = 'shopifyApi';
+	} else if (authenticationMethod === 'accessToken') {
+		credentials = await this.getCredentials('shopifyAccessTokenApi');
+		credentialType = 'shopifyAccessTokenApi';
+	} else {
+		credentials = await this.getCredentials('shopifyOAuth2Api');
+	}
+
+	const options: IRequestOptions = {
+		method,
+		qs: query,
+		uri: uri || `https://${credentials.shopSubdomain}.myshopify.com/admin/api/2024-07/${resource}`,
+		body,
+		json: true,
+	};
+
+	const oAuth2Options: IOAuth2Options = {
+		tokenType: 'Bearer',
+		keyToIncludeInAccessTokenHeader: 'X-Shopify-Access-Token',
+	};
+
+	if (authenticationMethod === 'apiKey') {
+		Object.assign(options, {
+			auth: { username: credentials.apiKey, password: credentials.password },
+		});
+	}
+
+	if (Object.keys(option).length !== 0) {
+		Object.assign(options, option);
+	}
+	if (Object.keys(body as IDataObject).length === 0) {
+		delete options.body;
+	}
+	if (Object.keys(query).length === 0) {
+		delete options.qs;
+	}
+
+	// Only limit and fields are allowed for page_info links
+	// https://shopify.dev/docs/api/usage/pagination-rest#limitations-and-considerations
+	if (uri?.includes('page_info')) {
+		options.qs = {};
+
+		if (query.limit) {
+			options.qs.limit = query.limit;
+		}
+
+		if (query.fields) {
+			options.qs.fields = query.fields;
+		}
+	}
+
+	return await this.helpers.requestWithAuthentication.call(this, credentialType, options, {
+		oauth2: oAuth2Options,
+	});
+}
+
+export async function shopifyApiRequestAllItems(
+	this: IHookFunctions | IExecuteFunctions | ILoadOptionsFunctions,
+	propertyName: string,
+	method: IHttpRequestMethods,
+	resource: string,
+
+	body: any = {},
+	query: IDataObject = {},
+): Promise<any> {
+	const returnData: IDataObject[] = [];
+
+	/*
+	 	When paginating some parameters
+		(e.g. product:getAll -> title ) cannot
+		be empty in the query string, so remove
+		all the empty ones before paginating.
+	*/
+	for (const field in query) {
+		if (query[field] === '') {
+			delete query[field];
+		}
+	}
+
+	let responseData;
+
+	let uri: string | undefined;
+
+	do {
+		responseData = await shopifyApiRequest.call(this, method, resource, body, query, uri, {
+			resolveWithFullResponse: true,
+		});
+		if (responseData.headers.link) {
+			uri = responseData.headers.link.split(';')[0].replace('<', '').replace('>', '');
+		}
+		returnData.push.apply(returnData, responseData.body[propertyName] as IDataObject[]);
+	} while (responseData.headers.link?.includes('rel="next"'));
+	return returnData;
+}
+
+export function keysToSnakeCase(elements: IDataObject[] | IDataObject): IDataObject[] {
+	if (elements === undefined) {
+		return [];
+	}
+	if (!Array.isArray(elements)) {
+		elements = [elements];
+	}
+	for (const element of elements) {
+		for (const key of Object.keys(element)) {
+			if (key !== snakeCase(key)) {
+				element[snakeCase(key)] = element[key];
+				delete element[key];
+			}
+		}
+	}
+	return elements;
+}
+
+
+// === File: OrderDescription.ts ===
+import type { INodeProperties } from 'n8n-workflow';
+
+export const orderOperations: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['order'],
+			},
+		},
+		options: [
+			{
+				name: 'Create',
+				value: 'create',
+				description: 'Create an order',
+				action: 'Create an order',
+			},
+			{
+				name: 'Delete',
+				value: 'delete',
+				description: 'Delete an order',
+				action: 'Delete an order',
+			},
+			{
+				name: 'Get',
+				value: 'get',
+				description: 'Get an order',
+				action: 'Get an order',
+			},
+			{
+				name: 'Get Many',
+				value: 'getAll',
+				description: 'Get many orders',
+				action: 'Get many orders',
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				description: 'Update an order',
+				action: 'Update an order',
+			},
+		],
+		default: 'create',
+	},
+];
+
+export const orderFields: INodeProperties[] = [
+	/* -------------------------------------------------------------------------- */
+	/*                                order:create                                */
+	/* -------------------------------------------------------------------------- */
+	{
+		displayName: 'Additional Fields',
+		name: 'additionalFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		displayOptions: {
+			show: {
+				operation: ['create'],
+				resource: ['order'],
+			},
+		},
+		default: {},
+		options: [
+			{
+				displayName: 'Billing Address',
+				name: 'billingAddressUi',
+				placeholder: 'Add Billing Address',
+				type: 'fixedCollection',
+				default: {},
+				typeOptions: {
+					multipleValues: false,
+				},
+				options: [
+					{
+						name: 'billingAddressValues',
+						displayName: 'Billing Address',
+						values: [
+							{
+								displayName: 'First Name',
+								name: 'firstName',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Last Name',
+								name: 'lastName',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Company',
+								name: 'company',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Country',
+								name: 'country',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Address Line 1',
+								name: 'address1',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Address Line 2',
+								name: 'address2',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'City',
+								name: 'city',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Province',
+								name: 'province',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Zip Code',
+								name: 'zip',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Phone',
+								name: 'phone',
+								type: 'string',
+								default: '',
+							},
+						],
+					},
+				],
+			},
+			{
+				displayName: 'Discount Codes',
+				name: 'discountCodesUi',
+				placeholder: 'Add Discount Code',
+				type: 'fixedCollection',
+				default: {},
+				typeOptions: {
+					multipleValues: true,
+				},
+				options: [
+					{
+						name: 'discountCodesValues',
+						displayName: 'Discount Code',
+						values: [
+							{
+								displayName: 'Amount',
+								name: 'amount',
+								type: 'string',
+								default: '',
+								description: "The amount that's deducted from the order total",
+							},
+							{
+								displayName: 'Code',
+								name: 'code',
+								type: 'string',
+								default: '',
+								description: 'When the associated discount application is of type code',
+							},
+							{
+								displayName: 'Type',
+								name: 'type',
+								type: 'options',
+								options: [
+									{
+										name: 'Fixed Amount',
+										value: 'fixedAmount',
+										description: "Applies amount as a unit of the store's currency",
+									},
+									{
+										name: 'Percentage',
+										value: 'percentage',
+										description: 'Applies a discount of amount as a percentage of the order total',
+									},
+									{
+										name: 'Shipping',
+										value: 'shipping',
+										description:
+											'Applies a free shipping discount on orders that have a shipping rate less than or equal to amount',
+									},
+								],
+								default: 'fixedAmount',
+								description: 'When the associated discount application is of type code',
+							},
+						],
+					},
+				],
+			},
+			{
+				displayName: 'Email',
+				name: 'email',
+				type: 'string',
+				placeholder: 'name@email.com',
+				default: '',
+				description: "The customer's email address",
+			},
+			{
+				displayName: 'Fulfillment Status',
+				name: 'fulfillmentStatus',
+				type: 'options',
+				options: [
+					{
+						name: 'Fulfilled',
+						value: 'fulfilled',
+						description: 'Every line item in the order has been fulfilled',
+					},
+					{
+						name: 'Null',
+						value: 'null',
+						description: 'None of the line items in the order have been fulfilled',
+					},
+					{
+						name: 'Partial',
+						value: 'partial',
+						description: 'At least one line item in the order has been fulfilled',
+					},
+					{
+						name: 'Restocked',
+						value: 'restocked',
+						description: 'Every line item in the order has been restocked and the order canceled',
+					},
+				],
+				default: '',
+				description: "The order's status in terms of fulfilled line items",
+			},
+			{
+				displayName: 'Inventory Behaviour',
+				name: 'inventoryBehaviour',
+				type: 'options',
+				options: [
+					{
+						name: 'Bypass',
+						value: 'bypass',
+						description: 'Do not claim inventory',
+					},
+					{
+						name: 'Decrement Ignoring Policy',
+						value: 'decrementIgnoringPolicy',
+						description: "Ignore the product's inventory policy and claim inventory",
+					},
+					{
+						name: 'Decrement Obeying Policy',
+						value: 'decrementObeyingPolicy',
+						description: "Follow the product's inventory policy and claim inventory, if possible",
+					},
+				],
+				default: 'bypass',
+				description: 'The behaviour to use when updating inventory',
+			},
+			{
+				displayName: 'Location Name or ID',
+				name: 'locationId',
+				type: 'options',
+				typeOptions: {
+					loadOptionsMethod: 'getLocations',
+				},
+				default: '',
+				description:
+					'The ID of the physical location where the order was processed. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+			},
+			{
+				displayName: 'Note',
+				name: 'note',
+				type: 'string',
+				default: '',
+				description: 'An optional note that a shop owner can attach to the order',
+			},
+			{
+				displayName: 'Send Fulfillment Receipt',
+				name: 'sendFulfillmentReceipt',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to send a shipping confirmation to the customer',
+			},
+			{
+				displayName: 'Send Receipt',
+				name: 'sendReceipt',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to send an order confirmation to the customer',
+			},
+			{
+				displayName: 'Shipping Address',
+				name: 'shippingAddressUi',
+				placeholder: 'Add Shipping',
+				type: 'fixedCollection',
+				default: {},
+				typeOptions: {
+					multipleValues: false,
+				},
+				options: [
+					{
+						name: 'shippingAddressValues',
+						displayName: 'Shipping Address',
+						values: [
+							{
+								displayName: 'First Name',
+								name: 'firstName',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Last Name',
+								name: 'lastName',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Company',
+								name: 'company',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Country',
+								name: 'country',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Address Line 1',
+								name: 'address1',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Address Line 2',
+								name: 'address2',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'City',
+								name: 'city',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Province',
+								name: 'province',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Zip Code',
+								name: 'zip',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Phone',
+								name: 'phone',
+								type: 'string',
+								default: '',
+							},
+						],
+					},
+				],
+			},
+			{
+				displayName: 'Source Name',
+				name: 'sourceName',
+				type: 'string',
+				default: '',
+				description:
+					'Where the order originated. Can be set only during order creation, and is not writeable afterwards.',
+			},
+			{
+				displayName: 'Tags',
+				name: 'tags',
+				type: 'string',
+				default: '',
+				description: 'Tags attached to the order, formatted as a string of comma-separated values',
+			},
+			{
+				displayName: 'Test',
+				name: 'test',
+				type: 'boolean',
+				default: false,
+				description: 'Whether this is a test order',
+			},
+		],
+	},
+	{
+		displayName: 'Line Items',
+		name: 'limeItemsUi',
+		placeholder: 'Add Line Item',
+		type: 'fixedCollection',
+		typeOptions: {
+			multipleValues: true,
+		},
+		displayOptions: {
+			show: {
+				resource: ['order'],
+				operation: ['create'],
+			},
+		},
+		default: {},
+		options: [
+			{
+				displayName: 'Line Item',
+				name: 'lineItemValues',
+				values: [
+					{
+						displayName: 'Product Name or ID',
+						name: 'productId',
+						type: 'options',
+						typeOptions: {
+							loadOptionsMethod: 'getProducts',
+						},
+						default: '',
+						description:
+							'The ID of the product that the line item belongs to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+					},
+					{
+						displayName: 'Variant ID',
+						name: 'variantId',
+						type: 'string',
+						default: '',
+						description: 'The ID of the product variant',
+					},
+					{
+						displayName: 'Title',
+						name: 'title',
+						type: 'string',
+						default: '',
+						description: 'The title of the product',
+					},
+					{
+						displayName: 'Grams',
+						name: 'grams',
+						type: 'string',
+						default: '',
+						description: 'The weight of the item in grams',
+					},
+					{
+						displayName: 'Quantity',
+						name: 'quantity',
+						type: 'number',
+						typeOptions: {
+							minValue: 1,
+						},
+						default: 1,
+						description: 'The number of items that were purchased',
+					},
+					{
+						displayName: 'Price',
+						name: 'price',
+						type: 'string',
+						default: '',
+					},
+				],
+			},
+		],
+	},
+	/* -------------------------------------------------------------------------- */
+	/*                                order:delete                                */
+	/* -------------------------------------------------------------------------- */
+	{
+		displayName: 'Order ID',
+		name: 'orderId',
+		type: 'string',
+		default: '',
+		displayOptions: {
+			show: {
+				resource: ['order'],
+				operation: ['delete'],
+			},
+		},
+		required: true,
+	},
+	/* -------------------------------------------------------------------------- */
+	/*                                order:get                                   */
+	/* -------------------------------------------------------------------------- */
+	{
+		displayName: 'Order ID',
+		name: 'orderId',
+		type: 'string',
+		default: '',
+		displayOptions: {
+			show: {
+				resource: ['order'],
+				operation: ['get'],
+			},
+		},
+		required: true,
+	},
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Field',
+		displayOptions: {
+			show: {
+				operation: ['get'],
+				resource: ['order'],
+			},
+		},
+		default: {},
+		options: [
+			{
+				displayName: 'Fields',
+				name: 'fields',
+				type: 'string',
+				default: '',
+				description:
+					'Fields the order will return, formatted as a string of comma-separated values. By default all the fields are returned.',
+			},
+		],
+	},
+	/* -------------------------------------------------------------------------- */
+	/*                                order:getAll                                */
+	/* -------------------------------------------------------------------------- */
+	{
+		displayName: 'Return All',
+		name: 'returnAll',
+		type: 'boolean',
+		displayOptions: {
+			show: {
+				resource: ['order'],
+				operation: ['getAll'],
+			},
+		},
+		default: false,
+		description: 'Whether to return all results or only up to a given limit',
+	},
+	{
+		displayName: 'Limit',
+		name: 'limit',
+		type: 'number',
+		displayOptions: {
+			show: {
+				resource: ['order'],
+				operation: ['getAll'],
+				returnAll: [false],
+			},
+		},
+		typeOptions: {
+			minValue: 1,
+			maxValue: 250,
+		},
+		default: 50,
+		description: 'Max number of results to return',
+	},
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Field',
+		default: {},
+		displayOptions: {
+			show: {
+				operation: ['getAll'],
+				resource: ['order'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Attribution App ID',
+				name: 'attributionAppId',
+				type: 'string',
+				default: '',
+				description:
+					'Show orders attributed to a certain app, specified by the app ID. Set as current to show orders for the app currently consuming the API.',
+			},
+			{
+				displayName: 'Created At Min',
+				name: 'createdAtMin',
+				type: 'dateTime',
+				default: '',
+				description: 'Show orders created at or after date',
+			},
+			{
+				displayName: 'Created At Max',
+				name: 'createdAtMax',
+				type: 'dateTime',
+				default: '',
+				description: 'Show orders created at or before date',
+			},
+			{
+				displayName: 'Financial Status',
+				name: 'financialStatus',
+				type: 'options',
+				options: [
+					{
+						name: 'Any',
+						value: 'any',
+						description: 'Show orders of any financial status',
+					},
+					{
+						name: 'Authorized',
+						value: 'authorized',
+						description: 'Show only authorized orders',
+					},
+					{
+						name: 'Paid',
+						value: 'paid',
+						description: 'Show only paid orders',
+					},
+					{
+						name: 'Partially Paid',
+						value: 'partiallyPaid',
+						description: 'Show only partially paid orders',
+					},
+					{
+						name: 'Partially Refunded',
+						value: 'partiallyRefunded',
+						description: 'Show only partially refunded orders',
+					},
+					{
+						name: 'Pending',
+						value: 'pending',
+						description: 'Show only pending orders',
+					},
+					{
+						name: 'Refunded',
+						value: 'refunded',
+						description: 'Show only refunded orders',
+					},
+					{
+						name: 'Unpaid',
+						value: 'unpaid',
+						description: 'Show authorized and partially paid orders',
+					},
+					{
+						name: 'Voided',
+						value: 'voided',
+						description: 'Show only voided orders',
+					},
+				],
+				default: 'any',
+				description: 'Filter orders by their financial status',
+			},
+			{
+				displayName: 'Fulfillment Status',
+				name: 'fulfillmentStatus',
+				type: 'options',
+				options: [
+					{
+						name: 'Any',
+						value: 'any',
+						description: 'Show orders of any fulfillment status',
+					},
+					{
+						name: 'Partial',
+						value: 'partial',
+						description: 'Show partially shipped orders',
+					},
+					{
+						name: 'Shipped',
+						value: 'shipped',
+						description:
+							'Show orders that have been shipped. Returns orders with fulfillment_status of fulfilled.',
+					},
+					{
+						name: 'Unfulfilled',
+						value: 'unfulfilled',
+						description: 'Returns orders with fulfillment_status of null or partial',
+					},
+					{
+						name: 'Unshipped',
+						value: 'unshipped',
+						description:
+							'Show orders that have not yet been shipped. Returns orders with fulfillment_status of null.',
+					},
+				],
+				default: 'any',
+				description: 'Filter orders by their fulfillment status',
+			},
+			{
+				displayName: 'Fields',
+				name: 'fields',
+				type: 'string',
+				default: '',
+				description:
+					'Fields the orders will return, formatted as a string of comma-separated values. By default all the fields are returned.',
+			},
+			{
+				displayName: 'IDs',
+				name: 'ids',
+				type: 'string',
+				default: '',
+				description: 'Retrieve only orders specified by a comma-separated list of order IDs',
+			},
+			{
+				displayName: 'Processed At Max',
+				name: 'processedAtMax',
+				type: 'dateTime',
+				default: '',
+				description: 'Show orders imported at or before date',
+			},
+			{
+				displayName: 'Processed At Min',
+				name: 'processedAtMin',
+				type: 'dateTime',
+				default: '',
+				description: 'Show orders imported at or after date',
+			},
+			{
+				displayName: 'Status',
+				name: 'status',
+				type: 'options',
+				options: [
+					{
+						name: 'Any',
+						value: 'any',
+						description: 'Show orders of any status, including archived orders',
+					},
+					{
+						name: 'Cancelled',
+						value: 'Cancelled',
+						description: 'Show only canceled orders',
+					},
+					{
+						name: 'Closed',
+						value: 'closed',
+						description: 'Show only closed orders',
+					},
+					{
+						name: 'Open',
+						value: 'open',
+						description: 'Show only open orders',
+					},
+				],
+				default: 'open',
+				description: 'Filter orders by their status',
+			},
+			{
+				displayName: 'Since ID',
+				name: 'sinceId',
+				type: 'string',
+				default: '',
+				description: 'Show orders after the specified ID',
+			},
+			{
+				displayName: 'Updated At Max',
+				name: 'updatedAtMax',
+				type: 'dateTime',
+				default: '',
+				description: 'Show orders last updated at or after date',
+			},
+			{
+				displayName: 'Updated At Min',
+				name: 'updatedAtMin',
+				type: 'dateTime',
+				default: '',
+				description: 'Show orders last updated at or before date',
+			},
+		],
+	},
+	/* -------------------------------------------------------------------------- */
+	/*                                order:update                                */
+	/* -------------------------------------------------------------------------- */
+	{
+		displayName: 'Order ID',
+		name: 'orderId',
+		type: 'string',
+		default: '',
+		displayOptions: {
+			show: {
+				resource: ['order'],
+				operation: ['update'],
+			},
+		},
+		required: true,
+	},
+	{
+		displayName: 'Update Fields',
+		name: 'updateFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		displayOptions: {
+			show: {
+				operation: ['update'],
+				resource: ['order'],
+			},
+		},
+		default: {},
+		options: [
+			{
+				displayName: 'Email',
+				name: 'email',
+				type: 'string',
+				placeholder: 'name@email.com',
+				default: '',
+				description: "The customer's email address",
+			},
+			{
+				displayName: 'Location Name or ID',
+				name: 'locationId',
+				type: 'options',
+				typeOptions: {
+					loadOptionsMethod: 'getLocations',
+				},
+				default: '',
+				description:
+					'The ID of the physical location where the order was processed. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+			},
+			{
+				displayName: 'Note',
+				name: 'note',
+				type: 'string',
+				default: '',
+				description: 'An optional note that a shop owner can attach to the order',
+			},
+			{
+				displayName: 'Shipping Address',
+				name: 'shippingAddressUi',
+				placeholder: 'Add Shipping',
+				type: 'fixedCollection',
+				default: {},
+				typeOptions: {
+					multipleValues: false,
+				},
+				options: [
+					{
+						name: 'shippingAddressValues',
+						displayName: 'Shipping Address',
+						values: [
+							{
+								displayName: 'First Name',
+								name: 'firstName',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Last Name',
+								name: 'lastName',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Company',
+								name: 'company',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Country',
+								name: 'country',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Address Line 1',
+								name: 'address1',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Address Line 2',
+								name: 'address2',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'City',
+								name: 'city',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Province',
+								name: 'province',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Zip Code',
+								name: 'zip',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Phone',
+								name: 'phone',
+								type: 'string',
+								default: '',
+							},
+						],
+					},
+				],
+			},
+			{
+				displayName: 'Source Name',
+				name: 'sourceName',
+				type: 'string',
+				default: '',
+				description:
+					'Where the order originated. Can be set only during order creation, and is not writeable afterwards.',
+			},
+			{
+				displayName: 'Tags',
+				name: 'tags',
+				type: 'string',
+				default: '',
+				description: 'Tags attached to the order, formatted as a string of comma-separated values',
+			},
+		],
+	},
+];
+
+
+// === File: OrderInterface.ts ===
+export interface ILineItem {
+	id?: number;
+	product_id?: number;
+	variant_id?: number;
+	title?: string;
+	price?: string;
+	grams?: string;
+	quantity?: number;
+}
+
+export interface IDiscountCode {
+	code?: string;
+	amount?: string;
+	type?: string;
+}
+
+export interface IAddress {
+	first_name?: string;
+	last_name?: string;
+	company?: string;
+	address1?: string;
+	address2?: string;
+	city?: string;
+	province?: string;
+	country?: string;
+	phone?: string;
+	zip?: string;
+}
+
+export interface IOrder {
+	billing_address?: IAddress;
+	discount_codes?: IDiscountCode[];
+	email?: string;
+	fulfillment_status?: string;
+	inventory_behaviour?: string;
+	line_items?: ILineItem[];
+	location_id?: number;
+	note?: string;
+	send_fulfillment_receipt?: boolean;
+	send_receipt?: boolean;
+	shipping_address?: IAddress;
+	source_name?: string;
+	tags?: string;
+	test?: boolean;
+}
+
+
+// === File: ProductDescription.ts ===
+import type { INodeProperties } from 'n8n-workflow';
+
+export const productOperations: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['product'],
+			},
+		},
+		options: [
+			{
+				name: 'Create',
+				value: 'create',
+				description: 'Create a product',
+				action: 'Create a product',
+			},
+			{
+				name: 'Delete',
+				value: 'delete',
+				description: 'Delete a product',
+				action: 'Delete a product',
+			},
+			{
+				name: 'Get',
+				value: 'get',
+				description: 'Get a product',
+				action: 'Get a product',
+			},
+			{
+				name: 'Get Many',
+				value: 'getAll',
+				description: 'Get many products',
+				action: 'Get many products',
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				description: 'Update a product',
+				action: 'Update a product',
+			},
+		],
+		default: 'create',
+	},
+];
+
+export const productFields: INodeProperties[] = [
+	/* -------------------------------------------------------------------------- */
+	/*                                product:create/update                       */
+	/* -------------------------------------------------------------------------- */
+	{
+		displayName: 'Title',
+		name: 'title',
+		type: 'string',
+		placeholder: '',
+		displayOptions: {
+			show: {
+				operation: ['create'],
+				resource: ['product'],
+			},
+		},
+		default: '',
+		description: 'The name of the product',
+		required: true,
+	},
+	{
+		displayName: 'Product ID',
+		name: 'productId',
+		type: 'string',
+		default: '',
+		displayOptions: {
+			show: {
+				resource: ['product'],
+				operation: ['update'],
+			},
+		},
+		required: true,
+	},
+	{
+		displayName: 'Additional Fields',
+		name: 'additionalFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		displayOptions: {
+			show: {
+				operation: ['create'],
+				resource: ['product'],
+			},
+		},
+		default: {},
+		options: [
+			{
+				displayName: 'Body HTML',
+				name: 'body_html',
+				type: 'string',
+				default: '',
+				description: 'A description of the product. Supports HTML formatting.',
+			},
+			{
+				displayName: 'Handle',
+				name: 'handle',
+				type: 'string',
+				default: '',
+				description:
+					"A unique human-friendly string for the product. Automatically generated from the product's title. Used by the Liquid templating language to refer to objects.",
+			},
+			{
+				displayName: 'Images',
+				name: 'images',
+				type: 'collection',
+				placeholder: 'Add Image Field',
+				typeOptions: {
+					multipleValues: true,
+				},
+				default: {},
+				description:
+					'A list of product image objects, each one representing an image associated with the product',
+				options: [
+					{
+						displayName: 'Created At',
+						name: 'created_at',
+						type: 'dateTime',
+						default: '',
+						description: 'The date and time when the product image was created',
+					},
+					{
+						displayName: 'ID',
+						name: 'id',
+						type: 'number',
+						default: '',
+						description: 'A unique numeric identifier for the product image',
+					},
+					{
+						displayName: 'Position',
+						name: 'position',
+						type: 'number',
+						default: '',
+						description:
+							'The order of the product image in the list. The first product image is at position 1 and is the "main" image for the product.',
+					},
+					{
+						displayName: 'Product ID',
+						name: 'product_id',
+						type: 'number',
+						default: '',
+						description: 'The ID of the product associated with the image',
+					},
+					{
+						displayName: 'Variant IDs',
+						name: 'variant_ids',
+						type: 'number',
+						typeOptions: {
+							multipleValues: true,
+						},
+						default: '',
+						description: 'An array of variant IDs associated with the image',
+					},
+					{
+						displayName: 'Source',
+						name: 'src',
+						type: 'string',
+						default: '',
+						description:
+							'<p>Specifies the location of the product image. This parameter supports URL filters that you can use to retrieve modified copies of the image.</p><p>For example, add _small, to the filename to retrieve a scaled copy of the image at 100 x 100 px (for example, ipod-nano_small.png), or add _2048x2048 to retrieve a copy of the image constrained at 2048 x 2048 px resolution (for example, ipod-nano_2048x2048.png).</p>.',
+					},
+					{
+						displayName: 'Width',
+						name: 'width',
+						type: 'number',
+						default: '',
+						description: 'Width dimension of the image which is determined on upload',
+					},
+					{
+						displayName: 'Height',
+						name: 'height',
+						type: 'number',
+						default: '',
+						description: 'Height dimension of the image which is determined on upload',
+					},
+					{
+						displayName: 'Updated At',
+						name: 'updated_at',
+						type: 'dateTime',
+						default: '',
+						description: 'The date and time when the product image was last modified',
+					},
+				],
+			},
+			{
+				displayName: 'Options',
+				name: 'productOptions',
+				type: 'fixedCollection',
+				placeholder: 'Add option',
+				typeOptions: {
+					multipleValues: true,
+				},
+				default: {},
+				description:
+					'The custom product property names like Size, Color, and Material. You can add up to 3 options of up to 255 characters each.',
+				options: [
+					{
+						displayName: 'Option',
+						name: 'option',
+						values: [
+							{
+								displayName: 'Name',
+								name: 'name',
+								type: 'string',
+								default: '',
+								description: "Option's name",
+							},
+							{
+								displayName: 'Value',
+								name: 'value',
+								type: 'string',
+								default: '',
+								description: "Option's values",
+							},
+						],
+					},
+				],
+			},
+			{
+				displayName: 'Product Type',
+				name: 'product_type',
+				type: 'string',
+				default: '',
+				description: 'A categorization for the product used for filtering and searching products',
+			},
+			{
+				displayName: 'Published At',
+				name: 'published_at',
+				type: 'dateTime',
+				default: '',
+				description:
+					'The date and time (ISO 8601 format) when the product was published. Can be set to null to unpublish the product from the Online Store channel.',
+			},
+			{
+				displayName: 'Published Scope',
+				name: 'published_scope',
+				type: 'options',
+				default: '',
+				options: [
+					{
+						name: 'Global',
+						value: 'global',
+						description:
+							'The product is published to both the Online Store channel and the Point of Sale channel',
+					},
+					{
+						name: 'Web',
+						value: 'web',
+						description:
+							'The product is published to the Online Store channel but not published to the Point of Sale channel',
+					},
+				],
+			},
+			{
+				displayName: 'Tags',
+				name: 'tags',
+				type: 'string',
+				default: '',
+				description:
+					'A string of comma-separated tags that are used for filtering and search. A product can have up to 250 tags. Each tag can have up to 255 characters.',
+			},
+			{
+				displayName: 'Template Suffix',
+				name: 'template_suffix',
+				type: 'string',
+				default: '',
+				description:
+					'The suffix of the Liquid template used for the product page. If this property is specified, then the product page uses a template called "product.suffix.liquid", where "suffix" is the value of this property. If this property is "" or null, then the product page uses the default template "product.liquid". (default: null)',
+			},
+			// {
+			// 	displayName: 'Variants',
+			// 	name: 'variants',
+			// 	type: 'collection',
+			// 	placeholder: 'Add Variant Field',
+			// 	typeOptions: {
+			// 		multipleValues: true,
+			// 	},
+			// 	default: {},
+			// 	description: 'A list of product variants, each representing a different version of the product.',
+			// 	options: [
+			// 		{
+			// 			displayName: 'Created At',
+			// 			name: 'created_at',
+			// 			type: 'dateTime',
+			// 			default: '',
+			// 			description: 'The date and time when the product image was created.',
+			// 		},
+			// 	],
+			// },
+			{
+				displayName: 'Vendor',
+				name: 'vendor',
+				type: 'string',
+				default: '',
+				description: "The name of the product's vendor",
+			},
+		],
+	},
+	{
+		displayName: 'Update Fields',
+		name: 'updateFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		displayOptions: {
+			show: {
+				operation: ['update'],
+				resource: ['product'],
+			},
+		},
+		default: {},
+		options: [
+			{
+				displayName: 'Body HTML',
+				name: 'body_html',
+				type: 'string',
+				default: '',
+				description: 'A description of the product. Supports HTML formatting.',
+			},
+			{
+				displayName: 'Handle',
+				name: 'handle',
+				type: 'string',
+				default: '',
+				description:
+					"A unique human-friendly string for the product. Automatically generated from the product's title. Used by the Liquid templating language to refer to objects.",
+			},
+			{
+				displayName: 'Images',
+				name: 'images',
+				type: 'collection',
+				placeholder: 'Add Image Field',
+				typeOptions: {
+					multipleValues: true,
+				},
+				default: {},
+				description:
+					'A list of product image objects, each one representing an image associated with the product',
+				options: [
+					{
+						displayName: 'Created At',
+						name: 'created_at',
+						type: 'dateTime',
+						default: '',
+						description: 'The date and time when the product image was created',
+					},
+					{
+						displayName: 'ID',
+						name: 'id',
+						type: 'number',
+						default: '',
+						description: 'A unique numeric identifier for the product image',
+					},
+					{
+						displayName: 'Position',
+						name: 'position',
+						type: 'number',
+						default: '',
+						description:
+							'The order of the product image in the list. The first product image is at position 1 and is the "main" image for the product.',
+					},
+					{
+						displayName: 'Product ID',
+						name: 'product_id',
+						type: 'number',
+						default: '',
+						description: 'The ID of the product associated with the image',
+					},
+					{
+						displayName: 'Variant IDs',
+						name: 'variant_ids',
+						type: 'number',
+						typeOptions: {
+							multipleValues: true,
+						},
+						default: '',
+						description: 'An array of variant IDs associated with the image',
+					},
+					{
+						displayName: 'Source',
+						name: 'src',
+						type: 'string',
+						default: '',
+						description:
+							'<p>Specifies the location of the product image. This parameter supports URL filters that you can use to retrieve modified copies of the image.</p><p>For example, add _small, to the filename to retrieve a scaled copy of the image at 100 x 100 px (for example, ipod-nano_small.png), or add _2048x2048 to retrieve a copy of the image constrained at 2048 x 2048 px resolution (for example, ipod-nano_2048x2048.png).</p>.',
+					},
+					{
+						displayName: 'Width',
+						name: 'width',
+						type: 'number',
+						default: '',
+						description: 'Width dimension of the image which is determined on upload',
+					},
+					{
+						displayName: 'Height',
+						name: 'height',
+						type: 'number',
+						default: '',
+						description: 'Height dimension of the image which is determined on upload',
+					},
+					{
+						displayName: 'Updated At',
+						name: 'updated_at',
+						type: 'dateTime',
+						default: '',
+						description: 'The date and time when the product image was last modified',
+					},
+				],
+			},
+			{
+				displayName: 'Options',
+				name: 'productOptions',
+				type: 'fixedCollection',
+				placeholder: 'Add option',
+				typeOptions: {
+					multipleValues: true,
+				},
+				default: {},
+				description:
+					'The custom product property names like Size, Color, and Material. You can add up to 3 options of up to 255 characters each.',
+				options: [
+					{
+						displayName: 'Option',
+						name: 'option',
+						values: [
+							{
+								displayName: 'Name',
+								name: 'name',
+								type: 'string',
+								default: '',
+								description: "Option's name",
+							},
+							{
+								displayName: 'Value',
+								name: 'value',
+								type: 'string',
+								default: '',
+								description: "Option's values",
+							},
+						],
+					},
+				],
+			},
+			{
+				displayName: 'Product Type',
+				name: 'product_type',
+				type: 'string',
+				default: '',
+				description: 'A categorization for the product used for filtering and searching products',
+			},
+			{
+				displayName: 'Published At',
+				name: 'published_at',
+				type: 'dateTime',
+				default: '',
+				description:
+					'The date and time (ISO 8601 format) when the product was published. Can be set to null to unpublish the product from the Online Store channel.',
+			},
+			{
+				displayName: 'Published Scope',
+				name: 'published_scope',
+				type: 'options',
+				default: '',
+				options: [
+					{
+						name: 'Global',
+						value: 'global',
+						description:
+							'The product is published to both the Online Store channel and the Point of Sale channel',
+					},
+					{
+						name: 'Web',
+						value: 'web',
+						description:
+							'The product is published to the Online Store channel but not published to the Point of Sale channel',
+					},
+				],
+			},
+			{
+				displayName: 'Tags',
+				name: 'tags',
+				type: 'string',
+				default: '',
+				description:
+					'A string of comma-separated tags that are used for filtering and search. A product can have up to 250 tags. Each tag can have up to 255 characters.',
+			},
+			{
+				displayName: 'Template Suffix',
+				name: 'template_suffix',
+				type: 'string',
+				default: '',
+				description:
+					'The suffix of the Liquid template used for the product page. If this property is specified, then the product page uses a template called "product.suffix.liquid", where "suffix" is the value of this property. If this property is "" or null, then the product page uses the default template "product.liquid". (default: null)',
+			},
+			{
+				displayName: 'Title',
+				name: 'title',
+				type: 'string',
+				default: '',
+				description: 'The name of the product',
+			},
+			// {
+			// 	displayName: 'Variants',
+			// 	name: 'variants',
+			// 	type: 'collection',
+			// 	placeholder: 'Add Variant Field',
+			// 	typeOptions: {
+			// 		multipleValues: true,
+			// 	},
+			// 	default: {},
+			// 	description: 'A list of product variants, each representing a different version of the product.',
+			// 	options: [
+			// 		{
+			// 			displayName: 'Created At',
+			// 			name: 'created_at',
+			// 			type: 'dateTime',
+			// 			default: '',
+			// 			description: 'The date and time when the product image was created.',
+			// 		},
+			// 	],
+			// },
+			{
+				displayName: 'Vendor',
+				name: 'vendor',
+				type: 'string',
+				default: '',
+				description: "The name of the product's vendor",
+			},
+		],
+	},
+	/* -------------------------------------------------------------------------- */
+	/*                                product:delete                              */
+	/* -------------------------------------------------------------------------- */
+	{
+		displayName: 'Product ID',
+		name: 'productId',
+		type: 'string',
+		default: '',
+		displayOptions: {
+			show: {
+				resource: ['product'],
+				operation: ['delete'],
+			},
+		},
+		required: true,
+	},
+	/* -------------------------------------------------------------------------- */
+	/*                                product:get                                 */
+	/* -------------------------------------------------------------------------- */
+	{
+		displayName: 'Product ID',
+		name: 'productId',
+		type: 'string',
+		default: '',
+		displayOptions: {
+			show: {
+				resource: ['product'],
+				operation: ['get'],
+			},
+		},
+		required: true,
+	},
+	{
+		displayName: 'Additional Fields',
+		name: 'additionalFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		displayOptions: {
+			show: {
+				operation: ['get'],
+				resource: ['product'],
+			},
+		},
+		default: {},
+		options: [
+			{
+				displayName: 'Fields',
+				name: 'fields',
+				type: 'string',
+				default: '',
+				description:
+					'Fields the product will return, formatted as a string of comma-separated values. By default all the fields are returned.',
+			},
+		],
+	},
+	/* -------------------------------------------------------------------------- */
+	/*                                product:getAll                              */
+	/* -------------------------------------------------------------------------- */
+	{
+		displayName: 'Return All',
+		name: 'returnAll',
+		type: 'boolean',
+		displayOptions: {
+			show: {
+				resource: ['product'],
+				operation: ['getAll'],
+			},
+		},
+		default: false,
+		description: 'Whether to return all results or only up to a given limit',
+	},
+	{
+		displayName: 'Limit',
+		name: 'limit',
+		type: 'number',
+		displayOptions: {
+			show: {
+				resource: ['product'],
+				operation: ['getAll'],
+				returnAll: [false],
+			},
+		},
+		typeOptions: {
+			minValue: 1,
+			maxValue: 250,
+		},
+		default: 50,
+		description: 'Max number of results to return',
+	},
+	{
+		displayName: 'Additional Fields',
+		name: 'additionalFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		default: {},
+		displayOptions: {
+			show: {
+				operation: ['getAll'],
+				resource: ['product'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Collection ID',
+				name: 'collection_id',
+				type: 'string',
+				default: '',
+				description: 'Filter results by product collection ID',
+			},
+			{
+				displayName: 'Created At Max',
+				name: 'created_at_max',
+				type: 'dateTime',
+				default: '',
+				description: 'Show products created before date',
+			},
+			{
+				displayName: 'Created At Min',
+				name: 'created_at_min',
+				type: 'dateTime',
+				default: '',
+				description: 'Show products created after date',
+			},
+			{
+				displayName: 'Fields',
+				name: 'fields',
+				type: 'string',
+				default: '',
+				description: 'Show only certain fields, specified by a comma-separated list of field names',
+			},
+			{
+				displayName: 'Handle',
+				name: 'handle',
+				type: 'string',
+				default: '',
+				description: 'Filter results by product handle',
+			},
+			{
+				displayName: 'IDs',
+				name: 'ids',
+				type: 'string',
+				default: '',
+				description: 'Return only products specified by a comma-separated list of product IDs',
+			},
+			{
+				displayName: 'Presentment Currencies',
+				name: 'presentment_currencies',
+				type: 'string',
+				default: '',
+				description:
+					'Return presentment prices in only certain currencies, specified by a comma-separated list of ISO 4217 currency codes',
+			},
+			{
+				displayName: 'Product Type',
+				name: 'product_type',
+				type: 'string',
+				default: '',
+				description: 'Filter results by product type',
+			},
+			{
+				displayName: 'Published At Max',
+				name: 'published_at_max',
+				type: 'dateTime',
+				default: '',
+				description: 'Show products published before date',
+			},
+			{
+				displayName: 'Published At Min',
+				name: 'published_at_min',
+				type: 'dateTime',
+				default: '',
+				description: 'Show products published after date',
+			},
+			{
+				displayName: 'Published Status',
+				name: 'published_status',
+				type: 'options',
+				options: [
+					{
+						name: 'Any',
+						value: 'any',
+						description: 'Show all products',
+					},
+					{
+						name: 'Published',
+						value: 'published',
+						description: 'Show only published products',
+					},
+					{
+						name: 'Unpublished',
+						value: 'unpublished',
+						description: 'Show only unpublished products',
+					},
+				],
+				default: 'any',
+				description: 'Return products by their published status',
+			},
+			{
+				displayName: 'Title',
+				name: 'title',
+				type: 'string',
+				default: '',
+				description: 'Filter results by product title',
+			},
+			{
+				displayName: 'Updated At Max',
+				name: 'updated_at_max',
+				type: 'dateTime',
+				default: '',
+				description: 'Show products last updated before date',
+			},
+			{
+				displayName: 'Updated At Min',
+				name: 'updated_at_min',
+				type: 'dateTime',
+				default: '',
+				description: 'Show products last updated after date',
+			},
+			{
+				displayName: 'Vendor',
+				name: 'vendor',
+				type: 'string',
+				default: '',
+				description: 'Filter results by product vendor',
+			},
+		],
+	},
+];
+
+
+// === File: ProductInterface.ts ===
+import type { IDataObject } from 'n8n-workflow';
+
+export interface IImage {
+	id?: string;
+	product_id?: string;
+	position?: number;
+	created_at?: string;
+	updated_at?: string;
+	width?: number;
+	height?: number;
+	src?: string;
+	variant_ids?: number[];
+}
+
+export interface IPrice {
+	currency_code?: string;
+	amount?: string;
+}
+
+export interface IPresentmentPrices {
+	price?: IPrice;
+	compare_at_price?: IPrice;
+}
+
+export interface IVariant {
+	barcode?: string;
+	compare_at_price?: string;
+	created_at?: string;
+	fulfillment_service?: string;
+	grams?: number;
+	id?: number;
+	image_id?: number;
+	inventory_item_id?: number;
+	inventory_management?: string;
+	inventory_policy?: string;
+	option1?: string;
+	option2?: string;
+	option3?: string;
+	presentment_prices?: IPresentmentPrices[];
+	price?: string;
+	product_id?: number;
+	sku?: string;
+	taxable?: boolean;
+	tax_code?: string;
+	title?: string;
+	updated_at?: string;
+	weight?: number;
+	weight_unit?: string;
+}
+
+export interface IProduct {
+	body_html?: string;
+	handle?: string;
+	images?: IImage[];
+	options?: IDataObject[];
+	product_type?: string;
+	published_at?: string;
+	published_scope?: string;
+	tags?: string;
+	template_suffix?: string;
+	title?: string;
+	variants?: IVariant[];
+	vendor?: string;
+}
+
+
+// === File: Shopify.node.ts ===
+import type {
+	IExecuteFunctions,
+	IDataObject,
+	ILoadOptionsFunctions,
+	INodeExecutionData,
+	INodePropertyOptions,
+	INodeType,
+	INodeTypeDescription,
+} from 'n8n-workflow';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
+
+import { keysToSnakeCase, shopifyApiRequest, shopifyApiRequestAllItems } from './GenericFunctions';
+import { orderFields, orderOperations } from './OrderDescription';
+import type { IAddress, IDiscountCode, ILineItem, IOrder } from './OrderInterface';
+import { productFields, productOperations } from './ProductDescription';
+import type { IProduct } from './ProductInterface';
+
+export class Shopify implements INodeType {
+	description: INodeTypeDescription = {
+		displayName: 'Shopify',
+		name: 'shopify',
+		icon: 'file:shopify.svg',
+		group: ['output'],
+		version: 1,
+		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
+		description: 'Consume Shopify API',
+		defaults: {
+			name: 'Shopify',
+		},
+		usableAsTool: true,
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
+		credentials: [
+			{
+				name: 'shopifyApi',
+				required: true,
+				displayOptions: {
+					show: {
+						authentication: ['apiKey'],
+					},
+				},
+			},
+			{
+				name: 'shopifyAccessTokenApi',
+				required: true,
+				displayOptions: {
+					show: {
+						authentication: ['accessToken'],
+					},
+				},
+			},
+			{
+				name: 'shopifyOAuth2Api',
+				required: true,
+				displayOptions: {
+					show: {
+						authentication: ['oAuth2'],
+					},
+				},
+			},
+		],
+		properties: [
+			{
+				displayName: 'Shopify API Version: 2024-07',
+				type: 'notice',
+				name: 'apiVersion',
+				default: '',
+				isNodeSetting: true,
+			},
+			{
+				displayName: 'Authentication',
+				name: 'authentication',
+				type: 'options',
+				options: [
+					{
+						name: 'Access Token',
+						value: 'accessToken',
+					},
+					{
+						name: 'OAuth2',
+						value: 'oAuth2',
+					},
+					{
+						name: 'API Key',
+						value: 'apiKey',
+					},
+				],
+				default: 'apiKey',
+			},
+			{
+				displayName: 'Resource',
+				name: 'resource',
+				type: 'options',
+				noDataExpression: true,
+				options: [
+					{
+						name: 'Order',
+						value: 'order',
+					},
+					{
+						name: 'Product',
+						value: 'product',
+					},
+				],
+				default: 'order',
+			},
+			// ORDER
+			...orderOperations,
+			...orderFields,
+			// PRODUCTS
+			...productOperations,
+			...productFields,
+		],
+	};
+
+	methods = {
+		loadOptions: {
+			// Get all the available products to display them to user so that they can
+			// select them easily
+			async getProducts(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const returnData: INodePropertyOptions[] = [];
+				const products = await shopifyApiRequestAllItems.call(
+					this,
+					'products',
+					'GET',
+					'/products.json',
+					{},
+					{ fields: 'id,title' },
+				);
+				for (const product of products) {
+					const productName = product.title;
+					const productId = product.id;
+					returnData.push({
+						name: productName,
+						value: productId,
+					});
+				}
+				return returnData;
+			},
+			// Get all the available locations to display them to user so that they can
+			// select them easily
+			async getLocations(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const returnData: INodePropertyOptions[] = [];
+				const locations = await shopifyApiRequestAllItems.call(
+					this,
+					'locations',
+					'GET',
+					'/locations.json',
+					{},
+					{ fields: 'id,name' },
+				);
+				for (const location of locations) {
+					const locationName = location.name;
+					const locationId = location.id;
+					returnData.push({
+						name: locationName,
+						value: locationId,
+					});
+				}
+				return returnData;
+			},
+		},
+	};
+
+	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+		const items = this.getInputData();
+		const returnData: INodeExecutionData[] = [];
+		const length = items.length;
+		let responseData;
+		const qs: IDataObject = {};
+		const resource = this.getNodeParameter('resource', 0);
+		const operation = this.getNodeParameter('operation', 0);
+		for (let i = 0; i < length; i++) {
+			try {
+				if (resource === 'order') {
+					//https://shopify.dev/docs/admin-api/rest/reference/orders/order#create-2020-04
+					if (operation === 'create') {
+						const additionalFields = this.getNodeParameter('additionalFields', i);
+						const discount = additionalFields.discountCodesUi as IDataObject;
+						const billing = additionalFields.billingAddressUi as IDataObject;
+						const shipping = additionalFields.shippingAddressUi as IDataObject;
+						const lineItem = (this.getNodeParameter('limeItemsUi', i) as IDataObject)
+							.lineItemValues as IDataObject[];
+						if (lineItem === undefined) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'At least one line item has to be added',
+								{ itemIndex: i },
+							);
+						}
+						const body: IOrder = {
+							test: true,
+							line_items: keysToSnakeCase(lineItem) as ILineItem[],
+						};
+						if (additionalFields.fulfillmentStatus) {
+							body.fulfillment_status = additionalFields.fulfillmentStatus as string;
+						}
+						if (additionalFields.inventoryBehaviour) {
+							body.inventory_behaviour = additionalFields.inventoryBehaviour as string;
+						}
+						if (additionalFields.locationId) {
+							body.location_id = additionalFields.locationId as number;
+						}
+						if (additionalFields.note) {
+							body.note = additionalFields.note as string;
+						}
+						if (additionalFields.sendFulfillmentReceipt) {
+							body.send_fulfillment_receipt = additionalFields.sendFulfillmentReceipt as boolean;
+						}
+						if (additionalFields.sendReceipt) {
+							body.send_receipt = additionalFields.sendReceipt as boolean;
+						}
+						if (additionalFields.sendReceipt) {
+							body.send_receipt = additionalFields.sendReceipt as boolean;
+						}
+						if (additionalFields.sourceName) {
+							body.source_name = additionalFields.sourceName as string;
+						}
+						if (additionalFields.tags) {
+							body.tags = additionalFields.tags as string;
+						}
+						if (additionalFields.test) {
+							body.test = additionalFields.test as boolean;
+						}
+						if (additionalFields.email) {
+							body.email = additionalFields.email as string;
+						}
+						if (discount) {
+							body.discount_codes = discount.discountCodesValues as IDiscountCode[];
+						}
+						if (billing) {
+							body.billing_address = keysToSnakeCase(
+								billing.billingAddressValues as IDataObject,
+							)[0] as IAddress;
+						}
+						if (shipping) {
+							body.shipping_address = keysToSnakeCase(
+								shipping.shippingAddressValues as IDataObject,
+							)[0] as IAddress;
+						}
+						responseData = await shopifyApiRequest.call(this, 'POST', '/orders.json', {
+							order: body,
+						});
+						responseData = responseData.order;
+					}
+					//https://shopify.dev/docs/admin-api/rest/reference/orders/order#destroy-2020-04
+					if (operation === 'delete') {
+						const orderId = this.getNodeParameter('orderId', i) as string;
+						responseData = await shopifyApiRequest.call(this, 'DELETE', `/orders/${orderId}.json`);
+						responseData = { success: true };
+					}
+					//https://shopify.dev/docs/admin-api/rest/reference/orders/order#show-2020-04
+					if (operation === 'get') {
+						const orderId = this.getNodeParameter('orderId', i) as string;
+						const options = this.getNodeParameter('options', i);
+						if (options.fields) {
+							qs.fields = options.fields as string;
+						}
+						responseData = await shopifyApiRequest.call(
+							this,
+							'GET',
+							`/orders/${orderId}.json`,
+							{},
+							qs,
+						);
+						responseData = responseData.order;
+					}
+					//https://shopify.dev/docs/admin-api/rest/reference/orders/order#index-2020-04
+					if (operation === 'getAll') {
+						const returnAll = this.getNodeParameter('returnAll', i);
+						const options = this.getNodeParameter('options', i);
+						if (options.fields) {
+							qs.fields = options.fields as string;
+						}
+						if (options.attributionAppId) {
+							qs.attribution_app_id = options.attributionAppId as string;
+						}
+						if (options.createdAtMin) {
+							qs.created_at_min = options.createdAtMin as string;
+						}
+						if (options.createdAtMax) {
+							qs.created_at_max = options.createdAtMax as string;
+						}
+						if (options.updatedAtMax) {
+							qs.updated_at_max = options.updatedAtMax as string;
+						}
+						if (options.updatedAtMin) {
+							qs.updated_at_min = options.updatedAtMin as string;
+						}
+						if (options.processedAtMin) {
+							qs.processed_at_min = options.processedAtMin as string;
+						}
+						if (options.processedAtMax) {
+							qs.processed_at_max = options.processedAtMax as string;
+						}
+						if (options.sinceId) {
+							qs.since_id = options.sinceId as string;
+						}
+						if (options.ids) {
+							qs.ids = options.ids as string;
+						}
+						if (options.status) {
+							qs.status = options.status as string;
+						}
+						if (options.financialStatus) {
+							qs.financial_status = options.financialStatus as string;
+						}
+						if (options.fulfillmentStatus) {
+							qs.fulfillment_status = options.fulfillmentStatus as string;
+						}
+
+						if (returnAll) {
+							responseData = await shopifyApiRequestAllItems.call(
+								this,
+								'orders',
+								'GET',
+								'/orders.json',
+								{},
+								qs,
+							);
+						} else {
+							qs.limit = this.getNodeParameter('limit', i);
+							responseData = await shopifyApiRequest.call(this, 'GET', '/orders.json', {}, qs);
+							responseData = responseData.orders;
+						}
+					}
+					//https://shopify.dev/docs/admin-api/rest/reference/orders/order#update-2019-10
+					if (operation === 'update') {
+						const orderId = this.getNodeParameter('orderId', i) as string;
+						const updateFields = this.getNodeParameter('updateFields', i);
+						const shipping = updateFields.shippingAddressUi as IDataObject;
+						const body: IOrder = {};
+						if (updateFields.locationId) {
+							body.location_id = updateFields.locationId as number;
+						}
+						if (updateFields.note) {
+							body.note = updateFields.note as string;
+						}
+						if (updateFields.sourceName) {
+							body.source_name = updateFields.sourceName as string;
+						}
+						if (updateFields.tags) {
+							body.tags = updateFields.tags as string;
+						}
+						if (updateFields.email) {
+							body.email = updateFields.email as string;
+						}
+						if (shipping) {
+							body.shipping_address = keysToSnakeCase(
+								shipping.shippingAddressValues as IDataObject,
+							)[0] as IAddress;
+						}
+						responseData = await shopifyApiRequest.call(this, 'PUT', `/orders/${orderId}.json`, {
+							order: body,
+						});
+						responseData = responseData.order;
+					}
+				} else if (resource === 'product') {
+					const productId = this.getNodeParameter('productId', i, '') as string;
+					let body: IProduct = {};
+					//https://shopify.dev/docs/admin-api/rest/reference/products/product#create-2020-04
+					if (operation === 'create') {
+						const title = this.getNodeParameter('title', i) as string;
+
+						const additionalFields = this.getNodeParameter('additionalFields', i, {});
+
+						if (additionalFields.productOptions) {
+							const metadata = (additionalFields.productOptions as IDataObject)
+								.option as IDataObject[];
+							additionalFields.options = {};
+							for (const data of metadata) {
+								//@ts-ignore
+								additionalFields.options[data.name as string] = data.value;
+							}
+							delete additionalFields.productOptions;
+						}
+
+						body = additionalFields;
+
+						body.title = title;
+
+						responseData = await shopifyApiRequest.call(this, 'POST', '/products.json', {
+							product: body,
+						});
+						responseData = responseData.product;
+					}
+					if (operation === 'delete') {
+						//https://shopify.dev/docs/admin-api/rest/reference/products/product#destroy-2020-04
+						responseData = await shopifyApiRequest.call(
+							this,
+							'DELETE',
+							`/products/${productId}.json`,
+						);
+						responseData = { success: true };
+					}
+					if (operation === 'get') {
+						//https://shopify.dev/docs/admin-api/rest/reference/products/product#show-2020-04
+						const additionalFields = this.getNodeParameter('additionalFields', i, {});
+						Object.assign(qs, additionalFields);
+						responseData = await shopifyApiRequest.call(
+							this,
+							'GET',
+							`/products/${productId}.json`,
+							{},
+							qs,
+						);
+						responseData = responseData.product;
+					}
+					if (operation === 'getAll') {
+						//https://shopify.dev/docs/admin-api/rest/reference/products/product#index-2020-04
+						const additionalFields = this.getNodeParameter('additionalFields', i, {});
+
+						const returnAll = this.getNodeParameter('returnAll', i);
+
+						Object.assign(qs, additionalFields);
+
+						if (returnAll) {
+							responseData = await shopifyApiRequestAllItems.call(
+								this,
+								'products',
+								'GET',
+								'/products.json',
+								{},
+								qs,
+							);
+						} else {
+							qs.limit = this.getNodeParameter('limit', i);
+							responseData = await shopifyApiRequest.call(this, 'GET', '/products.json', {}, qs);
+							responseData = responseData.products;
+						}
+					}
+					if (operation === 'update') {
+						//https://shopify.dev/docs/admin-api/rest/reference/products/product?api[version]=2020-07#update-2020-07
+						const updateFields = this.getNodeParameter('updateFields', i, {});
+
+						if (updateFields.productOptions) {
+							const metadata = (updateFields.productOptions as IDataObject).option as IDataObject[];
+							updateFields.options = {};
+							for (const data of metadata) {
+								//@ts-ignore
+								updateFields.options[data.name as string] = data.value;
+							}
+							delete updateFields.productOptions;
+						}
+
+						body = updateFields;
+
+						responseData = await shopifyApiRequest.call(
+							this,
+							'PUT',
+							`/products/${productId}.json`,
+							{ product: body },
+						);
+
+						responseData = responseData.product;
+					}
+				}
+
+				const executionData = this.helpers.constructExecutionMetaData(
+					this.helpers.returnJsonArray(responseData as IDataObject[]),
+					{ itemData: { item: i } },
+				);
+
+				returnData.push(...executionData);
+			} catch (error) {
+				if (this.continueOnFail()) {
+					const executionErrorData = this.helpers.constructExecutionMetaData(
+						this.helpers.returnJsonArray({ error: error.message }),
+						{ itemData: { item: i } },
+					);
+					returnData.push(...executionErrorData);
+					continue;
+				}
+				throw error;
+			}
+		}
+		return [returnData];
+	}
+}
+
+
+// === File: ShopifyTrigger.node.ts ===
+import { createHmac } from 'crypto';
+import {
+	type IHookFunctions,
+	type IWebhookFunctions,
+	type IDataObject,
+	type INodeType,
+	type INodeTypeDescription,
+	type IWebhookResponseData,
+	NodeConnectionTypes,
+} from 'n8n-workflow';
+
+import { shopifyApiRequest } from './GenericFunctions';
+
+export class ShopifyTrigger implements INodeType {
+	description: INodeTypeDescription = {
+		displayName: 'Shopify Trigger',
+		name: 'shopifyTrigger',
+		icon: 'file:shopify.svg',
+		group: ['trigger'],
+		version: 1,
+		subtitle: '={{$parameter["event"]}}',
+		description: 'Handle Shopify events via webhooks',
+		defaults: {
+			name: 'Shopify Trigger',
+		},
+		inputs: [],
+		outputs: [NodeConnectionTypes.Main],
+		credentials: [
+			{
+				name: 'shopifyApi',
+				required: true,
+				displayOptions: {
+					show: {
+						authentication: ['apiKey'],
+					},
+				},
+			},
+			{
+				name: 'shopifyAccessTokenApi',
+				required: true,
+				displayOptions: {
+					show: {
+						authentication: ['accessToken'],
+					},
+				},
+			},
+			{
+				name: 'shopifyOAuth2Api',
+				required: true,
+				displayOptions: {
+					show: {
+						authentication: ['oAuth2'],
+					},
+				},
+			},
+		],
+		webhooks: [
+			{
+				name: 'default',
+				httpMethod: 'POST',
+				responseMode: 'onReceived',
+				path: 'webhook',
+			},
+		],
+		properties: [
+			{
+				displayName: 'Authentication',
+				name: 'authentication',
+				type: 'options',
+				options: [
+					{
+						name: 'Access Token',
+						value: 'accessToken',
+					},
+					{
+						name: 'OAuth2',
+						value: 'oAuth2',
+					},
+					{
+						name: 'API Key',
+						value: 'apiKey',
+					},
+				],
+				default: 'apiKey',
+			},
+			{
+				displayName: 'Trigger On',
+				name: 'topic',
+				type: 'options',
+				default: '',
+				options: [
+					{
+						name: 'App Uninstalled',
+						value: 'app/uninstalled',
+					},
+					{
+						name: 'Cart Created',
+						value: 'carts/create',
+					},
+					{
+						name: 'Cart Updated',
+						value: 'carts/update',
+					},
+					{
+						name: 'Checkout Created',
+						value: 'checkouts/create',
+					},
+					{
+						name: 'Checkout Delete',
+						value: 'checkouts/delete',
+					},
+					{
+						name: 'Checkout Update',
+						value: 'checkouts/update',
+					},
+					{
+						name: 'Collection Created',
+						value: 'collections/create',
+					},
+					{
+						name: 'Collection Deleted',
+						value: 'collections/delete',
+					},
+					{
+						name: 'Collection Listings Added',
+						value: 'collection_listings/add',
+					},
+					{
+						name: 'Collection Listings Removed',
+						value: 'collection_listings/remove',
+					},
+					{
+						name: 'Collection Listings Updated',
+						value: 'collection_listings/update',
+					},
+					{
+						name: 'Collection Updated',
+						value: 'collections/update',
+					},
+					{
+						name: 'Customer Created',
+						value: 'customers/create',
+					},
+					{
+						name: 'Customer Deleted',
+						value: 'customers/delete',
+					},
+					{
+						name: 'Customer Disabled',
+						value: 'customers/disable',
+					},
+					{
+						name: 'Customer Enabled',
+						value: 'customers/enable',
+					},
+					{
+						name: 'Customer Groups Created',
+						value: 'customer_groups/create',
+					},
+					{
+						name: 'Customer Groups Deleted',
+						value: 'customer_groups/delete',
+					},
+					{
+						name: 'Customer Groups Updated',
+						value: 'customer_groups/update',
+					},
+					{
+						name: 'Customer Updated',
+						value: 'customers/update',
+					},
+					{
+						name: 'Draft Orders Created',
+						value: 'draft_orders/create',
+					},
+					{
+						name: 'Draft Orders Deleted',
+						value: 'draft_orders/delete',
+					},
+					{
+						name: 'Draft Orders Updated',
+						value: 'draft_orders/update',
+					},
+					{
+						name: 'Fulfillment Created',
+						value: 'fulfillments/create',
+					},
+					{
+						name: 'Fulfillment Events Created',
+						value: 'fulfillment_events/create',
+					},
+					{
+						name: 'Fulfillment Events Deleted',
+						value: 'fulfillment_events/delete',
+					},
+					{
+						name: 'Fulfillment Updated',
+						value: 'fulfillments/update',
+					},
+					{
+						name: 'Inventory Items Created',
+						value: 'inventory_items/create',
+					},
+					{
+						name: 'Inventory Items Deleted',
+						value: 'inventory_items/delete',
+					},
+					{
+						name: 'Inventory Items Updated',
+						value: 'inventory_items/update',
+					},
+					{
+						name: 'Inventory Levels Connected',
+						value: 'inventory_levels/connect',
+					},
+					{
+						name: 'Inventory Levels Disconnected',
+						value: 'inventory_levels/disconnect',
+					},
+					{
+						name: 'Inventory Levels Updated',
+						value: 'inventory_levels/update',
+					},
+					{
+						name: 'Locale Created',
+						value: 'locales/create',
+					},
+					{
+						name: 'Locale Updated',
+						value: 'locales/update',
+					},
+					{
+						name: 'Location Created',
+						value: 'locations/create',
+					},
+					{
+						name: 'Location Deleted',
+						value: 'locations/delete',
+					},
+					{
+						name: 'Location Updated',
+						value: 'locations/update',
+					},
+					{
+						name: 'Order Cancelled',
+						value: 'orders/cancelled',
+					},
+					{
+						name: 'Order Created',
+						value: 'orders/create',
+					},
+					{
+						name: 'Order Fulfilled',
+						value: 'orders/fulfilled',
+					},
+					{
+						name: 'Order Paid',
+						value: 'orders/paid',
+					},
+					{
+						name: 'Order Partially Fulfilled',
+						value: 'orders/partially_fulfilled',
+					},
+					{
+						name: 'Order Transactions Created',
+						value: 'order_transactions/create',
+					},
+					{
+						name: 'Order Updated',
+						value: 'orders/updated',
+					},
+					{
+						name: 'Orders Deleted',
+						value: 'orders/delete',
+					},
+					{
+						name: 'Product Created',
+						value: 'products/create',
+					},
+					{
+						name: 'Product Deleted',
+						value: 'products/delete',
+					},
+					{
+						name: 'Product Listings Added',
+						value: 'product_listings/add',
+					},
+					{
+						name: 'Product Listings Removed',
+						value: 'product_listings/remove',
+					},
+					{
+						name: 'Product Listings Updated',
+						value: 'product_listings/update',
+					},
+					{
+						name: 'Product Updated',
+						value: 'products/update',
+					},
+					{
+						name: 'Refund Created',
+						value: 'refunds/create',
+					},
+					{
+						name: 'Shop Updated',
+						value: 'shop/update',
+					},
+					{
+						name: 'Tender Transactions Created',
+						value: 'tender_transactions/create',
+					},
+					{
+						name: 'Theme Created',
+						value: 'themes/create',
+					},
+					{
+						name: 'Theme Deleted',
+						value: 'themes/delete',
+					},
+					{
+						name: 'Theme Published',
+						value: 'themes/publish',
+					},
+					{
+						name: 'Theme Updated',
+						value: 'themes/update',
+					},
+				],
+			},
+		],
+	};
+
+	webhookMethods = {
+		default: {
+			async checkExists(this: IHookFunctions): Promise<boolean> {
+				const topic = this.getNodeParameter('topic') as string;
+				const webhookData = this.getWorkflowStaticData('node');
+				const webhookUrl = this.getNodeWebhookUrl('default');
+				const endpoint = '/webhooks';
+
+				const { webhooks } = await shopifyApiRequest.call(this, 'GET', endpoint, {}, { topic });
+				for (const webhook of webhooks) {
+					if (webhook.address === webhookUrl) {
+						webhookData.webhookId = webhook.id;
+						return true;
+					}
+				}
+				return false;
+			},
+			async create(this: IHookFunctions): Promise<boolean> {
+				const webhookUrl = this.getNodeWebhookUrl('default');
+				const topic = this.getNodeParameter('topic') as string;
+				const webhookData = this.getWorkflowStaticData('node');
+				const endpoint = '/webhooks.json';
+				const body = {
+					webhook: {
+						topic,
+						address: webhookUrl,
+						format: 'json',
+					},
+				};
+
+				const responseData = await shopifyApiRequest.call(this, 'POST', endpoint, body);
+
+				if (responseData.webhook === undefined || responseData.webhook.id === undefined) {
+					// Required data is missing so was not successful
+					return false;
+				}
+
+				webhookData.webhookId = responseData.webhook.id as string;
+				return true;
+			},
+			async delete(this: IHookFunctions): Promise<boolean> {
+				const webhookData = this.getWorkflowStaticData('node');
+				if (webhookData.webhookId !== undefined) {
+					const endpoint = `/webhooks/${webhookData.webhookId}.json`;
+					try {
+						await shopifyApiRequest.call(this, 'DELETE', endpoint, {});
+					} catch (error) {
+						return false;
+					}
+					delete webhookData.webhookId;
+				}
+				return true;
+			},
+		},
+	};
+
+	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
+		const headerData = this.getHeaderData() as IDataObject;
+		const req = this.getRequestObject();
+		const authentication = this.getNodeParameter('authentication') as string;
+		let secret = '';
+
+		if (authentication === 'apiKey') {
+			const credentials = await this.getCredentials('shopifyApi');
+			secret = credentials.sharedSecret as string;
+		}
+
+		if (authentication === 'accessToken') {
+			const credentials = await this.getCredentials('shopifyAccessTokenApi');
+			secret = credentials.appSecretKey as string;
+		}
+
+		if (authentication === 'oAuth2') {
+			const credentials = await this.getCredentials('shopifyOAuth2Api');
+			secret = credentials.clientSecret as string;
+		}
+
+		const topic = this.getNodeParameter('topic') as string;
+		if (
+			headerData['x-shopify-topic'] !== undefined &&
+			headerData['x-shopify-hmac-sha256'] !== undefined &&
+			headerData['x-shopify-shop-domain'] !== undefined &&
+			headerData['x-shopify-api-version'] !== undefined
+		) {
+			const computedSignature = createHmac('sha256', secret).update(req.rawBody).digest('base64');
+
+			if (headerData['x-shopify-hmac-sha256'] !== computedSignature) {
+				return {};
+			}
+			if (topic !== headerData['x-shopify-topic']) {
+				return {};
+			}
+		} else {
+			return {};
+		}
+		return {
+			workflowData: [this.helpers.returnJsonArray(req.body as IDataObject)],
+		};
+	}
+}

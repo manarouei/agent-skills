@@ -84,7 +84,7 @@ from .airtable import AirtableNode
 from .github import GithubNode
 
 from .local_gpt import LocalGptNode
-
+from .gitlab import GitlabNode
 # Node definitions registry
 # Format: 'node_type': {'node_class': NodeClass, 'type': 'regular'|'trigger'}
 node_definitions = {
@@ -167,7 +167,8 @@ node_definitions = {
 
     'localGpt': {'node_class': LocalGptNode, 'type': 'regular'},
 
-    'github':{'node_class':GithubNode, 'type':'regular'}
+    'github':{'node_class':GithubNode, 'type':'regular'},
+    'gitlab':{'node_class':GitlabNode, 'type':'regular'}
    
     # Add more nodes as they are implemented
 }

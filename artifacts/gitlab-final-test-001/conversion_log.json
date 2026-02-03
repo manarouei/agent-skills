@@ -1,0 +1,34 @@
+{
+  "correlation_id": "gitlab-final-test-001",
+  "node_name": "Gitlab",
+  "source_type": "TYPE1",
+  "operations_converted": 16,
+  "files_generated": [
+    "/home/toni/agent-skills/artifacts/gitlab-final-test-001/converted_node/gitlab.py",
+    "/home/toni/agent-skills/artifacts/gitlab-final-test-001/converted_node/__init__.py"
+  ],
+  "notes": [
+    "Selected Gitlab.node.ts as main node (name match + execute)",
+    "Found main node class for Gitlab",
+    "Found 16 operation handlers",
+    "Converted issue/create",
+    "Converted issue/createComment",
+    "Converted issue/edit",
+    "Converted issue/get",
+    "Converted issue/lock",
+    "Converted release/create",
+    "Converted release/delete",
+    "Converted release/get",
+    "Converted release/getAll",
+    "Converted release/update",
+    "Converted repository/get",
+    "Converted repository/getIssues",
+    "Converted user/getRepositories",
+    "Converted file/delete",
+    "Converted file/get",
+    "Converted file/list",
+    "Converted GenericFunctions.ts to Python helpers",
+    "Using 86 parameters from inferred schema"
+  ],
+  "generated_at": "2026-02-02T14:49:01.426043"
+}

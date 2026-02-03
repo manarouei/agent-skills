@@ -1,0 +1,14 @@
+{
+  "source-ingest:d37476bccc7a6039": {
+    "completed_at": "2026-02-02T09:21:43.329031",
+    "skill": "source-ingest"
+  },
+  "schema-infer:d37476bccc7a6039": {
+    "completed_at": "2026-02-02T09:21:43.817567",
+    "skill": "schema-infer"
+  },
+  "repo-ground:d37476bccc7a6039": {
+    "completed_at": "2026-02-02T09:21:43.822128",
+    "skill": "repo-ground"
+  }
+}

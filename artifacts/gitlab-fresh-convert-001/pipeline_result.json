@@ -1,0 +1,117 @@
+{
+  "pipeline_name": "type1-convert",
+  "correlation_id": "gitlab-fresh-convert-001",
+  "status": "failed",
+  "started_at": "2026-02-03T09:20:43.124101",
+  "completed_at": "2026-02-03T09:20:43.144095",
+  "duration_ms": 19,
+  "steps": [
+    {
+      "step_name": "ingest",
+      "skill_name": "source-ingest",
+      "status": "completed",
+      "started_at": "2026-02-03T09:20:43.124422",
+      "completed_at": "2026-02-03T09:20:43.130446",
+      "duration_ms": 5,
+      "outputs": {
+        "status": "failed",
+        "error": "validation_error",
+        "error_message": "Source directory not found: input_sources/Gitlab.node.ts"
+      },
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required output: raw_content",
+        "Missing required output: parsed_sections",
+        "Missing required output: metadata"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "infer-schema",
+      "skill_name": "schema-infer",
+      "status": "failed",
+      "started_at": "2026-02-03T09:20:43.130477",
+      "completed_at": "2026-02-03T09:20:43.144038",
+      "duration_ms": 13,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required input: parsed_sections",
+        "Input validation failed"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "ground",
+      "skill_name": "repo-ground",
+      "status": "skipped",
+      "started_at": "2026-02-03T09:20:43.144068",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "scaffold",
+      "skill_name": "node-scaffold",
+      "status": "skipped",
+      "started_at": "2026-02-03T09:20:43.144075",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "convert",
+      "skill_name": "code-convert",
+      "status": "skipped",
+      "started_at": "2026-02-03T09:20:43.144079",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "generate-tests",
+      "skill_name": "test-generate",
+      "status": "skipped",
+      "started_at": "2026-02-03T09:20:43.144084",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "validate",
+      "skill_name": "code-validate",
+      "status": "skipped",
+      "started_at": "2026-02-03T09:20:43.144088",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    }
+  ],
+  "outputs": {
+    "ingest": {
+      "status": "failed",
+      "error": "validation_error",
+      "error_message": "Source directory not found: input_sources/Gitlab.node.ts"
+    },
+    "infer-schema": {}
+  },
+  "artifacts_dir": "/home/toni/agent-skills/artifacts/gitlab-fresh-convert-001",
+  "errors": [
+    "Step 'infer-schema' failed"
+  ]
+}

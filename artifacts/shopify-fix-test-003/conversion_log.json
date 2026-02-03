@@ -1,0 +1,28 @@
+{
+  "correlation_id": "shopify-fix-test-003",
+  "node_name": "Shopify",
+  "source_type": "TYPE1",
+  "operations_converted": 10,
+  "files_generated": [
+    "/home/toni/agent-skills/artifacts/shopify-fix-test-003/converted_node/shopify.py",
+    "/home/toni/agent-skills/artifacts/shopify-fix-test-003/converted_node/__init__.py"
+  ],
+  "notes": [
+    "Selected Shopify.node.ts as main node (name match + execute)",
+    "Found main node class for Shopify",
+    "Found 10 operation handlers",
+    "Converted order/create",
+    "Converted order/delete",
+    "Converted order/get",
+    "Converted order/getAll",
+    "Converted order/update",
+    "Converted product/create",
+    "Converted product/delete",
+    "Converted product/get",
+    "Converted product/getAll",
+    "Converted product/update",
+    "Converted GenericFunctions.ts to Python helpers",
+    "Using 4 parameters from inferred schema"
+  ],
+  "generated_at": "2026-02-02T14:03:20.847415"
+}

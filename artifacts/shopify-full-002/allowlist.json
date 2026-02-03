@@ -1,0 +1,18 @@
+{
+  "node_name": "shopify-n8n",
+  "allowed_paths": [
+    "nodes/shopify_n8n*",
+    "nodes/shopify-n8n*",
+    "tests/*shopify_n8n*",
+    "tests/*shopify-n8n*",
+    "credentials/*shopify_n8n*",
+    "credentials/*shopify-n8n*"
+  ],
+  "forbidden_paths": [
+    "**/base.py",
+    "**/Base*.py",
+    "**/__init__.py"
+  ],
+  "generated_at": "2026-02-02T12:26:15.401528",
+  "correlation_id": "shopify-full-002"
+}

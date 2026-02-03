@@ -90,15 +90,24 @@ def match_glob(path: str, pattern: str) -> bool:
     """Simple glob matching for allowlist patterns."""
     import fnmatch
     
-    # Handle ** (recursive)
+    # Handle ** (recursive) - matches any path segment
     if "**" in pattern:
-        pattern = pattern.replace("**", "*")
-        # Match any path that starts with the prefix
-        prefix = pattern.split("*")[0]
-        if path.startswith(prefix):
-            suffix = pattern.split("*")[-1] if "*" in pattern else ""
-            if not suffix or path.endswith(suffix):
+        # Split pattern on **
+        parts = pattern.split("**/")
+        if len(parts) == 2 and parts[0] == "":
+            # Pattern like "**/Base*.py" - match the suffix against any path segment
+            suffix_pattern = parts[1]
+            # Check if basename matches the pattern after **
+            basename = path.split("/")[-1]
+            if fnmatch.fnmatch(basename, suffix_pattern):
                 return True
+            # Also check full path with single * for **
+            simplified = pattern.replace("**", "*")
+            if fnmatch.fnmatch(path, simplified):
+                return True
+            return False
+        # Other ** patterns - simplify to single *
+        pattern = pattern.replace("**", "*")
     
     return fnmatch.fnmatch(path, pattern)
 

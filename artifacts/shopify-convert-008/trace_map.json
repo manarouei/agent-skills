@@ -1,0 +1,112 @@
+{
+  "correlation_id": "shopify-convert-008",
+  "node_type": "shopify",
+  "trace_entries": [
+    {
+      "field_path": "operations[5].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'create' (display: 'Create') in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts",
+      "line_range": "L5",
+      "excerpt_hash": "b8260fedb0ea"
+    },
+    {
+      "field_path": "operations[6].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'delete' (display: 'Delete') in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts",
+      "line_range": "L5",
+      "excerpt_hash": "4145325a9924"
+    },
+    {
+      "field_path": "operations[7].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'get' (display: 'Get') in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts",
+      "line_range": "L5",
+      "excerpt_hash": "190a33fead69"
+    },
+    {
+      "field_path": "operations[8].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'getAll' (display: 'Get Many') in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts",
+      "line_range": "L5",
+      "excerpt_hash": "8f566c3e3149"
+    },
+    {
+      "field_path": "operations[9].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'update' (display: 'Update') in ProductDescription.ts",
+      "confidence": "high",
+      "source_file": "ProductDescription.ts",
+      "line_range": "L5",
+      "excerpt_hash": "a878589a54f4"
+    },
+    {
+      "field_path": "operations[5].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'getProducts' defined in Shopify.node.ts",
+      "confidence": "high",
+      "source_file": "Shopify.node.ts",
+      "line_range": "L120",
+      "excerpt_hash": "b24e6b6aa850"
+    },
+    {
+      "field_path": "operations[6].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'getLocations' defined in Shopify.node.ts",
+      "confidence": "high",
+      "source_file": "Shopify.node.ts",
+      "line_range": "L142",
+      "excerpt_hash": "acce9c4bbceb"
+    },
+    {
+      "field_path": "operations[7].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'checkExists' defined in ShopifyTrigger.node.ts",
+      "confidence": "high",
+      "source_file": "ShopifyTrigger.node.ts",
+      "line_range": "L335",
+      "excerpt_hash": "5be11dd57b5f"
+    },
+    {
+      "field_path": "operations[8].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'create' defined in ShopifyTrigger.node.ts",
+      "confidence": "high",
+      "source_file": "ShopifyTrigger.node.ts",
+      "line_range": "L350",
+      "excerpt_hash": "537a3dc6a4d7"
+    },
+    {
+      "field_path": "operations[9].name",
+      "source": "SOURCE_CODE",
+      "evidence": "Function 'webhook' defined in ShopifyTrigger.node.ts",
+      "confidence": "high",
+      "source_file": "ShopifyTrigger.node.ts",
+      "line_range": "L389",
+      "excerpt_hash": "d4d633bde3c3"
+    },
+    {
+      "field_path": "credentials[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Auth pattern 'api[_-]?key' found in source",
+      "confidence": "medium"
+    }
+  ],
+  "generated_at": "2026-02-02T10:16:05.894797",
+  "skill_version": "1.0.0",
+  "_hybrid_metadata": {
+    "source_type": "TYPE1",
+    "extraction_confidence": 0.7944444444444444,
+    "advisor_used": false,
+    "assumption_ratio": 0.0,
+    "deterministic_operations": 11,
+    "assumption_operations": 0
+  }
+}

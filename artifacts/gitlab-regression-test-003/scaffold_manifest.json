@@ -1,0 +1,18 @@
+{
+  "correlation_id": "gitlab-regression-test-003",
+  "node_name": "gitlab",
+  "class_name": "Gitlab",
+  "module_name": "gitlab",
+  "files_created": [
+    "/home/toni/agent-skills/artifacts/gitlab-regression-test-003/generated_node/gitlab.py",
+    "/home/toni/agent-skills/artifacts/gitlab-regression-test-003/generated_node/__init__.py"
+  ],
+  "generated_at": "2026-02-03T07:15:24.553026",
+  "schema_summary": {
+    "type": "Gitlab",
+    "version": 1,
+    "operation_count": 0,
+    "parameter_count": 81,
+    "credential_count": 0
+  }
+}

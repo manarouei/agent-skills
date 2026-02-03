@@ -1,0 +1,115 @@
+{
+  "pipeline_name": "type1-convert",
+  "correlation_id": "trace-split-001",
+  "status": "failed",
+  "started_at": "2026-02-02T13:26:00.861260",
+  "completed_at": "2026-02-02T13:26:00.870233",
+  "duration_ms": 8,
+  "steps": [
+    {
+      "step_name": "ingest",
+      "skill_name": "source-ingest",
+      "status": "completed",
+      "started_at": "2026-02-02T13:26:00.861356",
+      "completed_at": "2026-02-02T13:26:00.866281",
+      "duration_ms": 4,
+      "outputs": {
+        "skipped": true,
+        "reason": "idempotency"
+      },
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "infer-schema",
+      "skill_name": "schema-infer",
+      "status": "blocked",
+      "started_at": "2026-02-02T13:26:00.866295",
+      "completed_at": "2026-02-02T13:26:00.866322",
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required artifacts: ['source_bundle/']"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "ground",
+      "skill_name": "repo-ground",
+      "status": "failed",
+      "started_at": "2026-02-02T13:26:00.866333",
+      "completed_at": "2026-02-02T13:26:00.870189",
+      "duration_ms": 3,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required input: repo_root",
+        "Input validation failed"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "scaffold",
+      "skill_name": "node-scaffold",
+      "status": "skipped",
+      "started_at": "2026-02-02T13:26:00.870219",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "convert",
+      "skill_name": "code-convert",
+      "status": "skipped",
+      "started_at": "2026-02-02T13:26:00.870224",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "generate-tests",
+      "skill_name": "test-generate",
+      "status": "skipped",
+      "started_at": "2026-02-02T13:26:00.870228",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "validate",
+      "skill_name": "code-validate",
+      "status": "skipped",
+      "started_at": "2026-02-02T13:26:00.870230",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    }
+  ],
+  "outputs": {
+    "ingest": {
+      "skipped": true,
+      "reason": "idempotency"
+    },
+    "infer-schema": {},
+    "ground": {}
+  },
+  "artifacts_dir": "artifacts/trace-split-001",
+  "errors": [
+    "Step 'infer-schema' blocked by gate",
+    "Step 'ground' failed"
+  ]
+}

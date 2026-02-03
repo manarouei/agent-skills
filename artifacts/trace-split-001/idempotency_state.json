@@ -1,0 +1,10 @@
+{
+  "source-ingest:cdee8024f0769445": {
+    "completed_at": "2026-02-02T13:25:43.492026",
+    "skill": "source-ingest"
+  },
+  "repo-ground:cdee8024f0769445": {
+    "completed_at": "2026-02-02T13:26:00.870020",
+    "skill": "repo-ground"
+  }
+}

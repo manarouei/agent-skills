@@ -1,0 +1,169 @@
+{
+  "type": "shopify",
+  "version": 1,
+  "description": {
+    "displayName": "Shopify",
+    "name": "shopify",
+    "inputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ]
+  },
+  "properties": {
+    "parameters": [
+      {
+        "name": "operation",
+        "type": "OPTIONS",
+        "display_name": "Operation",
+        "options": [
+          {
+            "name": "Create",
+            "value": "create",
+            "description": "Create a product"
+          },
+          {
+            "name": "Delete",
+            "value": "delete",
+            "description": "Delete a product"
+          },
+          {
+            "name": "Get",
+            "value": "get",
+            "description": "Get a product"
+          },
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "description": "Get many products"
+          },
+          {
+            "name": "Update",
+            "value": "update",
+            "description": "Update a product"
+          },
+          {
+            "name": "getProducts",
+            "value": "getProducts",
+            "description": "Operation: getProducts"
+          },
+          {
+            "name": "getLocations",
+            "value": "getLocations",
+            "description": "Operation: getLocations"
+          },
+          {
+            "name": "checkExists",
+            "value": "checkExists",
+            "description": "Operation: checkExists"
+          },
+          {
+            "name": "create",
+            "value": "create",
+            "description": "Operation: create"
+          },
+          {
+            "name": "webhook",
+            "value": "webhook",
+            "description": "Operation: webhook"
+          }
+        ],
+        "default": "create",
+        "description": "Operation to perform"
+      },
+      {
+        "name": "apiVersion",
+        "display_name": "Shopify API Version: 2024-07",
+        "type": "OPTIONS",
+        "default": ""
+      },
+      {
+        "name": "OAuth2",
+        "display_name": "Access Token",
+        "type": "OPTIONS"
+      },
+      {
+        "name": "authentication",
+        "display_name": "Authentication",
+        "type": "OPTIONS",
+        "default": "apiKey",
+        "options": [
+          {
+            "name": "Access Token",
+            "value": "accessToken"
+          },
+          {
+            "name": "OAuth2",
+            "value": "oAuth2"
+          },
+          {
+            "name": "API Key",
+            "value": "apiKey"
+          }
+        ]
+      },
+      {
+        "name": "OAuth2",
+        "display_name": "Access Token",
+        "type": "OPTIONS"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "name": "create",
+      "display_name": "Create",
+      "description": "Create a product"
+    },
+    {
+      "name": "delete",
+      "display_name": "Delete",
+      "description": "Delete a product"
+    },
+    {
+      "name": "get",
+      "display_name": "Get",
+      "description": "Get a product"
+    },
+    {
+      "name": "getAll",
+      "display_name": "Get Many",
+      "description": "Get many products"
+    },
+    {
+      "name": "update",
+      "display_name": "Update",
+      "description": "Update a product"
+    },
+    {
+      "name": "getProducts",
+      "description": "Operation: getProducts"
+    },
+    {
+      "name": "getLocations",
+      "description": "Operation: getLocations"
+    },
+    {
+      "name": "checkExists",
+      "description": "Operation: checkExists"
+    },
+    {
+      "name": "create",
+      "description": "Operation: create"
+    },
+    {
+      "name": "webhook",
+      "description": "Operation: webhook"
+    }
+  ],
+  "credentials": [
+    "apiKey"
+  ]
+}

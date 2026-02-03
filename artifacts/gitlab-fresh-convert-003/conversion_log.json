@@ -1,0 +1,35 @@
+{
+  "correlation_id": "gitlab-fresh-convert-003",
+  "node_name": "Gitlab",
+  "source_type": "TYPE1",
+  "operations_converted": 16,
+  "files_generated": [
+    "/home/toni/agent-skills/artifacts/gitlab-fresh-convert-003/converted_node/gitlab.py",
+    "/home/toni/agent-skills/artifacts/gitlab-fresh-convert-003/converted_node/__init__.py"
+  ],
+  "notes": [
+    "Selected Gitlab.node.ts as main node (name match + execute)",
+    "Found main node class for Gitlab",
+    "GOLDEN: No golden implementation provided, using TS extraction",
+    "Found 16 operation handlers from TS",
+    "TS: Converted issue_create",
+    "TS: Converted issue_createComment",
+    "TS: Converted issue_edit",
+    "TS: Converted issue_get",
+    "TS: Converted issue_lock",
+    "TS: Converted release_create",
+    "TS: Converted release_delete",
+    "TS: Converted release_get",
+    "TS: Converted release_getAll",
+    "TS: Converted release_update",
+    "TS: Converted repository_get",
+    "TS: Converted repository_getIssues",
+    "TS: Converted user_getRepositories",
+    "TS: Converted file_delete",
+    "TS: Converted file_get",
+    "TS: Converted file_list",
+    "Converted GenericFunctions.ts to Python helpers",
+    "Using 81 parameters from inferred schema"
+  ],
+  "generated_at": "2026-02-03T09:30:04.619182"
+}

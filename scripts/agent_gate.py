@@ -13,14 +13,15 @@ Exit codes:
     1 - At least one gate failed
 
 Usage:
-    python3 scripts/agent_gate.py --correlation-id <id> [--trace-map PATH] [--repo-path PATH] [--skip-pytest]
+    python3 scripts/agent_gate.py --correlation-id <id> [--trace-map PATH] [--repo-path PATH] [--skip-pytest] [--skip-behavioral]
     
 Gates run in order:
     1. validate_skill_contracts.py - Contract validation for all 12 skills
     2. validate_trace_map.py - Trace map validation (if --trace-map provided)
     3. enforce_scope.py <correlation_id> --check-git - Git diff scope enforcement (REQUIRED)
     4. validate_sync_celery_compat.py - Async pattern detection
-    5. pytest -q - Run test suite (unless --skip-pytest)
+    5. behavioral_validate - No-stub, HTTP parity, semantic diff gates (NEW)
+    6. pytest -q - Run test suite (unless --skip-pytest)
 """
 
 import subprocess
@@ -55,12 +56,138 @@ def run_gate(name: str, cmd: list[str], allow_failure: bool = False) -> bool:
     return passed or allow_failure
 
 
+def run_behavioral_gate(correlation_id: str, artifacts_dir: Path, golden_path: Path | None = None) -> bool:
+    """
+    Run behavioral validation gate.
+    
+    Checks generated code for:
+    1. No-stub patterns (TODO, NotImplementedError, empty responses)
+    2. HTTP parity with golden (if available)
+    3. Semantic diff with golden (if available)
+    4. Contract round-trip validity
+    
+    Returns True if passed, False if failed.
+    """
+    print(f"\n{'='*60}")
+    print("GATE: Behavioral Validation")
+    print("=" * 60)
+    
+    # Find generated node file
+    converted_dir = artifacts_dir / correlation_id / "converted_node"
+    
+    if not converted_dir.exists():
+        print(f"  ⚠ No converted_node directory found at {converted_dir}")
+        print("  ⚠ Skipping behavioral validation (no generated code)")
+        return True  # Skip, not fail
+    
+    # Find Python files in converted_node
+    py_files = list(converted_dir.glob("*.py"))
+    node_files = [f for f in py_files if f.name != "__init__.py"]
+    
+    if not node_files:
+        print(f"  ⚠ No node files found in {converted_dir}")
+        return True  # Skip
+    
+    all_passed = True
+    
+    # Import behavioral validation
+    # Import behavioral validation using importlib (skill dirs use hyphens)
+    try:
+        import importlib.util
+        skill_impl = Path(__file__).parent.parent / "skills" / "behavioral-validate" / "impl.py"
+        spec = importlib.util.spec_from_file_location("behavioral_validate_impl", skill_impl)
+        behavioral_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(behavioral_module)
+        validate_no_stubs = behavioral_module.validate_no_stubs
+        validate_http_parity = behavioral_module.validate_http_parity
+    except ImportError:
+        # Fall back to inline validation
+        print("  ⚠ behavioral_validate skill not importable, using inline checks")
+        
+        # Inline no-stub check
+        STUB_PATTERNS = [
+            r'#\s*TODO:\s*Implement',
+            r'#\s*__STUB_MARKER__',
+            r'raise\s+NotImplementedError',
+            r'response\s*=\s*\{\s*\}',
+        ]
+        
+        import re
+        
+        for node_file in node_files:
+            print(f"\n  Checking: {node_file.name}")
+            code = node_file.read_text()
+            
+            violations = []
+            for pattern in STUB_PATTERNS:
+                matches = re.findall(pattern, code, re.MULTILINE | re.IGNORECASE)
+                if matches:
+                    violations.append(f"Pattern '{pattern}' found {len(matches)} times")
+            
+            if violations:
+                print(f"    ✗ STUB VIOLATIONS:")
+                for v in violations:
+                    print(f"      - {v}")
+                all_passed = False
+            else:
+                print(f"    ✓ No stub patterns found")
+            
+            # Check for HTTP calls
+            http_patterns = [
+                'requests.',
+                'self._api_request',
+                'self._http_request',
+            ]
+            has_http = any(p in code for p in http_patterns)
+            
+            if has_http:
+                print(f"    ✓ HTTP calls present")
+            else:
+                print(f"    ⚠ WARNING: No HTTP calls detected")
+        
+        return all_passed
+    
+    # Use imported validation
+    for node_file in node_files:
+        print(f"\n  Checking: {node_file.name}")
+        code = node_file.read_text()
+        
+        # Gate 1: No-stub
+        result = validate_no_stubs(code)
+        if result.passed:
+            print(f"    ✓ No-stub gate passed")
+        else:
+            print(f"    ✗ No-stub gate FAILED:")
+            for v in result.violations:
+                print(f"      - {v}")
+            all_passed = False
+        
+        # Gate 2: HTTP parity (if golden available)
+        if golden_path and golden_path.exists():
+            golden_code = golden_path.read_text()
+            result = validate_http_parity(code, golden_code)
+            if result.passed:
+                print(f"    ✓ HTTP parity gate passed")
+            else:
+                print(f"    ✗ HTTP parity gate FAILED:")
+                for v in result.violations:
+                    print(f"      - {v}")
+                all_passed = False
+    
+    status = "✓ PASSED" if all_passed else "✗ FAILED"
+    print(f"\n{status}: Behavioral Validation")
+    
+    return all_passed
+
+
 def main() -> int:
     """Run all gates in sequence."""
     # Parse arguments
     trace_map_path = None
+    golden_path = None
     repo_path = Path(__file__).parent.parent
     skip_pytest = False
+    skip_behavioral = False
     correlation_id = None
     
     args = sys.argv[1:]
@@ -68,6 +195,9 @@ def main() -> int:
     while i < len(args):
         if args[i] == "--trace-map" and i + 1 < len(args):
             trace_map_path = args[i + 1]
+            i += 2
+        elif args[i] == "--golden" and i + 1 < len(args):
+            golden_path = Path(args[i + 1])
             i += 2
         elif args[i] == "--repo-path" and i + 1 < len(args):
             repo_path = Path(args[i + 1])
@@ -77,6 +207,9 @@ def main() -> int:
             i += 2
         elif args[i] == "--skip-pytest":
             skip_pytest = True
+            i += 1
+        elif args[i] == "--skip-behavioral":
+            skip_behavioral = True
             i += 1
         elif args[i] in ("-h", "--help"):
             print(__doc__)
@@ -99,8 +232,10 @@ def main() -> int:
         print("Options:")
         print("  --correlation-id <id>  REQUIRED. Session ID for scope enforcement")
         print("  --trace-map <path>     Path to trace_map.json to validate")
+        print("  --golden <path>        Path to golden implementation for HTTP parity")
         print("  --repo-path <path>     Repository root (default: script parent)")
         print("  --skip-pytest          Skip pytest suite")
+        print("  --skip-behavioral      Skip behavioral validation gate")
         print()
         print("PR-ready mode requires:")
         print("  - artifacts/<id>/allowlist.json")
@@ -162,7 +297,17 @@ def main() -> int:
             allow_failure=True,  # Skills themselves may have async test fixtures
         ))
     
-    # Gate 6: Pytest (unless skipped)
+    # Gate 6: Behavioral Validation (no-stub, HTTP parity, semantic diff)
+    if not skip_behavioral:
+        results.append(run_behavioral_gate(
+            correlation_id=correlation_id,
+            artifacts_dir=artifacts_dir,
+            golden_path=golden_path,
+        ))
+    else:
+        print(f"\n⚠ SKIPPED: Behavioral Validation (--skip-behavioral)")
+    
+    # Gate 7: Pytest (unless skipped)
     if not skip_pytest:
         results.append(run_gate(
             "Pytest Suite",

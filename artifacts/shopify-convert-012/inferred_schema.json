@@ -1,0 +1,327 @@
+{
+  "type": "Shopify",
+  "version": 1,
+  "description": {
+    "displayName": "Shopify",
+    "name": "shopify",
+    "inputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ]
+  },
+  "properties": {
+    "parameters": [
+      {
+        "name": "authentication",
+        "type": "OPTIONS",
+        "display_name": "Authentication",
+        "options": [
+          {
+            "name": "Shopifyapi",
+            "value": "shopifyApi"
+          },
+          {
+            "name": "Shopifyaccesstokenapi",
+            "value": "shopifyAccessTokenApi"
+          },
+          {
+            "name": "Shopifyoauth2api",
+            "value": "shopifyOAuth2Api"
+          }
+        ],
+        "default": "shopifyApi",
+        "description": "Authentication method to use"
+      },
+      {
+        "name": "resource",
+        "type": "OPTIONS",
+        "display_name": "Resource",
+        "options": [
+          {
+            "name": "Order",
+            "value": "order"
+          },
+          {
+            "name": "Product",
+            "value": "product"
+          }
+        ],
+        "default": "order",
+        "description": "The resource to operate on"
+      },
+      {
+        "name": "operation",
+        "type": "OPTIONS",
+        "display_name": "Operation",
+        "options": [
+          {
+            "name": "Create",
+            "value": "create",
+            "description": "Create a product"
+          },
+          {
+            "name": "Delete",
+            "value": "delete",
+            "description": "Delete a product"
+          },
+          {
+            "name": "Get",
+            "value": "get",
+            "description": "Get a product"
+          },
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "description": "Get many products"
+          },
+          {
+            "name": "Update",
+            "value": "update",
+            "description": "Update a product"
+          }
+        ],
+        "default": "create",
+        "description": "Operation to perform on product",
+        "display_options": {
+          "show": {
+            "resource": [
+              "product"
+            ]
+          }
+        }
+      },
+      {
+        "name": "operation",
+        "type": "OPTIONS",
+        "display_name": "Operation",
+        "options": [
+          {
+            "name": "Create",
+            "value": "create",
+            "description": "Create an order"
+          },
+          {
+            "name": "Delete",
+            "value": "delete",
+            "description": "Delete an order"
+          },
+          {
+            "name": "Get",
+            "value": "get",
+            "description": "Get an order"
+          },
+          {
+            "name": "Get Many",
+            "value": "getAll",
+            "description": "Get many orders"
+          },
+          {
+            "name": "Update",
+            "value": "update",
+            "description": "Update an order"
+          }
+        ],
+        "default": "create",
+        "description": "Operation to perform on order",
+        "display_options": {
+          "show": {
+            "resource": [
+              "order"
+            ]
+          }
+        }
+      },
+      {
+        "name": "apiVersion",
+        "display_name": "Shopify API Version: 2024-07",
+        "type": "OPTIONS",
+        "default": ""
+      },
+      {
+        "name": "OAuth2",
+        "display_name": "Access Token",
+        "type": "OPTIONS"
+      },
+      {
+        "name": "OAuth2",
+        "display_name": "Access Token",
+        "type": "OPTIONS"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "name": "create",
+      "display_name": "Create",
+      "description": "Create an order",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "delete",
+      "display_name": "Delete",
+      "description": "Delete an order",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "get",
+      "display_name": "Get",
+      "description": "Get an order",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "getAll",
+      "display_name": "Get Many",
+      "description": "Get many orders",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "update",
+      "display_name": "Update",
+      "description": "Update an order",
+      "resource": "order",
+      "display_options": {
+        "show": {
+          "resource": [
+            "order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "create",
+      "display_name": "Create",
+      "description": "Create a product",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    },
+    {
+      "name": "delete",
+      "display_name": "Delete",
+      "description": "Delete a product",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    },
+    {
+      "name": "get",
+      "display_name": "Get",
+      "description": "Get a product",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    },
+    {
+      "name": "getAll",
+      "display_name": "Get Many",
+      "description": "Get many products",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    },
+    {
+      "name": "update",
+      "display_name": "Update",
+      "description": "Update a product",
+      "resource": "product",
+      "display_options": {
+        "show": {
+          "resource": [
+            "product"
+          ]
+        }
+      }
+    }
+  ],
+  "credentials": [
+    {
+      "name": "shopifyApi",
+      "required": true,
+      "display_options": {
+        "show": {
+          "authentication": [
+            "shopifyApi"
+          ]
+        }
+      }
+    },
+    {
+      "name": "shopifyAccessTokenApi",
+      "required": true,
+      "display_options": {
+        "show": {
+          "authentication": [
+            "shopifyAccessTokenApi"
+          ]
+        }
+      }
+    },
+    {
+      "name": "shopifyOAuth2Api",
+      "required": true,
+      "display_options": {
+        "show": {
+          "authentication": [
+            "shopifyOAuth2Api"
+          ]
+        }
+      }
+    }
+  ]
+}

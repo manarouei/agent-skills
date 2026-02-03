@@ -1,0 +1,430 @@
+{
+  "correlation_id": "shopify-fix-test-003",
+  "node_type": null,
+  "skill_name": "code-convert",
+  "created_at": "2026-02-02T14:03:20.854903",
+  "generated_code": {
+    "shopify.py": "#!/usr/bin/env python3\n\"\"\"\nShopify Node\n\nConverted from TypeScript by agent-skills/code-convert\nCorrelation ID: shopify-fix-test-003\nGenerated: 2026-02-02T14:03:20.843283\n\nSYNC-CELERY SAFE: All methods are synchronous with timeouts.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport logging\nfrom typing import Any, Dict, List\n\nimport requests\n\nfrom .base import BaseNode, NodeParameter, NodeParameterType, NodeExecutionData\n\nlogger = logging.getLogger(__name__)\n\n\nclass ShopifyNode(BaseNode):\n    \"\"\"\n    Shopify node.\n    \n    \n    \"\"\"\n\n    node_type = \"shopify\"\n    node_version = 1\n    display_name = \"Shopify\"\n    description = \"\"\n    icon = \"file:shopify.svg\"\n    group = ['output']\n    \n    credentials = [\n        {\n            \"name\": \"shopifyApi\",\n            \"required\": True,\n        }\n    ]\n\n    properties = [\n            {\"name\": \"authentication\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Authentication\", \"options\": [\n                {\"name\": \"Shopifyapi\", \"value\": \"shopifyApi\"},\n                {\"name\": \"Shopifyaccesstokenapi\", \"value\": \"shopifyAccessTokenApi\"},\n                {\"name\": \"Shopifyoauth2api\", \"value\": \"shopifyOAuth2Api\"}\n            ], \"default\": \"shopifyApi\", \"description\": \"Authentication method to use\"},\n            {\"name\": \"resource\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Resource\", \"options\": [\n                {\"name\": \"Order\", \"value\": \"order\"},\n                {\"name\": \"Product\", \"value\": \"product\"}\n            ], \"default\": \"order\", \"description\": \"The resource to operate on\"},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Create\", \"value\": \"create\", \"description\": \"Create a product\"},\n                {\"name\": \"Delete\", \"value\": \"delete\", \"description\": \"Delete a product\"},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get a product\"},\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Get many products\"},\n                {\"name\": \"Update\", \"value\": \"update\", \"description\": \"Update a product\"}\n            ], \"default\": \"create\", \"description\": \"Operation to perform on product\", \"display_options\": {'show': {'resource': ['product']}}},\n            {\"name\": \"operation\", \"type\": NodeParameterType.OPTIONS, \"display_name\": \"Operation\", \"options\": [\n                {\"name\": \"Create\", \"value\": \"create\", \"description\": \"Create an order\"},\n                {\"name\": \"Delete\", \"value\": \"delete\", \"description\": \"Delete an order\"},\n                {\"name\": \"Get\", \"value\": \"get\", \"description\": \"Get an order\"},\n                {\"name\": \"Get Many\", \"value\": \"getAll\", \"description\": \"Get many orders\"},\n                {\"name\": \"Update\", \"value\": \"update\", \"description\": \"Update an order\"}\n            ], \"default\": \"create\", \"description\": \"Operation to perform on order\", \"display_options\": {'show': {'resource': ['order']}}}\n        ]\n\n    def execute(self) -> List[List[NodeExecutionData]]:\n        \"\"\"\n        Execute the node operations.\n        \n        SYNC-CELERY SAFE: All HTTP calls use timeout parameter.\n        \n        Returns:\n            List[List[NodeExecutionData]]: Nested list where outer list is output branches,\n            inner list is items in that branch.\n        \"\"\"\n        # Get input data from previous node\n        input_data = self.get_input_data()\n        \n        # Handle empty input\n        if not input_data:\n            return [[]]\n        \n        return_items: List[NodeExecutionData] = []\n\n        for i, item in enumerate(input_data):\n            try:\n                resource = self.get_node_parameter(\"resource\", i)\n                operation = self.get_node_parameter(\"operation\", i)\n                item_data = item.json_data if hasattr(item, 'json_data') else item.get('json', {})\n                \n                if resource == \"order\" and operation == \"create\":\n                    result = self._order_create(i, item_data)\n                elif resource == \"order\" and operation == \"delete\":\n                    result = self._order_delete(i, item_data)\n                elif resource == \"order\" and operation == \"get\":\n                    result = self._order_get(i, item_data)\n                elif resource == \"order\" and operation == \"getAll\":\n                    result = self._order_getAll(i, item_data)\n                elif resource == \"order\" and operation == \"update\":\n                    result = self._order_update(i, item_data)\n                elif resource == \"product\" and operation == \"create\":\n                    result = self._product_create(i, item_data)\n                elif resource == \"product\" and operation == \"delete\":\n                    result = self._product_delete(i, item_data)\n                elif resource == \"product\" and operation == \"get\":\n                    result = self._product_get(i, item_data)\n                elif resource == \"product\" and operation == \"getAll\":\n                    result = self._product_getAll(i, item_data)\n                elif resource == \"product\" and operation == \"update\":\n                    result = self._product_update(i, item_data)\n                else:\n                    raise ValueError(f\"Unknown resource/operation: {resource}/{operation}\")\n                \n                # Handle array results\n                if isinstance(result, list):\n                    for r in result:\n                        return_items.append(NodeExecutionData(json_data=r))\n                else:\n                    return_items.append(NodeExecutionData(json_data=result))\n                \n            except Exception:\n                logger.error(f\"Error in {resource}/{operation}: {e}\")\n                if self.continue_on_fail:\n                    return_items.append(NodeExecutionData(json_data={\"error\": str(e)}))\n                else:\n                    raise\n        \n        return [return_items]\n\n    def _api_request(\n        self,\n        method: str,\n        endpoint: str,\n        body: Dict[str, Any] | None = None,\n        query: Dict[str, Any] | None = None,\n    ) -> Dict[str, Any]:\n        \"\"\"\n        Make authenticated API request.\n        \n        SYNC-CELERY SAFE: Uses requests with timeout.\n        \"\"\"\n        credentials = self.get_credentials(\"shopifyApi\")\n        \n        # TODO: Configure authentication based on credential type\n        query = query or {}\n        # For API key auth: query[\"api_key\"] = credentials.get(\"apiKey\")\n        # For Bearer auth: headers[\"Authorization\"] = f\"Bearer {credentials.get('accessToken')}\"\n        \n        url = f\"https://api.example.com{endpoint}\"\n        \n        response = requests.request(\n            method,\n            url,\n            params=query,\n            json=body,\n            timeout=30,  # REQUIRED for Celery\n        )\n        response.raise_for_status()\n        return response.json()\n\n    def _order_create(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Order Create operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        additional_fields = self.get_node_parameter('additionalFields', item_index)\n        \n        # Build request body\n        body = {'test': True, 'line_items': keys_to_snake_case, 'fulfillment_status': additional_fields.get('fulfillmentStatus'), 'inventory_behaviour': additional_fields.get('inventoryBehaviour'), 'location_id': additional_fields.get('locationId'), 'note': additional_fields.get('note'), 'send_fulfillment_receipt': additional_fields.get('sendFulfillmentReceipt'), 'send_receipt': additional_fields.get('sendReceipt'), 'send_receipt': additional_fields.get('sendReceipt'), 'source_name': additional_fields.get('sourceName'), 'tags': additional_fields.get('tags'), 'test': additional_fields.get('test'), 'email': additional_fields.get('email'), 'discount_codes': discount_discount_codes_values, 'billing_address': keys_to_snake_case(\n\t\t\t\t\t\t\t\tbilling_billing_address_values,\n\t\t\t\t\t\t\t)[0], 'shipping_address': keys_to_snake_case(\n\t\t\t\t\t\t\t\tshipping_shipping_address_values,\n\t\t\t\t\t\t\t)[0]}\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _order_delete(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Order Delete operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        order_id = self.get_node_parameter('orderId', item_index)\n        \n        # Make API request\n        response = self._api_request('DELETE', '/orders/${orderId}.json', body=None, query=None)\n        response = response.get('data', response)\n        \n        return response\n\n    def _order_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Order Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        order_id = self.get_node_parameter('orderId', item_index)\n        options = self.get_node_parameter('options', item_index)\n        \n        # Build query parameters\n        query = {}\n        query['fields'] = options.get('fields')\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _order_getAll(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Order Getall operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        return_all = self.get_node_parameter('returnAll', item_index)\n        options = self.get_node_parameter('options', item_index)\n        limit = self.get_node_parameter('limit', item_index)\n        \n        # Build query parameters\n        query = {}\n        query['fields'] = options.get('fields')\n        query['attribution_app_id'] = options.get('attributionAppId')\n        query['created_at_min'] = options.get('createdAtMin')\n        query['created_at_max'] = options.get('createdAtMax')\n        query['updated_at_max'] = options.get('updatedAtMax')\n        query['updated_at_min'] = options.get('updatedAtMin')\n        query['processed_at_min'] = options.get('processedAtMin')\n        query['processed_at_max'] = options.get('processedAtMax')\n        query['since_id'] = options.get('sinceId')\n        query['ids'] = options.get('ids')\n        query['status'] = options.get('status')\n        query['financial_status'] = options.get('financialStatus')\n        query['fulfillment_status'] = options.get('fulfillmentStatus')\n        query['limit'] = this_get_node_parameter('limit', i)\n        \n        # Make API request\n        response = self._api_request('GET', '/orders.json', body=None, query=query)\n        response = response.get('data', response)\n        \n        return response\n\n    def _order_update(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Order Update operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        order_id = self.get_node_parameter('orderId', item_index)\n        update_fields = self.get_node_parameter('updateFields', item_index)\n        \n        # Build request body\n        body = {'location_id': update_fields.get('locationId'), 'note': update_fields.get('note'), 'source_name': update_fields.get('sourceName'), 'tags': update_fields.get('tags'), 'email': update_fields.get('email'), 'shipping_address': keys_to_snake_case(\n\t\t\t\t\t\t\t\tshipping_shipping_address_values,\n\t\t\t\t\t\t\t)[0]}\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _product_create(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Product Create operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        title = self.get_node_parameter('title', item_index)\n        additional_fields = self.get_node_parameter('additionalFields', item_index)\n        \n        # Build request body\n        body = {'title': title}\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _product_delete(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Product Delete operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _product_get(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Product Get operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        additional_fields = self.get_node_parameter('additionalFields', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n    def _product_getAll(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Product Getall operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        additional_fields = self.get_node_parameter('additionalFields', item_index)\n        return_all = self.get_node_parameter('returnAll', item_index)\n        limit = self.get_node_parameter('limit', item_index)\n        \n        # Build query parameters\n        query = {}\n        query['limit'] = this_get_node_parameter('limit', i)\n        \n        # Make API request\n        response = self._api_request('GET', '/products.json', body=None, query=query)\n        response = response.get('data', response)\n        \n        return response\n\n    def _product_update(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"\n        Product Update operation.\n        \n        Args:\n            item_index: Index of the current item being processed\n            item_data: JSON data from the input item\n            \n        Returns:\n            Dict with operation result\n        \"\"\"\n        update_fields = self.get_node_parameter('updateFields', item_index)\n        \n        # TODO: Implement API call\n        response = {}\n        \n        return response\n\n",
+    "__init__.py": "\"\"\"\nShopify Node Package\nConverted from TypeScript by agent-skills/code-convert\n\"\"\"\n\nfrom .shopify import ShopifyNode\n\n__all__ = [\"ShopifyNode\"]\n"
+  },
+  "node_schema": {
+    "type": "Shopify",
+    "version": 1,
+    "description": {
+      "displayName": "Shopify",
+      "name": "shopify",
+      "inputs": [
+        {
+          "name": "main",
+          "type": "main"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "main",
+          "type": "main"
+        }
+      ]
+    },
+    "properties": {
+      "parameters": [
+        {
+          "name": "authentication",
+          "type": "OPTIONS",
+          "display_name": "Authentication",
+          "options": [
+            {
+              "name": "Shopifyapi",
+              "value": "shopifyApi"
+            },
+            {
+              "name": "Shopifyaccesstokenapi",
+              "value": "shopifyAccessTokenApi"
+            },
+            {
+              "name": "Shopifyoauth2api",
+              "value": "shopifyOAuth2Api"
+            }
+          ],
+          "default": "shopifyApi",
+          "description": "Authentication method to use"
+        },
+        {
+          "name": "resource",
+          "type": "OPTIONS",
+          "display_name": "Resource",
+          "options": [
+            {
+              "name": "Order",
+              "value": "order"
+            },
+            {
+              "name": "Product",
+              "value": "product"
+            }
+          ],
+          "default": "order",
+          "description": "The resource to operate on"
+        },
+        {
+          "name": "operation",
+          "type": "OPTIONS",
+          "display_name": "Operation",
+          "options": [
+            {
+              "name": "Create",
+              "value": "create",
+              "description": "Create a product"
+            },
+            {
+              "name": "Delete",
+              "value": "delete",
+              "description": "Delete a product"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get a product"
+            },
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Get many products"
+            },
+            {
+              "name": "Update",
+              "value": "update",
+              "description": "Update a product"
+            }
+          ],
+          "default": "create",
+          "description": "Operation to perform on product",
+          "display_options": {
+            "show": {
+              "resource": [
+                "product"
+              ]
+            }
+          }
+        },
+        {
+          "name": "operation",
+          "type": "OPTIONS",
+          "display_name": "Operation",
+          "options": [
+            {
+              "name": "Create",
+              "value": "create",
+              "description": "Create an order"
+            },
+            {
+              "name": "Delete",
+              "value": "delete",
+              "description": "Delete an order"
+            },
+            {
+              "name": "Get",
+              "value": "get",
+              "description": "Get an order"
+            },
+            {
+              "name": "Get Many",
+              "value": "getAll",
+              "description": "Get many orders"
+            },
+            {
+              "name": "Update",
+              "value": "update",
+              "description": "Update an order"
+            }
+          ],
+          "default": "create",
+          "description": "Operation to perform on order",
+          "display_options": {
+            "show": {
+              "resource": [
+                "order"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "operations": [
+      {
+        "name": "create",
+        "display_name": "Create",
+        "description": "Create an order",
+        "resource": "order",
+        "display_options": {
+          "show": {
+            "resource": [
+              "order"
+            ]
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "display_name": "Delete",
+        "description": "Delete an order",
+        "resource": "order",
+        "display_options": {
+          "show": {
+            "resource": [
+              "order"
+            ]
+          }
+        }
+      },
+      {
+        "name": "get",
+        "display_name": "Get",
+        "description": "Get an order",
+        "resource": "order",
+        "display_options": {
+          "show": {
+            "resource": [
+              "order"
+            ]
+          }
+        }
+      },
+      {
+        "name": "getAll",
+        "display_name": "Get Many",
+        "description": "Get many orders",
+        "resource": "order",
+        "display_options": {
+          "show": {
+            "resource": [
+              "order"
+            ]
+          }
+        }
+      },
+      {
+        "name": "update",
+        "display_name": "Update",
+        "description": "Update an order",
+        "resource": "order",
+        "display_options": {
+          "show": {
+            "resource": [
+              "order"
+            ]
+          }
+        }
+      },
+      {
+        "name": "create",
+        "display_name": "Create",
+        "description": "Create a product",
+        "resource": "product",
+        "display_options": {
+          "show": {
+            "resource": [
+              "product"
+            ]
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "display_name": "Delete",
+        "description": "Delete a product",
+        "resource": "product",
+        "display_options": {
+          "show": {
+            "resource": [
+              "product"
+            ]
+          }
+        }
+      },
+      {
+        "name": "get",
+        "display_name": "Get",
+        "description": "Get a product",
+        "resource": "product",
+        "display_options": {
+          "show": {
+            "resource": [
+              "product"
+            ]
+          }
+        }
+      },
+      {
+        "name": "getAll",
+        "display_name": "Get Many",
+        "description": "Get many products",
+        "resource": "product",
+        "display_options": {
+          "show": {
+            "resource": [
+              "product"
+            ]
+          }
+        }
+      },
+      {
+        "name": "update",
+        "display_name": "Update",
+        "description": "Update a product",
+        "resource": "product",
+        "display_options": {
+          "show": {
+            "resource": [
+              "product"
+            ]
+          }
+        }
+      }
+    ],
+    "credentials": [
+      {
+        "name": "shopifyApi",
+        "required": true,
+        "display_options": {
+          "show": {
+            "authentication": [
+              "shopifyApi"
+            ]
+          }
+        }
+      },
+      {
+        "name": "shopifyAccessTokenApi",
+        "required": true,
+        "display_options": {
+          "show": {
+            "authentication": [
+              "shopifyAccessTokenApi"
+            ]
+          }
+        }
+      },
+      {
+        "name": "shopifyOAuth2Api",
+        "required": true,
+        "display_options": {
+          "show": {
+            "authentication": [
+              "shopifyOAuth2Api"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "trace_map": {
+    "correlation_id": "shopify-fix-test-003",
+    "node_type": "Shopify",
+    "trace_entries": [
+      {
+        "field_path": "operations[0]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'create' for resource 'order' in OrderDescription.ts",
+        "confidence": "high",
+        "source_file": "OrderDescription.ts"
+      },
+      {
+        "field_path": "operations[1]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'delete' for resource 'order' in OrderDescription.ts",
+        "confidence": "high",
+        "source_file": "OrderDescription.ts"
+      },
+      {
+        "field_path": "operations[2]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'get' for resource 'order' in OrderDescription.ts",
+        "confidence": "high",
+        "source_file": "OrderDescription.ts"
+      },
+      {
+        "field_path": "operations[3]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'getAll' for resource 'order' in OrderDescription.ts",
+        "confidence": "high",
+        "source_file": "OrderDescription.ts"
+      },
+      {
+        "field_path": "operations[4]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'update' for resource 'order' in OrderDescription.ts",
+        "confidence": "high",
+        "source_file": "OrderDescription.ts"
+      },
+      {
+        "field_path": "operations[5]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'create' for resource 'product' in ProductDescription.ts",
+        "confidence": "high",
+        "source_file": "ProductDescription.ts"
+      },
+      {
+        "field_path": "operations[6]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'delete' for resource 'product' in ProductDescription.ts",
+        "confidence": "high",
+        "source_file": "ProductDescription.ts"
+      },
+      {
+        "field_path": "operations[7]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'get' for resource 'product' in ProductDescription.ts",
+        "confidence": "high",
+        "source_file": "ProductDescription.ts"
+      },
+      {
+        "field_path": "operations[8]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'getAll' for resource 'product' in ProductDescription.ts",
+        "confidence": "high",
+        "source_file": "ProductDescription.ts"
+      },
+      {
+        "field_path": "operations[9]",
+        "source": "SOURCE_CODE",
+        "evidence": "Operation 'update' for resource 'product' in ProductDescription.ts",
+        "confidence": "high",
+        "source_file": "ProductDescription.ts"
+      },
+      {
+        "field_path": "credentials[0]",
+        "source": "SOURCE_CODE",
+        "evidence": "Credential 'shopifyApi' extracted from source",
+        "confidence": "high"
+      },
+      {
+        "field_path": "credentials[1]",
+        "source": "SOURCE_CODE",
+        "evidence": "Credential 'shopifyAccessTokenApi' extracted from source",
+        "confidence": "high"
+      },
+      {
+        "field_path": "credentials[2]",
+        "source": "SOURCE_CODE",
+        "evidence": "Credential 'shopifyOAuth2Api' extracted from source",
+        "confidence": "high"
+      }
+    ],
+    "generated_at": "2026-02-02T14:03:20.479532",
+    "skill_version": "1.0.0",
+    "_hybrid_metadata": {
+      "source_type": "TYPE1",
+      "extraction_confidence": 0.9,
+      "advisor_used": false,
+      "assumption_ratio": 0.0,
+      "deterministic_operations": 13,
+      "assumption_operations": 0
+    }
+  },
+  "tests_passed": false,
+  "validation_passed": true,
+  "fix_iterations": 0,
+  "source_files": [],
+  "source_hash": null
+}

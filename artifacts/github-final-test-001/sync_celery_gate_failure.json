@@ -1,0 +1,23 @@
+{
+  "gate": "sync_celery_compatibility",
+  "passed": false,
+  "violations": [
+    {
+      "line": 461,
+      "pattern": "await (requires async context)",
+      "content": "body = {'sha': await get_file_sha_call("
+    },
+    {
+      "line": 488,
+      "pattern": "await (requires async context)",
+      "content": "body = {'author': additional_parameters_author, 'committer': additional_paramete"
+    }
+  ],
+  "timestamp": "2026-02-02T14:08:47.373602",
+  "remediation": [
+    "Replace async def with def",
+    "Use requests/httpx sync API instead of aiohttp",
+    "Add explicit timeout= to all HTTP calls",
+    "Ensure all threads call .join() before return"
+  ]
+}

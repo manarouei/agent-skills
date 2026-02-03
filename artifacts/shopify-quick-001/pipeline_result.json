@@ -1,0 +1,91 @@
+{
+  "pipeline_name": "quick-convert",
+  "correlation_id": "shopify-quick-001",
+  "status": "failed",
+  "started_at": "2026-02-02T09:09:52.951562",
+  "completed_at": "2026-02-02T09:09:52.969236",
+  "duration_ms": 17,
+  "steps": [
+    {
+      "step_name": "ingest",
+      "skill_name": "source-ingest",
+      "status": "completed",
+      "started_at": "2026-02-02T09:09:52.951859",
+      "completed_at": "2026-02-02T09:09:52.957016",
+      "duration_ms": 5,
+      "outputs": {
+        "stub": true,
+        "message": "Skill source-ingest has no implementation registered"
+      },
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required output: raw_content",
+        "Missing required output: parsed_sections",
+        "Missing required output: metadata"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "infer-schema",
+      "skill_name": "schema-infer",
+      "status": "failed",
+      "started_at": "2026-02-02T09:09:52.957033",
+      "completed_at": "2026-02-02T09:09:52.969185",
+      "duration_ms": 12,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [
+        "Missing required input: parsed_sections",
+        "Input validation failed"
+      ],
+      "skipped_reason": null
+    },
+    {
+      "step_name": "scaffold",
+      "skill_name": "node-scaffold",
+      "status": "skipped",
+      "started_at": "2026-02-02T09:09:52.969223",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "ground",
+      "skill_name": "repo-ground",
+      "status": "skipped",
+      "started_at": "2026-02-02T09:09:52.969230",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    },
+    {
+      "step_name": "convert",
+      "skill_name": "code-convert",
+      "status": "skipped",
+      "started_at": "2026-02-02T09:09:52.969233",
+      "completed_at": null,
+      "duration_ms": 0,
+      "outputs": {},
+      "artifacts_produced": [],
+      "errors": [],
+      "skipped_reason": "Previous step failed"
+    }
+  ],
+  "outputs": {
+    "ingest": {
+      "stub": true,
+      "message": "Skill source-ingest has no implementation registered"
+    },
+    "infer-schema": {}
+  },
+  "artifacts_dir": "/home/toni/agent-skills/artifacts/shopify-quick-001",
+  "errors": [
+    "Step 'infer-schema' failed"
+  ]
+}

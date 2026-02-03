@@ -27,29 +27,31 @@ type1-convert:
       input_mappings:
         parsed_sections: ingest.parsed_sections
     
-    # node-scaffold requires: [correlation_id, node_schema, normalized_name]
+    # repo-ground requires: [correlation_id, repo_root] - produces repo_facts.json for code gen gates
+    # MUST run before scaffold (scaffold needs repo_facts.json)
+    - name: ground
+      skill: repo-ground
+      depends_on: [infer-schema]
+      produces_artifacts:
+        - repo_facts.json
+        - target_repo_layout.json
+    
+    # node-scaffold requires: [correlation_id, node_schema, normalized_name, repo_facts]
     - name: scaffold
       skill: node-scaffold
-      depends_on: [infer-schema]
+      depends_on: [ground]
       requires_artifacts:
         - inferred_schema.json
+        - repo_facts.json
       produces_artifacts:
         - converted/
       input_mappings:
         node_schema: infer-schema.inferred_schema
     
-    # repo-ground requires: [correlation_id, repo_root] - produces repo_facts.json for code gen gates
-    - name: ground
-      skill: repo-ground
-      depends_on: [scaffold]
-      produces_artifacts:
-        - repo_facts.json
-        - target_repo_layout.json
-    
     # code-convert requires: [correlation_id, source_type, parsed_sections, node_schema, allowlist]
     - name: convert
       skill: code-convert
-      depends_on: [ground]
+      depends_on: [scaffold]
       requires_artifacts:
         - source_bundle/
         - inferred_schema.json
@@ -351,29 +353,31 @@ quick-convert:
       input_mappings:
         parsed_sections: ingest.parsed_sections
     
-    # node-scaffold requires: [correlation_id, node_schema, normalized_name]
+    # repo-ground requires: [correlation_id, repo_root] - produces repo_facts.json for code gen gates
+    # MUST run before scaffold (scaffold needs repo_facts.json)
+    - name: ground
+      skill: repo-ground
+      depends_on: [infer-schema]
+      produces_artifacts:
+        - repo_facts.json
+        - target_repo_layout.json
+    
+    # node-scaffold requires: [correlation_id, node_schema, normalized_name, repo_facts]
     - name: scaffold
       skill: node-scaffold
-      depends_on: [infer-schema]
+      depends_on: [ground]
       requires_artifacts:
         - inferred_schema.json
+        - repo_facts.json
       produces_artifacts:
         - converted/
       input_mappings:
         node_schema: infer-schema.inferred_schema
     
-    # repo-ground requires: [correlation_id, repo_root] - produces repo_facts.json for code gen gates
-    - name: ground
-      skill: repo-ground
-      depends_on: [scaffold]
-      produces_artifacts:
-        - repo_facts.json
-        - target_repo_layout.json
-    
     # code-convert requires: [correlation_id, source_type, parsed_sections, node_schema, allowlist]
     - name: convert
       skill: code-convert
-      depends_on: [ground]
+      depends_on: [scaffold]
       requires_artifacts:
         - inferred_schema.json
         - repo_facts.json
