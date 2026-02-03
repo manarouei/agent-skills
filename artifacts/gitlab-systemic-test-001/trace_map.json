@@ -1,0 +1,67 @@
+{
+  "correlation_id": "gitlab-systemic-test-001",
+  "node_type": "Gitlab",
+  "trace_entries": [
+    {
+      "field_path": "operations[2].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'create' (display: 'Create') in Gitlab.node.ts",
+      "confidence": "high",
+      "source_file": "Gitlab.node.ts",
+      "line_range": "L99",
+      "excerpt_hash": "62a0b8a0ac7c"
+    },
+    {
+      "field_path": "operations[3].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'createComment' (display: 'Create Comment') in Gitlab.node.ts",
+      "confidence": "high",
+      "source_file": "Gitlab.node.ts",
+      "line_range": "L99",
+      "excerpt_hash": "ef6243ff0050"
+    },
+    {
+      "field_path": "operations[4].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'edit' (display: 'Edit') in Gitlab.node.ts",
+      "confidence": "high",
+      "source_file": "Gitlab.node.ts",
+      "line_range": "L99",
+      "excerpt_hash": "153030552837"
+    },
+    {
+      "field_path": "operations[5].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'get' (display: 'Get') in Gitlab.node.ts",
+      "confidence": "high",
+      "source_file": "Gitlab.node.ts",
+      "line_range": "L99",
+      "excerpt_hash": "192b8712b49d"
+    },
+    {
+      "field_path": "operations[6].name",
+      "source": "SOURCE_CODE",
+      "evidence": "n8n operation 'lock' (display: 'Lock') in Gitlab.node.ts",
+      "confidence": "high",
+      "source_file": "Gitlab.node.ts",
+      "line_range": "L99",
+      "excerpt_hash": "882d62ccdcc8"
+    },
+    {
+      "field_path": "credentials[0]",
+      "source": "SOURCE_CODE",
+      "evidence": "Auth pattern 'oauth' found in source",
+      "confidence": "medium"
+    }
+  ],
+  "generated_at": "2026-02-03T13:53:33.217001",
+  "skill_version": "1.0.0",
+  "_hybrid_metadata": {
+    "source_type": "TYPE1",
+    "extraction_confidence": 0.95,
+    "advisor_used": false,
+    "assumption_ratio": 0.0,
+    "deterministic_operations": 6,
+    "assumption_operations": 0
+  }
+}

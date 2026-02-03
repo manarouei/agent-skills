@@ -1,0 +1,926 @@
+{
+  "type": "Gitlab",
+  "version": 1,
+  "description": {
+    "displayName": "Gitlab",
+    "name": "gitlab",
+    "inputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "main",
+        "type": "main"
+      }
+    ]
+  },
+  "properties": {
+    "parameters": [
+      {
+        "name": "operation",
+        "type": "OPTIONS",
+        "display_name": "Operation",
+        "options": [
+          {
+            "name": "Create",
+            "value": "create",
+            "description": "Create a new issue"
+          },
+          {
+            "name": "Create Comment",
+            "value": "createComment",
+            "description": "Create a new comment on an issue"
+          },
+          {
+            "name": "Edit",
+            "value": "edit",
+            "description": "Edit an issue"
+          },
+          {
+            "name": "Get",
+            "value": "get",
+            "description": "Get the data of a single issue"
+          },
+          {
+            "name": "Lock",
+            "value": "lock",
+            "description": "Lock an issue"
+          }
+        ],
+        "default": "create",
+        "description": "Operation to perform"
+      },
+      {
+        "name": "Issue",
+        "display_name": "File",
+        "type": "OPTIONS"
+      },
+      {
+        "name": "Create Comment",
+        "display_name": "Create",
+        "type": "OPTIONS",
+        "description": "Create a new issue"
+      },
+      {
+        "name": "Get Issues",
+        "display_name": "Get",
+        "type": "OPTIONS",
+        "description": "Get the data of a single repository"
+      },
+      {
+        "name": "Delete",
+        "display_name": "Create",
+        "type": "OPTIONS",
+        "description": "Create a new release"
+      },
+      {
+        "name": "Delete",
+        "display_name": "Create",
+        "type": "STRING",
+        "description": "Create a new file in repository"
+      },
+      {
+        "name": "repository",
+        "display_name": "Project Name",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The name of the project"
+      },
+      {
+        "name": "title",
+        "display_name": "Title",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The title of the issue",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create"
+            ]
+          }
+        }
+      },
+      {
+        "name": "body",
+        "display_name": "Body",
+        "type": "STRING",
+        "default": "",
+        "description": "The body of the issue",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create"
+            ]
+          }
+        }
+      },
+      {
+        "name": "due_date",
+        "display_name": "Due Date",
+        "type": "DATETIME",
+        "default": "",
+        "description": "Due Date for issue",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create"
+            ]
+          }
+        }
+      },
+      {
+        "name": "labels",
+        "display_name": "Labels",
+        "type": "COLLECTION",
+        "default": "{ label: ",
+        "description": "Label to add to issue",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create"
+            ]
+          }
+        }
+      },
+      {
+        "name": "label",
+        "display_name": "Label",
+        "type": "STRING",
+        "default": "",
+        "description": "Label to add to issue"
+      },
+      {
+        "name": "assignee_ids",
+        "display_name": "Assignees",
+        "type": "COLLECTION",
+        "default": "{ assignee: ",
+        "description": "User ID to assign issue to",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create"
+            ]
+          }
+        }
+      },
+      {
+        "name": "assignee",
+        "display_name": "Assignee",
+        "type": "NUMBER",
+        "default": 0,
+        "description": "User ID to assign issue to"
+      },
+      {
+        "name": "issueNumber",
+        "display_name": "Issue Number",
+        "type": "NUMBER",
+        "default": 0,
+        "required": true,
+        "description": "The number of the issue on which to create the comment on",
+        "display_options": {
+          "show": {
+            "operation": [
+              "createComment"
+            ]
+          }
+        }
+      },
+      {
+        "name": "body",
+        "display_name": "Body",
+        "type": "STRING",
+        "default": "",
+        "description": "The body of the comment",
+        "display_options": {
+          "show": {
+            "operation": [
+              "createComment"
+            ]
+          }
+        }
+      },
+      {
+        "name": "issueNumber",
+        "display_name": "Issue Number",
+        "type": "NUMBER",
+        "default": 0,
+        "required": true,
+        "description": "The number of the issue edit",
+        "display_options": {
+          "show": {
+            "operation": [
+              "edit"
+            ]
+          }
+        }
+      },
+      {
+        "name": "editFields",
+        "display_name": "Edit Fields",
+        "type": "COLLECTION",
+        "default": "{",
+        "description": "The title of the issue",
+        "display_options": {
+          "show": {
+            "operation": [
+              "edit"
+            ]
+          }
+        }
+      },
+      {
+        "name": "title",
+        "display_name": "Title",
+        "type": "STRING",
+        "default": "",
+        "description": "The title of the issue"
+      },
+      {
+        "name": "description",
+        "display_name": "Body",
+        "type": "STRING",
+        "default": "",
+        "description": "The body of the issue"
+      },
+      {
+        "name": "state",
+        "display_name": "State",
+        "type": "OPTIONS",
+        "default": "open",
+        "description": "Set the state to ",
+        "options": [
+          {
+            "name": "Closed",
+            "value": "closed"
+          },
+          {
+            "name": "Open",
+            "value": "open"
+          }
+        ]
+      },
+      {
+        "name": "Open",
+        "display_name": "Closed",
+        "type": "COLLECTION",
+        "description": "Set the state to "
+      },
+      {
+        "name": "label",
+        "display_name": "Label",
+        "type": "STRING",
+        "default": "",
+        "description": "Label to add to issue"
+      },
+      {
+        "name": "assignee_ids",
+        "display_name": "Assignees",
+        "type": "COLLECTION",
+        "default": "{ assignee: ",
+        "description": "User to assign issue too"
+      },
+      {
+        "name": "assignee",
+        "display_name": "Assignees",
+        "type": "STRING",
+        "default": "",
+        "description": "User to assign issue too"
+      },
+      {
+        "name": "due_date",
+        "display_name": "Due Date",
+        "type": "DATETIME",
+        "default": "",
+        "description": "Due Date for issue"
+      },
+      {
+        "name": "issueNumber",
+        "display_name": "Issue Number",
+        "type": "NUMBER",
+        "default": 0,
+        "required": true,
+        "description": "The number of the issue get data of",
+        "display_options": {
+          "show": {
+            "operation": [
+              "get"
+            ]
+          }
+        }
+      },
+      {
+        "name": "issueNumber",
+        "display_name": "Issue Number",
+        "type": "NUMBER",
+        "default": 0,
+        "required": true,
+        "description": "The number of the issue to lock",
+        "display_options": {
+          "show": {
+            "operation": [
+              "lock"
+            ]
+          }
+        }
+      },
+      {
+        "name": "lockReason",
+        "display_name": "Lock Reason",
+        "type": "OPTIONS",
+        "default": "resolved",
+        "description": "The issue is Off-Topic",
+        "display_options": {
+          "show": {
+            "operation": [
+              "lock"
+            ]
+          }
+        },
+        "options": [
+          {
+            "name": "Off-Topic",
+            "value": "off-topic"
+          },
+          {
+            "name": "Too Heated",
+            "value": "too heated"
+          },
+          {
+            "name": "Resolved",
+            "value": "resolved"
+          },
+          {
+            "name": "Spam",
+            "value": "spam"
+          }
+        ]
+      },
+      {
+        "name": "Too Heated",
+        "display_name": "Off-Topic",
+        "type": "STRING",
+        "description": "The issue is Off-Topic"
+      },
+      {
+        "name": "additionalFields",
+        "display_name": "Additional Fields",
+        "type": "COLLECTION",
+        "default": "{",
+        "description": "The name of the release",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create"
+            ]
+          }
+        }
+      },
+      {
+        "name": "name",
+        "display_name": "Name",
+        "type": "STRING",
+        "default": "",
+        "description": "The name of the release"
+      },
+      {
+        "name": "description",
+        "display_name": "Description",
+        "type": "STRING",
+        "default": "",
+        "description": "The description of the release"
+      },
+      {
+        "name": "ref",
+        "display_name": "Ref",
+        "type": "STRING",
+        "default": "",
+        "description": "If Tag doesn\u2019t exist, the release will be created from Ref. It can be a commit SHA, another tag name, or a branch name."
+      },
+      {
+        "name": "projectId",
+        "display_name": "Project ID",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The ID or URL-encoded path of the project",
+        "display_options": {
+          "show": {
+            "operation": [
+              "delete",
+              "get"
+            ]
+          }
+        }
+      },
+      {
+        "name": "tag_name",
+        "display_name": "Tag Name",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The Git tag the release is associated with",
+        "display_options": {
+          "show": {
+            "operation": [
+              "delete",
+              "get"
+            ]
+          }
+        }
+      },
+      {
+        "name": "projectId",
+        "display_name": "Project ID",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The ID or URL-encoded path of the project",
+        "display_options": {
+          "show": {
+            "operation": [
+              "getAll"
+            ]
+          }
+        }
+      },
+      {
+        "name": "returnAll",
+        "display_name": "Return All",
+        "type": "BOOLEAN",
+        "default": false,
+        "description": "Whether to return all results or only up to a given limit",
+        "display_options": {
+          "show": {
+            "operation": [
+              "getAll",
+              "list",
+              "getIssues"
+            ]
+          }
+        }
+      },
+      {
+        "name": "limit",
+        "display_name": "Limit",
+        "type": "NUMBER",
+        "default": 20,
+        "description": "Max number of results to return",
+        "display_options": {
+          "show": {
+            "operation": [
+              "getAll",
+              "list",
+              "getIssues"
+            ]
+          }
+        }
+      },
+      {
+        "name": "additionalFields",
+        "display_name": "Additional Fields",
+        "type": "COLLECTION",
+        "default": "{",
+        "description": "The field to use as order",
+        "display_options": {
+          "show": {
+            "operation": [
+              "getAll"
+            ]
+          }
+        }
+      },
+      {
+        "name": "order_by",
+        "display_name": "Order By",
+        "type": "OPTIONS",
+        "default": "released_at",
+        "description": "The field to use as order",
+        "options": [
+          {
+            "name": "Created At",
+            "value": "created_at"
+          },
+          {
+            "name": "Released At",
+            "value": "released_at"
+          }
+        ]
+      },
+      {
+        "name": "Released At",
+        "display_name": "Created At",
+        "type": "OPTIONS"
+      },
+      {
+        "name": "DESC",
+        "display_name": "ASC",
+        "type": "STRING"
+      },
+      {
+        "name": "tag_name",
+        "display_name": "Tag Name",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The Git tag the release is associated with",
+        "display_options": {
+          "show": {
+            "operation": [
+              "update"
+            ]
+          }
+        }
+      },
+      {
+        "name": "additionalFields",
+        "display_name": "Additional Fields",
+        "type": "COLLECTION",
+        "default": "{",
+        "description": "The release name",
+        "display_options": {
+          "show": {
+            "operation": [
+              "update"
+            ]
+          }
+        }
+      },
+      {
+        "name": "name",
+        "display_name": "Name",
+        "type": "STRING",
+        "default": "",
+        "description": "The release name"
+      },
+      {
+        "name": "description",
+        "display_name": "Description",
+        "type": "STRING",
+        "default": "",
+        "description": "The description of the release. You can use Markdown."
+      },
+      {
+        "name": "milestones",
+        "display_name": "Milestones",
+        "type": "STRING",
+        "default": "",
+        "description": "The title of each milestone to associate with the release (provide a titles list spearated with comma)"
+      },
+      {
+        "name": "released_at",
+        "display_name": "Released At",
+        "type": "DATETIME",
+        "default": "",
+        "description": "The date when the release is/was ready"
+      },
+      {
+        "name": "getRepositoryIssuesFilters",
+        "display_name": "Filters",
+        "type": "COLLECTION",
+        "default": "{",
+        "description": "Return only issues which are assigned to a specific user",
+        "display_options": {
+          "show": {
+            "operation": [
+              "getIssues"
+            ]
+          }
+        }
+      },
+      {
+        "name": "assignee_username",
+        "display_name": "Assignee",
+        "type": "STRING",
+        "default": "",
+        "description": "Return only issues which are assigned to a specific user"
+      },
+      {
+        "name": "author_username",
+        "display_name": "Creator",
+        "type": "STRING",
+        "default": "",
+        "description": "Return only issues which were created by a specific user"
+      },
+      {
+        "name": "search",
+        "display_name": "Search",
+        "type": "STRING",
+        "default": "",
+        "description": "Search issues against their title and description"
+      },
+      {
+        "name": "labels",
+        "display_name": "Labels",
+        "type": "STRING",
+        "default": "",
+        "description": "Return only issues with the given labels. Multiple lables can be separated by comma."
+      },
+      {
+        "name": "updated_after",
+        "display_name": "Updated After",
+        "type": "DATETIME",
+        "default": "",
+        "description": "Return only issues updated at or after this time"
+      },
+      {
+        "name": "state",
+        "display_name": "State",
+        "type": "OPTIONS",
+        "default": "opened",
+        "description": "Returns issues with any state",
+        "options": [
+          {
+            "name": "All",
+            "value": "closed"
+          },
+          {
+            "name": "Open",
+            "value": "opened"
+          }
+        ]
+      },
+      {
+        "name": "Closed",
+        "display_name": "All",
+        "type": "OPTIONS",
+        "description": "Returns issues with any state"
+      },
+      {
+        "name": "Updated At",
+        "display_name": "Created At",
+        "type": "OPTIONS",
+        "description": "Sort by created date"
+      },
+      {
+        "name": "Descending",
+        "display_name": "Ascending",
+        "type": "STRING",
+        "description": "Sort in ascending order"
+      },
+      {
+        "name": "filePath",
+        "display_name": "Path",
+        "type": "STRING",
+        "default": "",
+        "description": "The path of the folder to list",
+        "display_options": {
+          "show": {
+            "operation": [
+              "list"
+            ]
+          }
+        }
+      },
+      {
+        "name": "page",
+        "display_name": "Page",
+        "type": "NUMBER",
+        "default": 1,
+        "description": "Page of results to display",
+        "display_options": {
+          "show": {
+            "operation": [
+              "list"
+            ]
+          }
+        }
+      },
+      {
+        "name": "additionalParameters",
+        "display_name": "Additional Parameters",
+        "type": "COLLECTION",
+        "default": "{",
+        "description": "Additional fields to add",
+        "display_options": {
+          "show": {
+            "operation": [
+              "list"
+            ]
+          }
+        }
+      },
+      {
+        "name": "ref",
+        "display_name": "Reference",
+        "type": "STRING",
+        "default": "",
+        "description": "The name of the commit/branch/tag. Default: the repository\u2019s default branch (usually main)."
+      },
+      {
+        "name": "recursive",
+        "display_name": "Recursive",
+        "type": "BOOLEAN",
+        "default": false,
+        "description": "Whether or not to get a recursive file tree. Default is false."
+      },
+      {
+        "name": "asBinaryProperty",
+        "display_name": "As Binary Property",
+        "type": "BOOLEAN",
+        "default": true,
+        "description": "Whether to set the data of the file as binary property instead of returning the raw API response",
+        "display_options": {
+          "show": {
+            "operation": [
+              "get"
+            ]
+          }
+        }
+      },
+      {
+        "name": "binaryPropertyName",
+        "display_name": "Put Output File in Field",
+        "type": "STRING",
+        "default": "data",
+        "required": true,
+        "display_options": {
+          "show": {
+            "operation": [
+              "get"
+            ]
+          }
+        }
+      },
+      {
+        "name": "additionalParameters",
+        "display_name": "Additional Parameters",
+        "type": "COLLECTION",
+        "default": "{",
+        "description": "Additional fields to add",
+        "display_options": {
+          "show": {
+            "operation": [
+              "get"
+            ]
+          }
+        }
+      },
+      {
+        "name": "reference",
+        "display_name": "Reference",
+        "type": "STRING",
+        "default": "",
+        "description": "The name of the commit/branch/tag. Default: the repository\u2019s default branch (usually main)."
+      },
+      {
+        "name": "binaryData",
+        "display_name": "Binary File",
+        "type": "BOOLEAN",
+        "default": false,
+        "required": true,
+        "description": "Whether the data to upload should be taken from binary field",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create",
+              "edit"
+            ]
+          }
+        }
+      },
+      {
+        "name": "fileContent",
+        "display_name": "File Content",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "The text content of the file",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create",
+              "edit"
+            ]
+          }
+        }
+      },
+      {
+        "name": "binaryPropertyName",
+        "display_name": "Input Binary Field",
+        "type": "STRING",
+        "default": "data",
+        "required": true,
+        "display_options": {
+          "show": {
+            "operation": [
+              "create",
+              "edit"
+            ]
+          }
+        }
+      },
+      {
+        "name": "commitMessage",
+        "display_name": "Commit Message",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "display_options": {
+          "show": {
+            "operation": [
+              "create",
+              "delete",
+              "edit"
+            ]
+          }
+        }
+      },
+      {
+        "name": "branch",
+        "display_name": "Branch",
+        "type": "STRING",
+        "default": "",
+        "required": true,
+        "description": "Name of the new branch to create. The commit is added to this branch.",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create",
+              "delete",
+              "edit"
+            ]
+          }
+        }
+      },
+      {
+        "name": "additionalParameters",
+        "display_name": "Additional Parameters",
+        "type": "COLLECTION",
+        "default": "{",
+        "description": "Additional fields to add",
+        "display_options": {
+          "show": {
+            "operation": [
+              "create",
+              "delete",
+              "edit"
+            ]
+          }
+        }
+      },
+      {
+        "name": "branchStart",
+        "display_name": "Start Branch",
+        "type": "STRING",
+        "default": "",
+        "description": "Name of the base branch to create the new branch from"
+      },
+      {
+        "name": "name",
+        "display_name": "author",
+        "type": "STRING",
+        "default": "",
+        "description": "The name of the author of the commit"
+      },
+      {
+        "name": "email",
+        "display_name": "Email",
+        "type": "STRING",
+        "default": "",
+        "description": "The email of the author of the commit"
+      },
+      {
+        "name": "encoding",
+        "display_name": "encoding",
+        "type": "STRING",
+        "default": "text",
+        "description": "Change encoding to base64. Default is text."
+      }
+    ]
+  },
+  "operations": [
+    {
+      "name": "create",
+      "display_name": "Create",
+      "description": "Create a new issue"
+    },
+    {
+      "name": "createComment",
+      "display_name": "Create Comment",
+      "description": "Create a new comment on an issue"
+    },
+    {
+      "name": "edit",
+      "display_name": "Edit",
+      "description": "Edit an issue"
+    },
+    {
+      "name": "get",
+      "display_name": "Get",
+      "description": "Get the data of a single issue"
+    },
+    {
+      "name": "lock",
+      "display_name": "Lock",
+      "description": "Lock an issue"
+    }
+  ],
+  "credentials": [
+    "oauth2"
+  ]
+}

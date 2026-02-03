@@ -923,6 +923,7 @@ def _convert_operation_handler(
     - API calls with various patterns
     - Conditional logic for filters, returnAll, etc.
     - GitLab baseEndpoint pattern with owner/repository extraction
+    - SYSTEMIC FIX: Ensure all endpoint template vars are extracted
     """
     lines = []
     qs_fields = []
@@ -930,10 +931,23 @@ def _convert_operation_handler(
     has_return_all = False
     has_filters = False
     needs_base_endpoint = False
+    endpoint_vars_needed = set()  # SYSTEMIC FIX: Track vars needed in endpoint
     
     # Check if this operation uses baseEndpoint pattern (GitLab-style)
     if 'baseEndpoint' in ts_code or '${baseEndpoint}' in (generic_ts or ''):
         needs_base_endpoint = True
+    
+    # SYSTEMIC FIX: Detect all template variables in endpoints
+    # Pattern: endpoint = `...${varName}...`
+    endpoint_pattern = r"endpoint\s*=\s*['\"`]([^'\"`]+)['\"`]"
+    endpoint_match = re.search(endpoint_pattern, ts_code)
+    if endpoint_match:
+        endpoint_template = endpoint_match.group(1)
+        # Extract all ${varName} references
+        for var_match in re.finditer(r'\$\{(\w+)\}', endpoint_template):
+            var_name = var_match.group(1)
+            if var_name != 'baseEndpoint':  # baseEndpoint is handled separately
+                endpoint_vars_needed.add(var_name)
     
     # =================================================================
     # Step 0: If GitLab-style, add owner/repository extraction first
@@ -943,8 +957,13 @@ def _convert_operation_handler(
         lines.append("repository = self.get_node_parameter('repository', item_index)")
         lines.append("")
         lines.append("# Build base endpoint for GitLab API")
-        lines.append("base_endpoint = f'/projects/{owner}/{repository}'")
+        lines.append("# FIX: URL-encode project path for GitLab API")
+        lines.append("project_path = quote(f'{owner}/{repository}', safe='')")
+        lines.append("base_endpoint = f'/projects/{project_path}'")
         lines.append("")
+        # Mark these as extracted so we don't duplicate
+        endpoint_vars_needed.discard('owner')
+        endpoint_vars_needed.discard('repository')
     
     # =================================================================
     # Step 1: Extract all getNodeParameter calls
@@ -965,6 +984,30 @@ def _convert_operation_handler(
             has_return_all = True
         if param_name == 'filters':
             has_filters = True
+        # Mark as extracted for endpoint vars
+        endpoint_vars_needed.discard(var_name)
+    
+    # SYSTEMIC FIX: Extract any remaining endpoint template variables
+    # These weren't found in getNodeParameter calls but are used in the endpoint
+    for var_name in list(endpoint_vars_needed):
+        py_var = _to_snake_case(var_name)
+        # Map common TS var names to parameter names
+        param_name_map = {
+            'owner': 'owner',
+            'repo': 'repository',
+            'repository': 'repository',
+            'projectId': 'projectId',
+            'id': 'projectId',
+            'issueNumber': 'issueNumber',
+            'issueIid': 'issueNumber',
+            'tagName': 'tag_name',
+            'releaseTag': 'releaseTag',
+            'filePath': 'filePath',
+        }
+        param_name = param_name_map.get(var_name, var_name)
+        extracted_params[var_name] = (py_var, param_name)
+        lines.append(f"{py_var} = self.get_node_parameter('{param_name}', item_index)")
+        endpoint_vars_needed.discard(var_name)
     
     # =================================================================
     # Step 2: Extract query string (qs) assignments
@@ -1298,6 +1341,15 @@ def _convert_ts_expression(expr: str, extracted_params: dict) -> str:
                 result = f"{result}.get('{part}')"
             return result
         else:
+            # SYSTEMIC FIX: Check if it's a known parameter name that should use .get()
+            # Common patterns: additionalParameters.field, additionalFields.field, etc.
+            param_like_names = ['additionalParameters', 'additionalFields', 'filters', 'options', 'editFields']
+            if parts[0] in param_like_names:
+                base = _to_snake_case(parts[0])
+                result = base
+                for part in parts[1:]:
+                    result = f"{result}.get('{part}')"
+                return result
             # Convert the whole thing to snake_case as a flat variable
             return _to_snake_case('_'.join(parts))
     
@@ -1541,10 +1593,8 @@ def _generate_python_node(
                 
             except Exception as e:
                 logger.error(f"Error in {{resource}}/{{operation}}: {{e}}")
-                if self.continue_on_fail:
-                    return_items.append(NodeExecutionData(json_data={{"error": str(e)}}))
-                else:
-                    raise
+                # BaseNode does not support continue_on_fail - always raise
+                raise
         
         return [return_items]'''
     else:
@@ -1581,10 +1631,8 @@ def _generate_python_node(
                     
             except Exception as e:
                 logger.error(f"Error in operation {{operation}}: {{e}}")
-                if self.continue_on_fail:
-                    return_items.append(NodeExecutionData(json_data={{"error": str(e)}}))
-                else:
-                    raise
+                # BaseNode does not support continue_on_fail - always raise
+                raise
         
         return [return_items]'''
     

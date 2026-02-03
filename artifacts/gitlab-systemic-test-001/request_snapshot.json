@@ -1,0 +1,11 @@
+{
+  "correlation_id": "gitlab-systemic-test-001",
+  "timestamp": "2026-02-03T13:53:32.997898",
+  "source_type": "TYPE1",
+  "source_files": [
+    "GenericFunctions.ts",
+    "Gitlab.node.ts"
+  ],
+  "node_name": "Gitlab",
+  "target_language": "python"
+}

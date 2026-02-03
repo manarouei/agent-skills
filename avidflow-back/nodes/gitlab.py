@@ -3,8 +3,8 @@
 Gitlab Node
 
 Converted from TypeScript by agent-skills/code-convert
-Correlation ID: gitlab-systemic-fix-005
-Generated: 2026-02-03T12:07:39.808132
+Correlation ID: gitlab-pipeline-test-001
+Generated: 2026-02-01T13:50:51.843072
 
 SYNC-CELERY SAFE: All methods are synchronous with timeouts.
 """
@@ -12,155 +12,104 @@ SYNC-CELERY SAFE: All methods are synchronous with timeouts.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from urllib.parse import quote
 
 import requests
 
-from .base import BaseNode, NodeParameterType
-from models import NodeExecutionData
+from .base import BaseNode, NodeParameterType, NodeExecutionData
 
 logger = logging.getLogger(__name__)
 
 
 class GitlabNode(BaseNode):
     """
-    Gitlab node implementation.
+    GitLab node.
     
-    Consume the Gitlab API
+    
     """
 
     type = "gitlab"
     version = 1
     
-    # GROUND TRUTH: description must be a dict with these fields
     description = {
-        "displayName": "Gitlab",
+        "displayName": "GitLab",
         "name": "gitlab",
-        "group": ['transform'],
-        "subtitle": "={{$parameter['operation'] + ': ' + $parameter['resource']}}",
-        "description": "Consume the Gitlab API",
+        "icon": "file:gitlab.svg",
+        "group": ['output'],
+        "description": "",
         "inputs": [{"name": "main", "type": "main", "required": True}],
         "outputs": [{"name": "main", "type": "main", "required": True}],
     }
     
-    # GROUND TRUTH: properties must be dict with credentials + parameters
     properties = {
-        "credentials": [
-            {
-                "name": "gitlab_api",
-                "required": True,
-            }
-        ],
         "parameters": [
-            {"name": "authentication", "type": NodeParameterType.OPTIONS, "display_name": "Authentication", "options": [
-                {"name": "Gitlabapi", "value": "gitlab_api"},
-                {"name": "Gitlaboauth2api", "value": "gitlab_o_auth2_api"}
-            ], "default": "gitlabApi", "description": "Authentication method to use"},
             {"name": "resource", "type": NodeParameterType.OPTIONS, "display_name": "Resource", "options": [
+                {"name": "File", "value": "file"},
                 {"name": "Issue", "value": "issue"},
-                {"name": "Repository", "value": "repository"},
-                {"name": "User", "value": "user"},
                 {"name": "Release", "value": "release"},
-                {"name": "File", "value": "file"}
+                {"name": "Repository", "value": "repository"},
+                {"name": "User", "value": "user"}
             ], "default": "issue", "description": "The resource to operate on"},
-            {"name": "Issue", "type": NodeParameterType.OPTIONS, "display_name": "File"},
-            {"name": "Create Comment", "type": NodeParameterType.OPTIONS, "display_name": "Create", "description": "Create a new issue"},
-            {"name": "Get Issues", "type": NodeParameterType.OPTIONS, "display_name": "Get", "description": "Get the data of a single repository"},
-            {"name": "Delete", "type": NodeParameterType.OPTIONS, "display_name": "Create", "description": "Create a new release"},
-            {"name": "Delete", "type": NodeParameterType.STRING, "display_name": "Create", "description": "Create a new file in repository"},
-            {"name": "repository", "type": NodeParameterType.STRING, "display_name": "Project Name", "default": "", "required": True, "description": "The name of the project"},
-            {"name": "title", "type": NodeParameterType.STRING, "display_name": "Title", "default": "", "required": True, "description": "The title of the issue", "display_options": {'show': {'operation': ['create']}}},
-            {"name": "body", "type": NodeParameterType.STRING, "display_name": "Body", "default": "", "description": "The body of the issue", "display_options": {'show': {'operation': ['create']}}},
-            {"name": "due_date", "type": NodeParameterType.STRING, "display_name": "Due Date", "default": "", "description": "Due Date for issue", "display_options": {'show': {'operation': ['create']}}},
-            {"name": "labels", "type": NodeParameterType.COLLECTION, "display_name": "Labels", "default": "{ label: ", "description": "Label to add to issue", "display_options": {'show': {'operation': ['create']}}},
-            {"name": "label", "type": NodeParameterType.STRING, "display_name": "Label", "default": "", "description": "Label to add to issue"},
-            {"name": "assignee_ids", "type": NodeParameterType.COLLECTION, "display_name": "Assignees", "default": "{ assignee: ", "description": "User ID to assign issue to", "display_options": {'show': {'operation': ['create']}}},
-            {"name": "assignee", "type": NodeParameterType.NUMBER, "display_name": "Assignee", "default": 0, "description": "User ID to assign issue to"},
-            {"name": "issueNumber", "type": NodeParameterType.NUMBER, "display_name": "Issue Number", "default": 0, "required": True, "description": "The number of the issue on which to create the comment on", "display_options": {'show': {'operation': ['create_comment']}}},
-            {"name": "body", "type": NodeParameterType.STRING, "display_name": "Body", "default": "", "description": "The body of the comment", "display_options": {'show': {'operation': ['create_comment']}}},
-            {"name": "issueNumber", "type": NodeParameterType.NUMBER, "display_name": "Issue Number", "default": 0, "required": True, "description": "The number of the issue edit", "display_options": {'show': {'operation': ['edit']}}},
-            {"name": "editFields", "type": NodeParameterType.COLLECTION, "display_name": "Edit Fields", "default": "{", "description": "The title of the issue", "display_options": {'show': {'operation': ['edit']}}},
-            {"name": "title", "type": NodeParameterType.STRING, "display_name": "Title", "default": "", "description": "The title of the issue"},
-            {"name": "description", "type": NodeParameterType.STRING, "display_name": "Body", "default": "", "description": "The body of the issue"},
-            {"name": "state", "type": NodeParameterType.OPTIONS, "display_name": "State", "options": [
-                {"name": "Closed", "value": "closed"},
-                {"name": "Open", "value": "open"}
-            ], "default": "open", "description": "Set the state to "},
-            {"name": "Open", "type": NodeParameterType.COLLECTION, "display_name": "Closed", "description": "Set the state to "},
-            {"name": "label", "type": NodeParameterType.STRING, "display_name": "Label", "default": "", "description": "Label to add to issue"},
-            {"name": "assignee_ids", "type": NodeParameterType.COLLECTION, "display_name": "Assignees", "default": "{ assignee: ", "description": "User to assign issue too"},
-            {"name": "assignee", "type": NodeParameterType.STRING, "display_name": "Assignees", "default": "", "description": "User to assign issue too"},
-            {"name": "due_date", "type": NodeParameterType.STRING, "display_name": "Due Date", "default": "", "description": "Due Date for issue"},
-            {"name": "issueNumber", "type": NodeParameterType.NUMBER, "display_name": "Issue Number", "default": 0, "required": True, "description": "The number of the issue get data of", "display_options": {'show': {'operation': ['get']}}},
-            {"name": "issueNumber", "type": NodeParameterType.NUMBER, "display_name": "Issue Number", "default": 0, "required": True, "description": "The number of the issue to lock", "display_options": {'show': {'operation': ['lock']}}},
+            {"name": "operation", "type": NodeParameterType.OPTIONS, "display_name": "Operation", "options": [
+                {"name": "Create", "value": "create", "description": "Create a new issue", "display_options": {'show': {'resource': ['release', 'issue']}}},
+                {"name": "Create Comment", "value": "createComment", "description": "Create a new comment on an issue", "display_options": {'show': {'resource': ['issue']}}},
+                {"name": "Edit", "value": "edit", "description": "Edit an issue", "display_options": {'show': {'resource': ['issue']}}},
+                {"name": "Get", "value": "get", "description": "Get the data of a single issue", "display_options": {'show': {'resource': ['repository', 'release', 'file', 'issue']}}},
+                {"name": "Lock", "value": "lock", "description": "Lock an issue", "display_options": {'show': {'resource': ['issue']}}},
+                {"name": "Get Issues", "value": "getIssues", "description": "Returns issues of a repository", "display_options": {'show': {'resource': ['repository']}}},
+                {"name": "Get Repositories", "value": "getRepositories", "description": "Returns the repositories of a user", "display_options": {'show': {'resource': ['user']}}},
+                {"name": "Delete", "value": "delete", "description": "Delete a release", "display_options": {'show': {'resource': ['release', 'file']}}},
+                {"name": "Get Many", "value": "getAll", "description": "Get many releases", "display_options": {'show': {'resource': ['release']}}},
+                {"name": "Update", "value": "update", "description": "Update a release", "display_options": {'show': {'resource': ['release']}}},
+                {"name": "List", "value": "list", "description": "List contents of a folder", "display_options": {'show': {'resource': ['file']}}}
+            ], "default": "create", "description": "Operation to perform"},
+            {"name": "authentication", "type": NodeParameterType.OPTIONS, "display_name": "Authentication", "options": [
+                {"name": "Access Token", "value": "accessToken"},
+                {"name": "OAuth2", "value": "oAuth2"}
+            ], "default": "accessToken"},
+            {"name": "owner", "type": NodeParameterType.STRING, "display_name": "Project Owner", "default": "", "required": True, "description": "User, group or namespace of the project", "display_options": {'show': {'operation': ['createComment', 'getAll', 'list', 'getIssues', 'delete', 'getRepositories', 'edit', 'update', 'get', 'create', 'lock']}}},
+            {"name": "repository", "type": NodeParameterType.STRING, "display_name": "Project Name", "default": "", "required": True, "description": "The name of the project", "display_options": {'show': {'operation': ['createComment', 'getAll', 'list', 'getIssues', 'delete', 'getRepositories', 'edit', 'update', 'get', 'create', 'lock']}}},
+            {"name": "title", "type": NodeParameterType.STRING, "display_name": "Title", "default": "", "required": True, "description": "The title of the issue", "display_options": {'show': {'operation': ['create'], 'resource': ['issue']}}},
+            {"name": "body", "type": NodeParameterType.STRING, "display_name": "Body", "default": "", "description": "The body of the issue", "display_options": {'show': {'operation': ['create'], 'resource': ['issue']}}},
+            {"name": "due_date", "type": NodeParameterType.STRING, "display_name": "Due Date", "default": "", "description": "Due Date for issue", "display_options": {'show': {'operation': ['create'], 'resource': ['issue']}}},
+            {"name": "labels", "type": NodeParameterType.COLLECTION, "display_name": "Labels", "default": "", "description": "Label to add to issue", "display_options": {'show': {'operation': ['create'], 'resource': ['issue']}}},
+            {"name": "assignee_ids", "type": NodeParameterType.COLLECTION, "display_name": "Assignees", "default": "", "description": "User ID to assign issue to", "display_options": {'show': {'operation': ['create'], 'resource': ['issue']}}},
+            {"name": "issueNumber", "type": NodeParameterType.NUMBER, "display_name": "Issue Number", "default": 0, "required": True, "description": "The number of the issue on which to create the comment on", "display_options": {'show': {'operation': ['createComment'], 'resource': ['issue']}}},
+            {"name": "editFields", "type": NodeParameterType.COLLECTION, "display_name": "Edit Fields", "default": "", "description": "The title of the issue", "display_options": {'show': {'operation': ['edit'], 'resource': ['issue']}}},
             {"name": "lockReason", "type": NodeParameterType.OPTIONS, "display_name": "Lock Reason", "options": [
                 {"name": "Off-Topic", "value": "off-topic"},
                 {"name": "Too Heated", "value": "too heated"},
                 {"name": "Resolved", "value": "resolved"},
                 {"name": "Spam", "value": "spam"}
-            ], "default": "resolved", "description": "The issue is Off-Topic", "display_options": {'show': {'operation': ['lock']}}},
-            {"name": "Too Heated", "type": NodeParameterType.STRING, "display_name": "Off-Topic", "description": "The issue is Off-Topic"},
-            {"name": "additionalFields", "type": NodeParameterType.COLLECTION, "display_name": "Additional Fields", "default": "{", "description": "The name of the release", "display_options": {'show': {'operation': ['create']}}},
-            {"name": "name", "type": NodeParameterType.STRING, "display_name": "Name", "default": "", "description": "The name of the release"},
-            {"name": "description", "type": NodeParameterType.STRING, "display_name": "Description", "default": "", "description": "The description of the release"},
-            {"name": "ref", "type": NodeParameterType.STRING, "display_name": "Ref", "default": "", "description": "If Tag doesn’t exist, the release will be created from Ref. It can be a commit SHA, another tag name, or a branch name."},
-            {"name": "projectId", "type": NodeParameterType.STRING, "display_name": "Project ID", "default": "", "required": True, "description": "The ID or URL-encoded path of the project", "display_options": {'show': {'operation': ['delete', 'get']}}},
-            {"name": "tag_name", "type": NodeParameterType.STRING, "display_name": "Tag Name", "default": "", "required": True, "description": "The Git tag the release is associated with", "display_options": {'show': {'operation': ['delete', 'get']}}},
-            {"name": "projectId", "type": NodeParameterType.STRING, "display_name": "Project ID", "default": "", "required": True, "description": "The ID or URL-encoded path of the project", "display_options": {'show': {'operation': ['get_all']}}},
-            {"name": "returnAll", "type": NodeParameterType.BOOLEAN, "display_name": "Return All", "default": False, "description": "Whether to return all results or only up to a given limit", "display_options": {'show': {'operation': ['get_all', 'list', 'get_issues']}}},
-            {"name": "limit", "type": NodeParameterType.NUMBER, "display_name": "Limit", "default": 20, "description": "Max number of results to return", "display_options": {'show': {'operation': ['get_all', 'list', 'get_issues']}}},
-            {"name": "additionalFields", "type": NodeParameterType.COLLECTION, "display_name": "Additional Fields", "default": "{", "description": "The field to use as order", "display_options": {'show': {'operation': ['get_all']}}},
-            {"name": "order_by", "type": NodeParameterType.OPTIONS, "display_name": "Order By", "options": [
-                {"name": "Created At", "value": "created_at"},
-                {"name": "Released At", "value": "released_at"}
-            ], "default": "released_at", "description": "The field to use as order"},
-            {"name": "Released At", "type": NodeParameterType.OPTIONS, "display_name": "Created At"},
-            {"name": "DESC", "type": NodeParameterType.STRING, "display_name": "ASC"},
-            {"name": "tag_name", "type": NodeParameterType.STRING, "display_name": "Tag Name", "default": "", "required": True, "description": "The Git tag the release is associated with", "display_options": {'show': {'operation': ['update']}}},
-            {"name": "additionalFields", "type": NodeParameterType.COLLECTION, "display_name": "Additional Fields", "default": "{", "description": "The release name", "display_options": {'show': {'operation': ['update']}}},
-            {"name": "name", "type": NodeParameterType.STRING, "display_name": "Name", "default": "", "description": "The release name"},
-            {"name": "description", "type": NodeParameterType.STRING, "display_name": "Description", "default": "", "description": "The description of the release. You can use Markdown."},
-            {"name": "milestones", "type": NodeParameterType.STRING, "display_name": "Milestones", "default": "", "description": "The title of each milestone to associate with the release (provide a titles list spearated with comma)"},
-            {"name": "released_at", "type": NodeParameterType.STRING, "display_name": "Released At", "default": "", "description": "The date when the release is/was ready"},
-            {"name": "getRepositoryIssuesFilters", "type": NodeParameterType.COLLECTION, "display_name": "Filters", "default": "{", "description": "Return only issues which are assigned to a specific user", "display_options": {'show': {'operation': ['get_issues']}}},
-            {"name": "assignee_username", "type": NodeParameterType.STRING, "display_name": "Assignee", "default": "", "description": "Return only issues which are assigned to a specific user"},
-            {"name": "author_username", "type": NodeParameterType.STRING, "display_name": "Creator", "default": "", "description": "Return only issues which were created by a specific user"},
-            {"name": "search", "type": NodeParameterType.STRING, "display_name": "Search", "default": "", "description": "Search issues against their title and description"},
-            {"name": "labels", "type": NodeParameterType.STRING, "display_name": "Labels", "default": "", "description": "Return only issues with the given labels. Multiple lables can be separated by comma."},
-            {"name": "updated_after", "type": NodeParameterType.STRING, "display_name": "Updated After", "default": "", "description": "Return only issues updated at or after this time"},
-            {"name": "state", "type": NodeParameterType.OPTIONS, "display_name": "State", "options": [
-                {"name": "All", "value": "closed"},
-                {"name": "Open", "value": "opened"}
-            ], "default": "opened", "description": "Returns issues with any state"},
-            {"name": "Closed", "type": NodeParameterType.OPTIONS, "display_name": "All", "description": "Returns issues with any state"},
-            {"name": "Updated At", "type": NodeParameterType.OPTIONS, "display_name": "Created At", "description": "Sort by created date"},
-            {"name": "Descending", "type": NodeParameterType.STRING, "display_name": "Ascending", "description": "Sort in ascending order"},
-            {"name": "filePath", "type": NodeParameterType.STRING, "display_name": "Path", "default": "", "description": "The path of the folder to list", "display_options": {'show': {'operation': ['list']}}},
-            {"name": "page", "type": NodeParameterType.NUMBER, "display_name": "Page", "default": 1, "description": "Page of results to display", "display_options": {'show': {'operation': ['list']}}},
-            {"name": "additionalParameters", "type": NodeParameterType.COLLECTION, "display_name": "Additional Parameters", "default": "{", "description": "Additional fields to add", "display_options": {'show': {'operation': ['list']}}},
-            {"name": "ref", "type": NodeParameterType.STRING, "display_name": "Reference", "default": "", "description": "The name of the commit/branch/tag. Default: the repository’s default branch (usually main)."},
-            {"name": "recursive", "type": NodeParameterType.BOOLEAN, "display_name": "Recursive", "default": False, "description": "Whether or not to get a recursive file tree. Default is False."},
-            {"name": "asBinaryProperty", "type": NodeParameterType.BOOLEAN, "display_name": "As Binary Property", "default": True, "description": "Whether to set the data of the file as binary property instead of returning the raw API response", "display_options": {'show': {'operation': ['get']}}},
-            {"name": "binaryPropertyName", "type": NodeParameterType.STRING, "display_name": "Put Output File in Field", "default": "data", "required": True, "display_options": {'show': {'operation': ['get']}}},
-            {"name": "additionalParameters", "type": NodeParameterType.COLLECTION, "display_name": "Additional Parameters", "default": "{", "description": "Additional fields to add", "display_options": {'show': {'operation': ['get']}}},
-            {"name": "reference", "type": NodeParameterType.STRING, "display_name": "Reference", "default": "", "description": "The name of the commit/branch/tag. Default: the repository’s default branch (usually main)."},
-            {"name": "binaryData", "type": NodeParameterType.BOOLEAN, "display_name": "Binary File", "default": False, "required": True, "description": "Whether the data to upload should be taken from binary field", "display_options": {'show': {'operation': ['create', 'edit']}}},
-            {"name": "fileContent", "type": NodeParameterType.STRING, "display_name": "File Content", "default": "", "required": True, "description": "The text content of the file", "display_options": {'show': {'operation': ['create', 'edit']}}},
-            {"name": "binaryPropertyName", "type": NodeParameterType.STRING, "display_name": "Input Binary Field", "default": "data", "required": True, "display_options": {'show': {'operation': ['create', 'edit']}}},
-            {"name": "commitMessage", "type": NodeParameterType.STRING, "display_name": "Commit Message", "default": "", "required": True, "display_options": {'show': {'operation': ['create', 'delete', 'edit']}}},
-            {"name": "branch", "type": NodeParameterType.STRING, "display_name": "Branch", "default": "", "required": True, "description": "Name of the new branch to create. The commit is added to this branch.", "display_options": {'show': {'operation': ['create', 'delete', 'edit']}}},
-            {"name": "additionalParameters", "type": NodeParameterType.COLLECTION, "display_name": "Additional Parameters", "default": "{", "description": "Additional fields to add", "display_options": {'show': {'operation': ['create', 'delete', 'edit']}}},
-            {"name": "branch_start", "type": NodeParameterType.STRING, "display_name": "Start Branch", "default": "", "description": "Name of the base branch to create the new branch from"},
-            {"name": "name", "type": NodeParameterType.STRING, "display_name": "author", "default": "", "description": "The name of the author of the commit"},
-            {"name": "email", "type": NodeParameterType.STRING, "display_name": "Email", "default": "", "description": "The email of the author of the commit"},
-            {"name": "encoding", "type": NodeParameterType.STRING, "display_name": "encoding", "default": "text", "description": "Change encoding to base64. Default is text."},
-            {"name": "repository", "type": NodeParameterType.STRING, "display_name": "Repository Name", "default": "", "required": True, "description": "The name of the repository"},
+            ], "default": "resolved", "description": "The issue is Off-Topic", "display_options": {'show': {'operation': ['lock'], 'resource': ['issue']}}},
+            {"name": "releaseTag", "type": NodeParameterType.STRING, "display_name": "Tag", "default": "", "required": True, "description": "The tag of the release", "display_options": {'show': {'operation': ['create'], 'resource': ['release']}}},
+            {"name": "additionalFields", "type": NodeParameterType.COLLECTION, "display_name": "Additional Fields", "default": "", "description": "The name of the release", "display_options": {'show': {'operation': ['create'], 'resource': ['release']}}},
+            {"name": "projectId", "type": NodeParameterType.STRING, "display_name": "Project ID", "default": "", "required": True, "description": "The ID or URL-encoded path of the project", "display_options": {'show': {'operation': ['delete', 'get'], 'resource': ['release']}}},
+            {"name": "tag_name", "type": NodeParameterType.STRING, "display_name": "Tag Name", "default": "", "required": True, "description": "The Git tag the release is associated with", "display_options": {'show': {'operation': ['delete', 'get'], 'resource': ['release']}}},
+            {"name": "returnAll", "type": NodeParameterType.BOOLEAN, "display_name": "Return All", "default": False, "description": "Whether to return all results or only up to a given limit", "display_options": {'show': {'operation': ['getAll', 'list', 'getIssues'], 'resource': ['release', 'file', 'repository']}}},
+            {"name": "limit", "type": NodeParameterType.NUMBER, "display_name": "Limit", "default": 20, "description": "Max number of results to return", "display_options": {'show': {'operation': ['getAll', 'list', 'getIssues'], 'resource': ['release', 'file', 'repository']}}},
+            {"name": "getRepositoryIssuesFilters", "type": NodeParameterType.COLLECTION, "display_name": "Filters", "default": "", "description": "Return only issues which are assigned to a specific user", "display_options": {'show': {'operation': ['getIssues'], 'resource': ['repository']}}},
+            {"name": "filePath", "type": NodeParameterType.STRING, "display_name": "File Path", "default": "", "description": "The file path of the file. Has to contain the full path or leave it empty for root folder.", "display_options": {'show': {'resource': ['file']}}},
+            {"name": "page", "type": NodeParameterType.NUMBER, "display_name": "Page", "default": 1, "description": "Page of results to display", "display_options": {'show': {'operation': ['list'], 'resource': ['file']}}},
+            {"name": "additionalParameters", "type": NodeParameterType.COLLECTION, "display_name": "Additional Parameters", "default": "", "description": "Additional fields to add", "display_options": {'show': {'operation': ['list'], 'resource': ['file']}}},
+            {"name": "asBinaryProperty", "type": NodeParameterType.BOOLEAN, "display_name": "As Binary Property", "default": True, "description": "Whether to set the data of the file as binary property instead of returning the raw API response", "display_options": {'show': {'operation': ['get'], 'resource': ['file']}}},
+            {"name": "binaryPropertyName", "type": NodeParameterType.STRING, "display_name": "Put Output File in Field", "default": "data", "required": True, "display_options": {'show': {'operation': ['get'], 'resource': ['file']}}},
+            {"name": "binaryData", "type": NodeParameterType.BOOLEAN, "display_name": "Binary File", "default": False, "required": True, "description": "Whether the data to upload should be taken from binary field", "display_options": {'show': {'operation': ['create', 'edit'], 'resource': ['file']}}},
+            {"name": "fileContent", "type": NodeParameterType.STRING, "display_name": "File Content", "default": "", "required": True, "description": "The text content of the file", "display_options": {'show': {'operation': ['create', 'edit'], 'resource': ['file']}}},
+            {"name": "commitMessage", "type": NodeParameterType.STRING, "display_name": "Commit Message", "default": "", "required": True, "display_options": {'show': {'operation': ['create', 'delete', 'edit'], 'resource': ['file']}}},
+            {"name": "branch", "type": NodeParameterType.STRING, "display_name": "Branch", "default": "", "required": True, "description": "Name of the new branch to create. The commit is added to this branch.", "display_options": {'show': {'operation': ['create', 'delete', 'edit'], 'resource': ['file']}}},
             {"name": "events", "type": NodeParameterType.MULTI_OPTIONS, "display_name": "Events", "options": [
                 {"name": "*", "value": "*"}
-            ], "default": "[]", "required": True, "description": "Any time any event is triggered (Wildcard Event)"}
+            ], "default": [], "required": True, "description": "Any time any event is triggered (Wildcard Event)"}
+        ],
+        "credentials": [
+            {"name": "gitlabApi", "required": False},
+            {"name": "gitlabOAuth2Api", "required": False}
         ]
     }
+    
+    icon = "gitlab.svg"
 
     def execute(self) -> List[List[NodeExecutionData]]:
         """
@@ -175,50 +124,50 @@ class GitlabNode(BaseNode):
         # Get input data from previous node
         input_data = self.get_input_data()
         
-        # Handle empty input
+        # FIX #40: Handle empty input - create default item so nodes work from Start
         if not input_data:
-            return [[]]
+            input_data = [NodeExecutionData(json_data={})]
         
         return_items: List[NodeExecutionData] = []
 
-        for item_index, item in enumerate(input_data):
+        for i, item in enumerate(input_data):
             try:
-                resource = self.get_node_parameter("resource", item_index)
-                operation = self.get_node_parameter("operation", item_index)
+                resource = self.get_node_parameter("resource", i)
+                operation = self.get_node_parameter("operation", i)
                 item_data = item.json_data if hasattr(item, 'json_data') else item.get('json', {})
                 
                 if resource == "issue" and operation == "create":
-                    result = self._issue_create(item_index, item_data)
+                    result = self._issue_create(i, item_data)
                 elif resource == "issue" and operation == "createComment":
-                    result = self._issue_createComment(item_index, item_data)
+                    result = self._issue_createComment(i, item_data)
                 elif resource == "issue" and operation == "edit":
-                    result = self._issue_edit(item_index, item_data)
+                    result = self._issue_edit(i, item_data)
                 elif resource == "issue" and operation == "get":
-                    result = self._issue_get(item_index, item_data)
+                    result = self._issue_get(i, item_data)
                 elif resource == "issue" and operation == "lock":
-                    result = self._issue_lock(item_index, item_data)
+                    result = self._issue_lock(i, item_data)
                 elif resource == "release" and operation == "create":
-                    result = self._release_create(item_index, item_data)
+                    result = self._release_create(i, item_data)
                 elif resource == "release" and operation == "delete":
-                    result = self._release_delete(item_index, item_data)
+                    result = self._release_delete(i, item_data)
                 elif resource == "release" and operation == "get":
-                    result = self._release_get(item_index, item_data)
+                    result = self._release_get(i, item_data)
                 elif resource == "release" and operation == "getAll":
-                    result = self._release_getAll(item_index, item_data)
+                    result = self._release_getAll(i, item_data)
                 elif resource == "release" and operation == "update":
-                    result = self._release_update(item_index, item_data)
+                    result = self._release_update(i, item_data)
                 elif resource == "repository" and operation == "get":
-                    result = self._repository_get(item_index, item_data)
+                    result = self._repository_get(i, item_data)
                 elif resource == "repository" and operation == "getIssues":
-                    result = self._repository_getIssues(item_index, item_data)
+                    result = self._repository_getIssues(i, item_data)
                 elif resource == "user" and operation == "getRepositories":
-                    result = self._user_getRepositories(item_index, item_data)
+                    result = self._user_getRepositories(i, item_data)
                 elif resource == "file" and operation == "delete":
-                    result = self._file_delete(item_index, item_data)
+                    result = self._file_delete(i, item_data)
                 elif resource == "file" and operation == "get":
-                    result = self._file_get(item_index, item_data)
+                    result = self._file_get(i, item_data)
                 elif resource == "file" and operation == "list":
-                    result = self._file_list(item_index, item_data)
+                    result = self._file_list(i, item_data)
                 else:
                     raise ValueError(f"Unknown resource/operation: {resource}/{operation}")
                 
@@ -231,13 +180,14 @@ class GitlabNode(BaseNode):
                 
             except Exception as e:
                 logger.error(f"Error in {resource}/{operation}: {e}")
-                if self.continue_on_fail:
-                    return_items.append(NodeExecutionData(json_data={"error": str(e)}))
-                else:
-                    raise
+                # Platform doesn't support continue_on_fail - always raise
+                raise
         
         return [return_items]
 
+    # API Base URL (may be overridden by credentials for self-hosted)
+    BASE_URL = "https://gitlab.com/api/v4"
+    
     def _api_request(
         self,
         method: str,
@@ -250,29 +200,28 @@ class GitlabNode(BaseNode):
         
         SYNC-CELERY SAFE: Uses requests with timeout.
         """
-        credentials = self.get_credentials("gitlabApi")
-        if not credentials:
-            raise ValueError("API credentials not found")
+        import requests
+
+        # FIX #22: Respect authentication selector
+        auth_type = self.get_node_parameter('authentication', 0)
+        if auth_type == 'oAuth2':
+            credentials = self.get_credentials("gitlabOAuth2Api")
+        else:
+            credentials = self.get_credentials("gitlabApi")
         
-        # Build auth headers (Bearer token pattern)
-        access_token = credentials.get("accessToken", credentials.get("token", credentials.get("apiKey", "")))
-        if not access_token:
-            raise ValueError("Access token not found in credentials")
+        # FIX #34: Get base URL from credentials (supports self-hosted)
+        base_url = credentials.get("server", "https://gitlab.com/api/v4")
+        url = f"{base_url}{endpoint}"
         
-        headers = {
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        }
-        
-        url = f"https://gitlab.com/api/v4{endpoint}"
+        # Get auth headers
+        headers = self._get_auth_headers(credentials)
         
         response = requests.request(
             method=method,
             url=url,
             headers=headers,
-            params=query,
             json=body,
+            params=query,
             timeout=30,  # REQUIRED for Celery
         )
         response.raise_for_status()
@@ -286,40 +235,97 @@ class GitlabNode(BaseNode):
         query: Dict[str, Any] | None = None,
     ) -> List[Dict[str, Any]]:
         """
-        Make paginated API request, returning all items.
+        Make paginated API request and return all items.
         
         SYNC-CELERY SAFE: Uses requests with timeout.
         """
-        all_items: List[Dict[str, Any]] = []
+        import requests
+
+        # FIX #22: Respect authentication selector
+        auth_type = self.get_node_parameter('authentication', 0)
+        if auth_type == 'oAuth2':
+            credentials = self.get_credentials("gitlabOAuth2Api")
+        else:
+            credentials = self.get_credentials("gitlabApi")
+        
+        # FIX #34: Get base URL from credentials (supports self-hosted)
+        base_url = credentials.get("server", "https://gitlab.com/api/v4")
+        url = f"{base_url}{endpoint}"
+        
+        results = []
         query = query or {}
         page = 1
         per_page = 100
         
         while True:
-            query["page"] = page
-            query["per_page"] = per_page
+            # Add pagination params
+            page_query = query.copy()
+            page_query["page"] = page
+            page_query["per_page"] = per_page
             
-            response = self._api_request(method, endpoint, body, query)
+            headers = self._get_auth_headers(credentials)
             
-            # Handle different response formats
-            if isinstance(response, list):
-                items = response
-            elif isinstance(response, dict):
-                items = response.get("items", response.get("data", []))
+            response = requests.request(
+                method=method,
+                url=url,
+                headers=headers,
+                json=body,
+                params=page_query,
+                timeout=30,
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            # Handle different pagination response formats
+            if isinstance(data, list):
+                if not data:
+                    break
+                results.extend(data)
+                if len(data) < per_page:
+                    break
+            elif isinstance(data, dict):
+                items = data.get("items", data.get("data", []))
+                if not items:
+                    break
+                results.extend(items)
+                if len(items) < per_page:
+                    break
             else:
-                break
-            
-            if not items:
-                break
-            
-            all_items.extend(items)
-            
-            if len(items) < per_page:
                 break
             
             page += 1
         
-        return all_items
+        return results
+    
+    def _get_auth_headers(self, credentials: Dict[str, Any]) -> Dict[str, str]:
+        """Get authentication headers from credentials."""
+        headers = {"Content-Type": "application/json"}
+        
+        # FIX #33: Service-specific authentication headers
+        # GitLab uses PRIVATE-TOKEN header
+        # GitHub uses 'token' prefix (NOT 'Bearer')
+        # Most other services use Bearer
+        if "token" in credentials and True:
+            headers["PRIVATE-TOKEN"] = credentials["token"]
+        elif "github" in "gitlab":
+            # GitHub uses 'token' prefix, not 'Bearer'
+            if "accessToken" in credentials:
+                headers["Authorization"] = f"token {credentials['accessToken']}"
+            elif "access_token" in credentials:
+                headers["Authorization"] = f"token {credentials['access_token']}"
+            headers["Accept"] = "application/vnd.github.v3+json"
+            headers["User-Agent"] = "AvidFlow-Node"
+        elif "accessToken" in credentials:
+            headers["Authorization"] = f"Bearer {credentials['accessToken']}"
+        elif "access_token" in credentials:
+            headers["Authorization"] = f"Bearer {credentials['access_token']}"
+        elif "token" in credentials:
+            headers["Authorization"] = f"Bearer {credentials['token']}"
+        elif "apiKey" in credentials:
+            # API key in header (some services)
+            headers["Authorization"] = f"Bearer {credentials['apiKey']}"
+        
+        return headers
 
 
     def _issue_create(self, item_index: int, item_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -333,21 +339,33 @@ class GitlabNode(BaseNode):
         Returns:
             Dict with operation result
         """
-        owner = self.get_node_parameter('owner', item_index)
-        repository = self.get_node_parameter('repository', item_index)
-        
-        # Build base endpoint for GitLab API
-        base_endpoint = f'/projects/{owner}/{repository}'
-        
         title = self.get_node_parameter('title', item_index)
-        description = self.get_node_parameter('body', item_index)
+        description = self.get_node_parameter('body', item_index, {})
         due_date = self.get_node_parameter('due_date', item_index)
         labels = self.get_node_parameter('labels', item_index)
         assignee_ids = self.get_node_parameter('assignee_ids', item_index)
+        owner = self.get_node_parameter('owner', item_index)
+        repository = self.get_node_parameter('repository', item_index)
+        title_text = self.get_node_parameter('title', item_index)
+        body_text = self.get_node_parameter('body', item_index)
+        due_date_text = self.get_node_parameter('due_date', item_index)
         
-        # Make API request (method/endpoint from operation block)
-        response = self._api_request('POST', f'{base_endpoint}/issues', body=None, query=None)
-        response = response.get('data', response)
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
+        base_endpoint = f'/projects/{owner}/{repository}'
+        
+        # Validate parameters
+        if not title or not title.strip():
+            raise ValueError("Parameter 'title' is required for issue creation")
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
+        
+        # Build request body
+        body = {'title': title_text, 'description': body_text, 'due_date': due_date_text, 'labels': labels, 'assignee_ids': assignee_ids}
+        
+        # Make API request
+        response = self._api_request('POST', f'{base_endpoint}/issues', body=body, query=None)
         
         return response
 
@@ -362,18 +380,28 @@ class GitlabNode(BaseNode):
         Returns:
             Dict with operation result
         """
+        issue_number = self.get_node_parameter('issueNumber', item_index)
+        body_param = self.get_node_parameter('body', item_index, {})
         owner = self.get_node_parameter('owner', item_index)
         repository = self.get_node_parameter('repository', item_index)
+        body_text = self.get_node_parameter('body', item_index)
         
-        # Build base endpoint for GitLab API
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
         base_endpoint = f'/projects/{owner}/{repository}'
         
-        issue_number = self.get_node_parameter('issueNumber', item_index)
-        body = self.get_node_parameter('body', item_index)
+        # Validate parameters
+        if not isinstance(issue_number, int) or issue_number <= 0:
+            raise ValueError("Parameter 'issueNumber' must be a positive integer")
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
         
-        # Make API request (method/endpoint from operation block)
-        response = self._api_request('POST', f'{base_endpoint}/issues/{issue_number}/notes', body=None, query=None)
-        response = response.get('data', response)
+        # Build request body (avoid parameter shadowing)
+        body = {'body': body_param}
+        
+        # Make API request
+        response = self._api_request('POST', f'{base_endpoint}/issues/{issue_number}/notes', body=body, query=None)
         
         return response
 
@@ -388,18 +416,24 @@ class GitlabNode(BaseNode):
         Returns:
             Dict with operation result
         """
+        issue_number = self.get_node_parameter('issueNumber', item_index)
+        body_param = self.get_node_parameter('editFields', item_index)
         owner = self.get_node_parameter('owner', item_index)
         repository = self.get_node_parameter('repository', item_index)
         
-        # Build base endpoint for GitLab API
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
         base_endpoint = f'/projects/{owner}/{repository}'
         
-        issue_number = self.get_node_parameter('issueNumber', item_index)
-        body = self.get_node_parameter('editFields', item_index)
+        # Validate parameters
+        if not isinstance(issue_number, int) or issue_number <= 0:
+            raise ValueError("Parameter 'issueNumber' must be a positive integer")
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
         
-        # Make API request (method/endpoint from operation block)
-        response = self._api_request('PUT', f'{base_endpoint}/issues/{issue_number}', body=None, query=None)
-        response = response.get('data', response)
+        # Make API request
+        response = self._api_request('PUT', f'{base_endpoint}/issues/{issue_number}', body=body, query=None)
         
         return response
 
@@ -414,17 +448,21 @@ class GitlabNode(BaseNode):
         Returns:
             Dict with operation result
         """
+        issue_number = self.get_node_parameter('issueNumber', item_index)
         owner = self.get_node_parameter('owner', item_index)
         repository = self.get_node_parameter('repository', item_index)
         
-        # Build base endpoint for GitLab API
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
         base_endpoint = f'/projects/{owner}/{repository}'
         
-        issue_number = self.get_node_parameter('issueNumber', item_index)
+        # Validate parameters
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
         
-        # Make API request (method/endpoint from operation block)
+        # Make API request
         response = self._api_request('GET', f'{base_endpoint}/issues/{issue_number}', body=None, query=None)
-        response = response.get('data', response)
         
         return response
 
@@ -439,20 +477,26 @@ class GitlabNode(BaseNode):
         Returns:
             Dict with operation result
         """
+        issue_number = self.get_node_parameter('issueNumber', item_index)
         owner = self.get_node_parameter('owner', item_index)
         repository = self.get_node_parameter('repository', item_index)
         
-        # Build base endpoint for GitLab API
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
         base_endpoint = f'/projects/{owner}/{repository}'
         
-        issue_number = self.get_node_parameter('issueNumber', item_index)
+        # Validate parameters
+        if not isinstance(issue_number, int) or issue_number <= 0:
+            raise ValueError("Parameter 'issueNumber' must be a positive integer")
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
+        
         
         # Build request body
-        body = {'discussion_locked': True}
-        
-        # Make API request (method/endpoint from operation block)
+        body = {}
+        # Make API request
         response = self._api_request('PUT', f'{base_endpoint}/issues/{issue_number}', body=body, query=None)
-        response = response.get('data', response)
         
         return response
 
@@ -467,18 +511,25 @@ class GitlabNode(BaseNode):
         Returns:
             Dict with operation result
         """
+        body_param = self.get_node_parameter('additionalFields', item_index, {})
+        tag_name = self.get_node_parameter('releaseTag', item_index)
         owner = self.get_node_parameter('owner', item_index)
         repository = self.get_node_parameter('repository', item_index)
         
-        # Build base endpoint for GitLab API
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
         base_endpoint = f'/projects/{owner}/{repository}'
         
-        body = self.get_node_parameter('additionalFields', item_index)
-        tag_name = self.get_node_parameter('releaseTag', item_index)
+        # Validate parameters
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
         
-        # Make API request (method/endpoint from operation block)
-        response = self._api_request('POST', f'{base_endpoint}/releases', body=None, query=None)
-        response = response.get('data', response)
+        # Build request body
+        body = {'tag_name': tag_name}
+        
+        # Make API request
+        response = self._api_request('POST', f'{base_endpoint}/releases', body=body, query=None)
         
         return response
 
@@ -495,10 +546,20 @@ class GitlabNode(BaseNode):
         """
         id = self.get_node_parameter('projectId', item_index)
         tag_name = self.get_node_parameter('tag_name', item_index)
+        owner = self.get_node_parameter('owner', item_index)
+        repository = self.get_node_parameter('repository', item_index)
         
-        # Make API request (method/endpoint from operation block)
-        response = self._api_request('DELETE', f'/projects/{quote(str(owner) + "%2F" + str(repository), safe="")}/releases/{quote(str(tag_name), safe="")}', body=None, query=None)
-        response = response.get('data', response)
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
+        base_endpoint = f'/projects/{owner}/{repository}'
+        
+        # Validate parameters
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
+        
+        # Make API request
+        response = self._api_request('DELETE', f'/projects/{id}/releases/{tag_name}', body=None, query=None)
         
         return response
 
@@ -515,10 +576,20 @@ class GitlabNode(BaseNode):
         """
         id = self.get_node_parameter('projectId', item_index)
         tag_name = self.get_node_parameter('tag_name', item_index)
+        owner = self.get_node_parameter('owner', item_index)
+        repository = self.get_node_parameter('repository', item_index)
         
-        # Make API request (method/endpoint from operation block)
-        response = self._api_request('GET', f'/projects/{quote(str(owner) + "%2F" + str(repository), safe="")}/releases/{quote(str(tag_name), safe="")}', body=None, query=None)
-        response = response.get('data', response)
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
+        base_endpoint = f'/projects/{owner}/{repository}'
+        
+        # Validate parameters
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
+        
+        # Make API request
+        response = self._api_request('GET', f'/projects/{id}/releases/{tag_name}', body=None, query=None)
         
         return response
 
@@ -534,17 +605,28 @@ class GitlabNode(BaseNode):
             Dict with operation result
         """
         id = self.get_node_parameter('projectId', item_index)
-        qs = self.get_node_parameter('additionalFields', item_index)
+        qs = self.get_node_parameter('additionalFields', item_index, {})
         return_all = self.get_node_parameter('returnAll', item_index)
         per_page = self.get_node_parameter('limit', item_index)
+        owner = self.get_node_parameter('owner', item_index)
+        repository = self.get_node_parameter('repository', item_index)
         
-        # Build query parameters
-        query = {}
-        query['per_page'] = self.get_node_parameter('limit', 0)
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
+        base_endpoint = f'/projects/{owner}/{repository}'
         
-        # Make API request (method/endpoint from operation block)
-        response = self._api_request('GET', f'/projects/{quote(str(owner) + "%2F" + str(repository), safe="")}/releases', body=None, query=query)
-        response = response.get('data', response)
+        # Validate parameters
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
+        
+        # Make API request
+        if return_all:
+            response = self._api_request_all_items('GET', f'/projects/{id}/releases', body=None, query=None)
+        else:
+            query = {}
+            query['per_page'] = per_page
+            response = self._api_request('GET', f'/projects/{id}/releases', body=None, query=query)
         
         return response
 
@@ -561,11 +643,21 @@ class GitlabNode(BaseNode):
         """
         id = self.get_node_parameter('projectId', item_index)
         tag_name = self.get_node_parameter('tag_name', item_index)
-        body = self.get_node_parameter('additionalFields', item_index)
+        body_param = self.get_node_parameter('additionalFields', item_index, {})
+        owner = self.get_node_parameter('owner', item_index)
+        repository = self.get_node_parameter('repository', item_index)
         
-        # Make API request (method/endpoint from operation block)
-        response = self._api_request('PUT', f'/projects/{quote(str(owner) + "%2F" + str(repository), safe="")}/releases/{quote(str(tag_name), safe="")}', body=None, query=None)
-        response = response.get('data', response)
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
+        base_endpoint = f'/projects/{owner}/{repository}'
+        
+        # Validate parameters
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
+        
+        # Make API request
+        response = self._api_request('PUT', f'/projects/{id}/releases/{tag_name}', body=body, query=None)
         
         return response
 
@@ -583,13 +675,17 @@ class GitlabNode(BaseNode):
         owner = self.get_node_parameter('owner', item_index)
         repository = self.get_node_parameter('repository', item_index)
         
-        # Build base endpoint for GitLab API
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
         base_endpoint = f'/projects/{owner}/{repository}'
         
+        # Validate parameters
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
         
-        # Make API request (method/endpoint from operation block)
+        # Make API request
         response = self._api_request('GET', f'{base_endpoint}', body=None, query=None)
-        response = response.get('data', response)
         
         return response
 
@@ -604,23 +700,28 @@ class GitlabNode(BaseNode):
         Returns:
             Dict with operation result
         """
+        qs = self.get_node_parameter('getRepositoryIssuesFilters', item_index, {})
+        return_all = self.get_node_parameter('returnAll', item_index)
+        per_page = self.get_node_parameter('limit', item_index)
         owner = self.get_node_parameter('owner', item_index)
         repository = self.get_node_parameter('repository', item_index)
         
-        # Build base endpoint for GitLab API
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
         base_endpoint = f'/projects/{owner}/{repository}'
         
-        qs = self.get_node_parameter('getRepositoryIssuesFilters', item_index)
-        return_all = self.get_node_parameter('returnAll', item_index)
-        per_page = self.get_node_parameter('limit', item_index)
+        # Validate parameters
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
         
-        # Build query parameters
-        query = {}
-        query['per_page'] = self.get_node_parameter('limit', 0)
-        
-        # Make API request (method/endpoint from operation block)
-        response = self._api_request('GET', f'{base_endpoint}/issues', body=None, query=query)
-        response = response.get('data', response)
+        # Make API request
+        if return_all:
+            response = self._api_request_all_items('GET', f'{base_endpoint}/issues', body=None, query=None)
+        else:
+            query = {}
+            query['per_page'] = per_page
+            response = self._api_request('GET', f'{base_endpoint}/issues', body=None, query=query)
         
         return response
 
@@ -635,10 +736,24 @@ class GitlabNode(BaseNode):
         Returns:
             Dict with operation result
         """
+        owner = self.get_node_parameter('owner', item_index)
+        repository = self.get_node_parameter('repository', item_index)
         
-        # Make API request (method/endpoint from operation block)
-        response = self._api_request('GET', f'/users/{owner}/projects', body=None, query=None)
-        response = response.get('data', response)
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
+        base_endpoint = f'/projects/{owner}/{repository}'
+        
+        # FIX #36: URL encode path parameters for API safety
+        owner_encoded = quote(str(owner), safe='')
+        repository_encoded = quote(str(repository), safe='')
+        
+        # Validate parameters
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
+        
+        # Make API request
+        response = self._api_request('GET', f'/users/{owner_encoded}/projects', body=None, query=None)
         
         return response
 
@@ -653,22 +768,39 @@ class GitlabNode(BaseNode):
         Returns:
             Dict with operation result
         """
-        owner = self.get_node_parameter('owner', item_index)
-        repository = self.get_node_parameter('repository', item_index)
-        
-        # Build base endpoint for GitLab API
-        base_endpoint = f'/projects/{owner}/{repository}'
-        
+        additional_parameters = self.get_node_parameter('additionalParameters', item_index, {})
         branch = self.get_node_parameter('branch', item_index)
         commit_message = self.get_node_parameter('commitMessage', item_index)
         file_path = self.get_node_parameter('filePath', item_index)
+        owner = self.get_node_parameter('owner', item_index)
+        repository = self.get_node_parameter('repository', item_index)
+        branch_text = self.get_node_parameter('branch', item_index)
+        
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
+        base_endpoint = f'/projects/{owner}/{repository}'
+        
+        # FIX #36: URL encode path parameters for API safety
+        owner_encoded = quote(str(owner), safe='')
+        repository_encoded = quote(str(repository), safe='')
+        file_path_encoded = quote(str(file_path), safe='')
+        
+        # Validate parameters
+        if not file_path or not file_path.strip():
+            raise ValueError("Parameter 'filePath' cannot be empty")
+        if file_path.startswith('/'):
+            raise ValueError("Parameter 'filePath' should not start with '/'. Use relative path from repository root.")
+        if not commit_message or not commit_message.strip():
+            raise ValueError("Parameter 'commitMessage' is required for file delete operations")
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
         
         # Build request body
-        body = {'author_name': author_name, 'author_email': author_email}
+        body = {'branch': branch_text, 'commit_message': commit_message}
         
-        # Make API request (method/endpoint from operation block)
-        response = self._api_request('DELETE', f'{base_endpoint}/repository/files/{quote(str(file_path), safe="")}', body=body, query=None)
-        response = response.get('data', response)
+        # Make API request
+        response = self._api_request('DELETE', f'{base_endpoint}/repository/files/{file_path_encoded}', body=body, query=None)
         
         return response
 
@@ -683,22 +815,36 @@ class GitlabNode(BaseNode):
         Returns:
             Dict with operation result
         """
+        file_path = self.get_node_parameter('filePath', item_index)
+        additional_parameters = self.get_node_parameter('additionalParameters', item_index, {})
         owner = self.get_node_parameter('owner', item_index)
         repository = self.get_node_parameter('repository', item_index)
         
-        # Build base endpoint for GitLab API
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
         base_endpoint = f'/projects/{owner}/{repository}'
         
-        file_path = self.get_node_parameter('filePath', item_index)
+        # FIX #36: URL encode path parameters for API safety
+        owner_encoded = quote(str(owner), safe='')
+        repository_encoded = quote(str(repository), safe='')
+        file_path_encoded = quote(str(file_path), safe='')
+        
+        # Validate parameters
+        if not file_path or not file_path.strip():
+            raise ValueError("Parameter 'filePath' cannot be empty")
+        if file_path.startswith('/'):
+            raise ValueError("Parameter 'filePath' should not start with '/'. Use relative path from repository root.")
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
         
         # Build query parameters
         query = {}
-        query['ref'] = additional_params
+        query['ref'] = additional_parameters.get('reference')
         query['ref'] = 'master'
         
-        # Make API request (method/endpoint from operation block)
-        response = self._api_request('GET', f'{base_endpoint}/repository/files/{quote(str(file_path), safe="")}', body=None, query=query)
-        response = response.get('data', response)
+        # Make API request
+        response = self._api_request('GET', f'{base_endpoint}/repository/files/{file_path_encoded}', body=None, query=query)
         
         return response
 
@@ -713,27 +859,38 @@ class GitlabNode(BaseNode):
         Returns:
             Dict with operation result
         """
-        owner = self.get_node_parameter('owner', item_index)
-        repository = self.get_node_parameter('repository', item_index)
-        
-        # Build base endpoint for GitLab API
-        base_endpoint = f'/projects/{owner}/{repository}'
-        
         file_path = self.get_node_parameter('filePath', item_index)
-        qs = self.get_node_parameter('additionalParameters', item_index)
+        qs = self.get_node_parameter('additionalParameters', item_index, {})
         return_all = self.get_node_parameter('returnAll', item_index)
         per_page = self.get_node_parameter('limit', item_index)
         page = self.get_node_parameter('page', item_index)
+        owner = self.get_node_parameter('owner', item_index)
+        repository = self.get_node_parameter('repository', item_index)
+        
+        # FIX #37: Build baseEndpoint for GitLab/complex endpoints
+        base_endpoint = f'/projects/{owner}/{repository}'
+        
+        # Validate parameters
+        if not file_path or not file_path.strip():
+            raise ValueError("Parameter 'filePath' cannot be empty")
+        if file_path.startswith('/'):
+            raise ValueError("Parameter 'filePath' should not start with '/'. Use relative path from repository root.")
+        if not owner or not owner.strip():
+            raise ValueError("Parameter 'owner' is required")
+        if not repository or not repository.strip():
+            raise ValueError("Parameter 'repository' is required")
         
         # Build query parameters
         query = {}
-        query['per_page'] = self.get_node_parameter('limit', i)
-        query['page'] = self.get_node_parameter('page', i)
+        query['page'] = page
         query['path'] = file_path
         
-        # Make API request (method/endpoint from operation block)
-        response = self._api_request('GET', f'{base_endpoint}/repository/tree', body=None, query=query)
-        response = response.get('data', response)
+        # Make API request
+        if return_all:
+            response = self._api_request_all_items('GET', f'{base_endpoint}/repository/tree', body=None, query=query)
+        else:
+            query['per_page'] = per_page
+            response = self._api_request('GET', f'{base_endpoint}/repository/tree', body=None, query=query)
         
         return response
 

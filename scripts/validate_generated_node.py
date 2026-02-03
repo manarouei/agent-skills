@@ -242,6 +242,127 @@ def validate_credentials_consistency(file_path: Path) -> List[NodeValidationErro
     return errors
 
 
+def validate_basenode_compatibility(file_path: Path) -> List[NodeValidationError]:
+    """
+    GATE: Check that generated code only uses BaseNode attributes/methods that exist.
+    
+    SYSTEMIC FIX: Catches continue_on_fail and other n8n features not in our BaseNode.
+    """
+    errors = []
+    content = file_path.read_text()
+    
+    # Attributes/methods that exist in our BaseNode
+    BASENODE_ATTRS = {
+        # Defined methods
+        'get_node_parameter', 'get_parameter', 'get_credentials', 'set_credentials',
+        'get_input_data', 'execute', 'input_data', 'node_data', 'workflow',
+        'execution_data', '_parameters', '_credentials', 'description', 'properties',
+        'type', 'version', 'icon', 'color', 'subtitle',
+        # Internal helpers
+        '_api_request', '_api_request_all_items', '_http_request', '_oauth2_request',
+        '_get_auth_headers',
+    }
+    
+    # Attributes that DO NOT exist in BaseNode (n8n-specific)
+    FORBIDDEN_ATTRS = {
+        'continue_on_fail': "n8n's continueOnFail - use try/except and always raise on error",
+        'continueOnFail': "n8n's continueOnFail - use try/except and always raise on error",
+        'helpers': "n8n's helpers object - use direct API calls instead",
+        'returnJsonArray': "n8n helper - return data directly",
+    }
+    
+    try:
+        tree = ast.parse(content)
+    except SyntaxError:
+        return []
+    
+    for node in ast.walk(tree):
+        # Check for self.forbidden_attr
+        if isinstance(node, ast.Attribute):
+            if isinstance(node.value, ast.Name) and node.value.id == 'self':
+                attr_name = node.attr
+                if attr_name in FORBIDDEN_ATTRS:
+                    errors.append(NodeValidationError(
+                        f"BaseNode compatibility: self.{attr_name} does not exist in BaseNode. "
+                        f"Hint: {FORBIDDEN_ATTRS[attr_name]}",
+                        severity="error",
+                        line=getattr(node, 'lineno', None)
+                    ))
+    
+    return errors
+
+
+def validate_undefined_variables(file_path: Path) -> List[NodeValidationError]:
+    """
+    GATE: Check for undefined variables in operation handlers.
+    
+    SYSTEMIC FIX: Catches 'owner', 'additional_params', etc. used before definition.
+    """
+    errors = []
+    content = file_path.read_text()
+    
+    try:
+        tree = ast.parse(content)
+    except SyntaxError:
+        return []
+    
+    # Python builtins we shouldn't flag
+    builtins = {'True', 'False', 'None', 'self', 'str', 'int', 'float', 'bool', 'list', 'dict',
+                'len', 'range', 'enumerate', 'zip', 'map', 'filter', 'any', 'all',
+                'isinstance', 'hasattr', 'getattr', 'setattr', 'Exception', 'ValueError',
+                'TypeError', 'KeyError', 'IndexError', 'print', 'quote', 'requests',
+                'logger', 'logging', 'json', 'NodeExecutionData', 'Dict', 'List', 'Any',
+                'Optional', 'Tuple', 'Set'}
+    
+    # Check each function definition
+    for func_node in ast.walk(tree):
+        if not isinstance(func_node, ast.FunctionDef):
+            continue
+        
+        # Track defined names within this function
+        defined_names: Set[str] = set()
+        
+        # Add function parameters
+        for arg in func_node.args.args:
+            defined_names.add(arg.arg)
+        
+        # Walk through function body in order
+        for stmt in ast.walk(func_node):
+            # Track assignments
+            if isinstance(stmt, ast.Assign):
+                for target in stmt.targets:
+                    if isinstance(target, ast.Name):
+                        defined_names.add(target.id)
+            elif isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+                defined_names.add(stmt.target.id)
+            elif isinstance(stmt, ast.For):
+                # Handle simple: for i in ...
+                if isinstance(stmt.target, ast.Name):
+                    defined_names.add(stmt.target.id)
+                # Handle tuple unpacking: for i, item in ...
+                elif isinstance(stmt.target, ast.Tuple):
+                    for elt in stmt.target.elts:
+                        if isinstance(elt, ast.Name):
+                            defined_names.add(elt.id)
+            
+            # Check for undefined names in expressions
+            if isinstance(stmt, ast.Name) and isinstance(stmt.ctx, ast.Load):
+                name = stmt.id
+                if name not in defined_names and name not in builtins:
+                    # Check if it's likely a typo or missing extraction
+                    if name in ('owner', 'repository', 'project_id', 'additional_params',
+                                'file_path', 'issue_number', 'tag_name', 'author_name',
+                                'author_email', 'i'):  # Common missing params
+                        errors.append(NodeValidationError(
+                            f"Undefined variable: '{name}' used in {func_node.name}() "
+                            f"- likely missing get_node_parameter() extraction",
+                            severity="error",
+                            line=getattr(stmt, 'lineno', None)
+                        ))
+    
+    return errors
+
+
 def validate_node_file(file_path: Path) -> Tuple[bool, List[NodeValidationError]]:
     """Run all validations on a node file."""
     all_errors = []
@@ -253,6 +374,8 @@ def validate_node_file(file_path: Path) -> Tuple[bool, List[NodeValidationError]
         validate_operation_routing,
         validate_body_usage,
         validate_credentials_consistency,
+        validate_basenode_compatibility,  # SYSTEMIC FIX: Catches continue_on_fail etc
+        validate_undefined_variables,      # SYSTEMIC FIX: Catches undefined vars
     ]
     
     for validator in validators:
